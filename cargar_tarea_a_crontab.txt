@@ -1,0 +1,1 @@
+ python .\temp.py "0 3 * * * /usr/bin/java -cp "/cdr02/data/ADI/NM400086/AutoRun_fat.jar:./ auto.Ejecutar 'CLOUD04'" 192.168.8.201 jgomez /cdr02/data/ADI/webautotarea/add_crontab.sh
