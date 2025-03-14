@@ -123,7 +123,7 @@ class SolicitudPrestamo {
 
         $tipo_cliente = cliente_existe($data['idcliente']);
         $recurrente = ($tipo_cliente > 0) ? 'Recurrente' : 'Nuevo';
-        $numero_solicitud = seq_solicitud_credito();
+        $numero_solicitud = seq_solicitud_credito() + 1;
 
         $stmt->execute([
             $numero_solicitud, $data['idcliente'], $data['actividad_economica'], $data['direccion_negocio'],
