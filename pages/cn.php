@@ -46,7 +46,7 @@ function conexion_bd($bd)
             
             case 3:
                 /* CADENA DE CONEXIÓN CON POSTGRESQL */
-                $conexion = new PDO("pgsql:host=localhost;port=5432;dbname=credimore", "postgres", "posgres");
+                $conexion = new PDO("pgsql:host=localhost;port=5400;dbname=credimore", "postgres", "posgres");
                 break;
 
             default:
