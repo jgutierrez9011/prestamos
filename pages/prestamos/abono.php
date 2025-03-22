@@ -34,12 +34,12 @@ require_once  '../usuarios/reg.php';
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>Créditos</h1>
+            <h1>Abono</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="#">Prestamos</a></li>
-              <li class="breadcrumb-item active">Creditos</li>
+              <li class="breadcrumb-item active">Abonos</li>
             </ol>
           </div>
         </div>
@@ -51,64 +51,108 @@ require_once  '../usuarios/reg.php';
     <!-- Main content -->
     <section class="content">
 
-      <!-- Default box -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Buscar créditos</h3>
-
-          <div class="card-tools">
-            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-              <i class="fas fa-minus"></i>
-            </button>
-            <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
-
-           <form class="needs-validation" method="post" action="">
-             <!-- Primera linea de campos en el fromulario-->
-
-            <div class="row">
-                  <div class="col-md-4">
-                     <a href="solicitud_prestamos.php" class="btn btn-primary" role="button">Nuevo crédito</a>
-                  </div>
+        <!-- Card de Información del Préstamo -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                Información del Préstamo
             </div>
-
-           </form>
-           <br>
-           <div class="row">
-        <div class="row table-responsive">
-          <table id="clientesTable" class="table table-bordered table-striped" style="width:100%">
-              <thead>
-                  <tr>
-                      <th><p class="small"><strong>Código</strong></p></th>
-                      <th><p class="small"><strong>Cliente</strong></p></th>
-                      <th><p class="small"><strong>Fecha Solicitud</strong></p></th>
-                      <th><p class="small"><strong>Monto Solicitado</strong></p></th>
-                      <th><p class="small"><strong>Estatus</strong></p></th>
-                      <th><p class="small"><strong>Plazo</strong></p></th>
-                      <th><p class="small"><strong>Tasa</strong></p></th>
-                      <th><p class="small"><strong>Oficial de Crédito</strong></p></th>
-                      <th><p class="small"><strong>Ver detalle</strong></p></th>
-                      <th><p class="small"><strong>Acciones</strong></p></th>
-                  </tr>
-              </thead>
-          </table>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>ID Préstamo:</strong> 12345</p>
+                        <p><strong>Monto Aprobado:</strong> $10,000.00</p>
+                        <p><strong>Interés:</strong> 5.00%</p>
+                        <p><strong>Plazo:</strong> 12 meses</p>
+                        <p><strong>Fecha de Aprobación:</strong> 2023-10-01</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Saldo Pendiente:</strong> $8,500.00</p>
+                        <p><strong>Fecha Primera Cuota:</strong> 2023-11-01</p>
+                        <p><strong>Modalidad:</strong> Semanal</p>
+                        <p><strong>Monto por Cuota:</strong> $875.00</p>
+                        <p><strong>Interés Semanal:</strong> $50.00</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-         <br>
-           </div>
-
+        <!-- Card de Formulario para Aplicar Abonos -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                Registrar Abono
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="montoAbonado">Monto Abonado</label>
+                            <input type="number" class="form-control" id="montoAbonado" placeholder="Ingrese el monto">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="fechaAbono">Fecha de Abono</label>
+                            <input type="date" class="form-control" id="fechaAbono" value="2023-10-15">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="esProrroga">
+                            <label class="form-check-label" for="esProrroga">
+                                ¿Es prórroga?
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Aplicar Abono</button>
+                </form>
+            </div>
         </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
 
+        <!-- Card de Calendario de Pagos -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                Calendario de Pagos
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Semana</th>
+                            <th>Fecha de Pago</th>
+                            <th>Cuota</th>
+                            <th>Interés</th>
+                            <th>Cuota Capital</th>
+                            <th>Saldo Pendiente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>2023-11-01</td>
+                            <td>$875.00</td>
+                            <td>$50.00</td>
+                            <td>$825.00</td>
+                            <td>$9,175.00</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2023-11-08</td>
+                            <td>$875.00</td>
+                            <td>$50.00</td>
+                            <td>$825.00</td>
+                            <td>$8,350.00</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>2023-11-15</td>
+                            <td>$875.00</td>
+                            <td>$50.00</td>
+                            <td>$825.00</td>
+                            <td>$7,525.00</td>
+                        </tr>
+                        <!-- Más filas según el plazo -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <!-- /.card-footer-->
-      </div>
-      <!-- /.card -->
 
     </section>
     <!-- /.content -->
@@ -226,7 +270,7 @@ require_once  '../usuarios/reg.php';
     data: "cod_solicitud",
     render: function(data, type, row) {
         return `
-            <a href="abono.php?id_solicitud=${data}" 
+            <a href="consultar_solicitud.php?id_solicitud=${data}" 
                class="btn btn-sm btn-success" 
                data-toggle="tooltip" 
                data-placement="top" 

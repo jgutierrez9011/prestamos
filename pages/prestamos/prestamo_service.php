@@ -27,8 +27,27 @@ class PrestamoService {
     // Crear un nuevo préstamo
     public function createPrestamo($data) {
 
-        $sql = "INSERT INTO prestamo (id_solicitud, monto_aprobado, interes, plazo, saldo, fecha_primer_cuota, comentario, usuario_creo)
-                VALUES (:id_solicitud, :monto_aprobado, :interes, :plazo, :saldo, :fecha_primer_cuota, :comentario, :usuario_creo)";
+        try{
+
+            // Calcular la cantidad de semanas a partir de los meses
+        $plazoMeses =$data['plazo'];
+        $plazoSemanas = ceil($plazoMeses * 4); // Redondear hacia arriba para evitar semanas incompletas
+
+        // Calcular el interés total simple
+        $monto = $data['monto_aprobado'];
+        $interesMensual= $data['interes'];
+        $interesTotal = $monto * ($interesMensual / 100) * $plazoMeses;
+
+        // Calcular el monto total a pagar
+        $montoTotal = $monto + $interesTotal;
+
+        // Calcular el pago semanal
+        $pagoSemanal = $montoTotal / $plazoSemanas;
+
+        $interesSemanal = $interesTotal / $plazoSemanas;
+
+        $sql = "INSERT INTO prestamo (id_solicitud, monto_aprobado, interes, plazo, saldo, fecha_primer_cuota, comentario, usuario_creo, monto_interes, montotal, frecuencia, modalidad, monto_cuota, interes_semanal)
+                VALUES (:id_solicitud, :monto_aprobado, :interes, :plazo, :saldo, :fecha_primer_cuota, :comentario, :usuario_creo, :interesTotal, :montototal, :frecuencia, :tipomodalidad, :monto_cuota, :interessemanal)";
         $stmt = $this->base_de_datos->prepare($sql);
         $stmt->execute([
             'id_solicitud' => $data['id_solicitud'],
@@ -38,10 +57,26 @@ class PrestamoService {
             'saldo' => $data['saldo'],
             'fecha_primer_cuota' => $data['fecha_primer_cuota'],
             'comentario' => $data['comentario'],
-            'usuario_creo' => $_SESSION["idusuario"]
+            'usuario_creo' => $_SESSION["idusuario"],
+            'interesTotal' => round($interesTotal,2),
+            'montototal' => round($montoTotal,2),
+            'frecuencia' => $plazoSemanas,
+            'tipomodalidad' => 'Semanal',
+            'monto_cuota' => round($pagoSemanal,2),
+            'interessemanal' => round($interesSemanal, 2)
         ]);
         
         return $this->base_de_datos->lastInsertId();
+
+        } catch (PDOException $e) {
+            // Captura errores específicos de PDO
+            http_response_code(500);
+            echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+        } catch (Exception $e) {
+            // Captura cualquier otra excepción
+            http_response_code(500);
+            echo json_encode(["error" => $e->getMessage()]);
+        }
     }
 
     // Actualizar un préstamo
