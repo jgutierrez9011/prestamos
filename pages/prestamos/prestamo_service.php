@@ -1,5 +1,6 @@
 <?php
 require_once '../cn.php';
+require_once 'fncalendariopago.php';
 
 
 class PrestamoService {

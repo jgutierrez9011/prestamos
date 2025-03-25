@@ -9,14 +9,14 @@ class CalendarioPago {
     /**
      * Crea un nuevo registro en calendariopago
      */
-    public function crear($id_prestamo, $fecha_pago, $monto_cuota, $interes, $principal, $estado = 'Pendiente') {
+    public function crear($id_prestamo, $fecha_pago, $monto_cuota, $interes, $principal, $saldo, $estado = 'Pendiente') {
         try {
             $this->pdo->beginTransaction();
 
             // Modificación específica para PostgreSQL para retornar el ID insertado
             $sql = "INSERT INTO calendariopago 
-                    (id_prestamo, fecha_pago, monto_cuota, interes, principal, estado) 
-                    VALUES (:id_prestamo, :fecha_pago, :monto_cuota, :interes, :principal, :estado)
+                    (id_prestamo, fecha_pago, monto_cuota, interes, principal, estado, saldo, usuario_creo, fecha_creo) 
+                    VALUES (:id_prestamo, :fecha_pago, :monto_cuota, :interes, :principal, :estado, :saldos, :usuario_creo,current_timestamp)
                     RETURNING id_pago";
                     
             $stmt = $this->pdo->prepare($sql);
@@ -26,7 +26,9 @@ class CalendarioPago {
                 ':monto_cuota' => $monto_cuota,
                 ':interes' => $interes,
                 ':principal' => $principal,
-                ':estado' => $estado
+                ':estado' => $estado,
+                ':saldos' => $saldo,
+                ':usuario_creo' => $_SESSION["idusuario"]
             ]);
 
             // Obtenemos el ID directamente del resultado (PostgreSQL specific)

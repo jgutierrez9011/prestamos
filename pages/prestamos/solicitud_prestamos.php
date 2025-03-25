@@ -232,65 +232,6 @@ require_once '../usuarios/reg.php';
               </div>
               <div class="card-body">
 
-                           <!-- <div class="form-group">
-                                <label for="ventaBuena">Venta Promedio Diaria Buena:</label>
-                                <input type="number" class="form-control form-control-sm" id="venta_promedio_bueno" name="venta_promedio_bueno" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="ventaMediana">Venta Promedio Diaria Mediana:</label>
-                                <input type="number" class="form-control form-control-sm" id="venta_promedio_mediano" name="venta_promedio_mediano" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="ventaBaja">Venta Promedio Diaria Baja:</label>
-                                <input type="number" class="form-control form-control-sm" id="venta_promedio_bajo" name="venta_promedio_bajo" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="promedioVenta">Promedio de Venta:</label>
-                                <input type="number" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="tipoPromedio">Tipo de Promedio:</label>
-                                <select class="form-control form-control-sm" id="tipo_promedio" name="tipo_promedio" required>
-                                    <option value="Diario">Diario</option>
-                                    <option value="Semanal">Semanal</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="ingresosMensuales">Ingresos Ventas Mensuales:</label>
-                                <input type="number" class="form-control form-control-sm" id="ventas_mensuales" name="ventas_mensuales" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="otrosIngresosNegocio">Otros Ingresos del Negocio:</label>
-                                <input type="number" class="form-control form-control-sm" id="otros_ingresos_negocio" name="otros_ingresos_negocio" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="aportesFamiliares">Aportes Familiares:</label>
-                                <input type="number" class="form-control form-control-sm" id="aportes_familiares" name="aportes_familiares" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="otrosIngresos">Otros Ingresos:</label>
-                                <input type="number" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="gastosVenta">Gastos de Costos de Venta:</label>
-                                <input type="number" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="gastosNegocio">Gastos del Negocio:</label>
-                                <input type="number" class="form-control form-control-sm" id="gastos_negocio" name="gastos_negocio" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="cuotasCredito">Cuotas de Crédito:</label>
-                                <input type="number" class="form-control form-control-sm" id="cuotas_credito" name="cuotas_credito" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="gastosFamiliares">Gastos Familiares:</label>
-                                <input type="number" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="utilidadFinal">Utilidad Final:</label>
-                                <input type="number" class="form-control form-control-sm" id="utilidad_final" name="utilidad_final" required>
-                            </div>-->
                                 <!-- Fila 1: Tipo de Promedio, Ventas Promedio y Promedio de Venta -->
     <fieldset class="border p-2 mb-3">
       <legend class="w-auto">Ventas Promedio</legend>
@@ -499,23 +440,7 @@ require_once '../usuarios/reg.php';
   
 
       // Envía los datos a la API
-     /* fetch('http://localhost/credimore/pages/prestamos/fnprestamos.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
-      .then(response => response.json())
-      .then(result => {
-        alert(result.message); // Muestra un mensaje de éxito
-        // Redirige o reinicia el formulario si es necesario
-        window.location.href = 'exito.html'; // Cambia esto por la URL de éxito
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Hubo un error al enviar la solicitud.');
-      });*/
+
 
       $.ajax({
                     type: "POST",

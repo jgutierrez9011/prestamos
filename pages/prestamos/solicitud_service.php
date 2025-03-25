@@ -124,7 +124,7 @@ class SolicitudPrestamo {
         $tipo_cliente = cliente_existe($data['idcliente']);
         $recurrente = ($tipo_cliente > 0) ? 'Recurrente' : 'Nuevo';
         $numero_solicitud = seq_solicitud_credito() + 1;
-          echo $numero_solicitud;
+          //echo $numero_solicitud;
         $stmt->execute([
             $numero_solicitud, $data['idcliente'], $data['actividad_economica'], $data['direccion_negocio'],
             $data['telefono'], $data['tipo_local'], $data['tiempo_operar'], $data['rubro'],
@@ -138,6 +138,7 @@ class SolicitudPrestamo {
         ]);
 
         return ["message" => "Solicitud creada exitosamente"];
+
         }catch(PDOException $e) {
            // Captura errores específicos de PDO
            http_response_code(500);

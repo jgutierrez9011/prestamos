@@ -1,22 +1,17 @@
 <?php
 header('Content-Type: application/json');
 require_once 'fncalendariopago.php';
+require_once '../cn.php';
 
 try {
     // Configuración de la conexión PDO
-    $host = 'tu_host';
-    $dbname = 'tu_base_de_datos';
-    $username = 'tu_usuario';
-    $password = 'tu_contraseña';
-
-    $pdo = new PDO("pgsql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+    $pdo = $base_de_datos;
+    // Instanciar la clase Abono
     $calendarioPago = new CalendarioPago($pdo);
 
     // Obtener método de la solicitud
     $method = $_SERVER['REQUEST_METHOD'];
-    $request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
+    //$request = explode('/', trim($_SERVER['PATH_INFO'], '/'));
     $input = json_decode(file_get_contents('php://input'), true);
 
     switch ($method) {
