@@ -1,6 +1,7 @@
 <?php
 require_once  'reg.php';
 require_once 'fnusuario.php';
+require_once '../../menu_builder.php';
 
 if (isset($_POST["btnguardar"]))
 {
@@ -28,7 +29,12 @@ if (isset($_POST["btnguardar"]))
 <div class="wrapper">
   <!-- Navbar -->
 <!-- INICIA EL MENU -->
-<?php require_once '../../menu.php'; ?>
+<?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
 <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->

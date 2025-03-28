@@ -1,5 +1,6 @@
 <?php
 require_once  'reg.php';
+require_once '../../menu_builder.php';
 
 function limpiar($tags){
   $tags = trim($tags);
@@ -25,7 +26,12 @@ function limpiar($tags){
 <div class="wrapper">
   <!-- Navbar -->
 <!-- INICIA EL MENU -->
-<?php require_once '../../menu.php'; ?>
+<?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
 <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->
@@ -126,23 +132,25 @@ function limpiar($tags){
                 $sentencia = $base_de_datos->query("SELECT idperfil, strperfil, bolactivo FROM tblcatperfilusr;");
                 $perfiles = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
-              foreach($perfiles as $perfil){
-               $nn=0;
-               $url= $perfil->idperfil;
-               $sentencia = $base_de_datos->query("SELECT a.idperfilusrfrm, b.strformulario, a.bolactivo
-                                                   FROM tblcatperfilusrfrm as a
-                                                   inner join tblcatformularios as b on a.idfrm = b.idfrm
-                                                   WHERE a.idperfil= $row[0] and a.bolactivo ='1';");
-               $perfiles_usuarios = $sentencia->fetchAll(PDO::FETCH_OBJ);
-               foreach($perfiles_usuarios as $perfiles_usuario){
-                 $nn++;
-               }
-
-               if($nn==0){
-                 $color='btn btn-danger btn-xs';
-               }else{
-                 $color='btn btn-primary btn-xs';
-               }
+                foreach($perfiles as $perfil){
+                  $nn = 0;
+                  $url = $perfil->idperfil;
+                  
+                  // Consulta corregida - usando el idperfil del objeto $perfil actual
+                  $sentencia = $base_de_datos->prepare("SELECT a.idperfilusrfrm, b.strformulario, a.bolactivo
+                                                      FROM tblcatperfilusrfrm as a
+                                                      INNER JOIN tblcatformularios as b ON a.idfrm = b.idfrm
+                                                      WHERE a.idperfil = :idperfil AND a.bolactivo = '1'");
+                  $sentencia->execute([':idperfil' => $perfil->idperfil]);
+                  $perfiles_usuarios = $sentencia->fetchAll(PDO::FETCH_OBJ);
+                  
+                  $nn = count($perfiles_usuarios); // Contamos directamente los resultados
+                  
+                  if($nn == 0){
+                      $color = 'btn btn-danger btn-xs';
+                  } else {
+                      $color = 'btn btn-primary btn-xs';
+                  }
            ?>
                  <tr>
                    <td><?php echo $perfil->strperfil; ?></td>
