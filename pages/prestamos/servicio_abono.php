@@ -47,14 +47,12 @@ try {
 
         case 'POST':
             // Crear un nuevo abono
-            $data = json_decode(file_get_contents("php://input"));
+            $data = json_decode(file_get_contents("php://input"),true);
+            //print_r($data);
             if (
-                !empty($data->id_prestamo) &&
-                !empty($data->fecha_abono) &&
-                !empty($data->monto_abonado) &&
-                isset($data->es_prorroga)
+                isset($data["id_prestamo"],$data["fecha_abono"],$data["monto_abono"])
             ) {
-                if ($abono->crearAbono($data->id_prestamo, $data->fecha_abono, $data->monto_abonado, $data->es_prorroga)) {
+                if ($abono->crearAbono($data["id_prestamo"], $data["fecha_abono"], $data["monto_abono"], $data["es_prorroga"])) {
                     http_response_code(201); // Created
                     echo json_encode(["message" => "Abono creado correctamente."]);
                 } else {

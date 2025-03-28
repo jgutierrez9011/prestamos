@@ -13,6 +13,8 @@ require_once '../../menu_builder.php';
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="../../plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
   <!-- DataTables -->
   <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
   <link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
@@ -70,6 +72,10 @@ if (!empty($_SESSION["user"])) {
                     <span id="lbl_prestamo" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
+                    <strong class="font-size-base">Cliente:</strong>
+                    <span id="lbl_cliente" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
                     <strong class="font-size-base">Monto Aprobado:</strong>
                     <span id="lbl_monto_aprobado" class="badge badge-secondary">No asignado</span>
                     </p>
@@ -118,15 +124,15 @@ if (!empty($_SESSION["user"])) {
                 Registrar Abono
             </div>
             <div class="card-body">
-                <form>
+                <form id="formabono">
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="montoAbonado">Monto Abonado</label>
-                            <input type="number" class="form-control" id="montoAbonado" placeholder="Ingrese el monto">
+                            <input type="number" class="form-control" id="montoAbonado" placeholder="Ingrese el monto" step="0.01" min="0" required>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="fechaAbono">Fecha de Abono</label>
-                            <input type="date" class="form-control" id="fechaAbono" value="2023-10-15">
+                            <input type="date" class="form-control" id="fechaAbono" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -137,7 +143,7 @@ if (!empty($_SESSION["user"])) {
                             </label>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Aplicar Abono</button>
+                    <button type="submit" form="formabono" class="btn btn-primary">Aplicar Abono</button>
                 </form>
             </div>
         </div>
@@ -172,46 +178,6 @@ if (!empty($_SESSION["user"])) {
   <?php require_once '../../footer.php'; ?>
   <!-- FOOTER -->
 
-  <!-- Modal -->
-  <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-
-        <div class="modal-header">
-          <h4 class="modal-title" id="myModalLabel">Activar/Inactivar usuario</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-
-        <div class="modal-body">
-
-          <form role="form" action="fnusuario.php" method="post">
-
-                 <div class="form-group">
-                     <label for="inputName">Fecha</label>
-                     <input type="date" class="form-control" id="fechabaja" name="fechabaja" required/>
-                 </div>
-
-                 <div class="form-group">
-                     <input type="hidden" class="form-control" id="idempleado" name="idempleado"/>
-                     <input type="hidden" class="form-control" id="estado_usuario" name="estado_usuario"/>
-                 </div>
-
-                 <input type="submit" name="inactivar" id="inactivar" value="Desactivar" class="btn btn-danger"/>
-
-                 <input type="submit" name="activar" id="activar" value="Activar" class="btn btn-success"/>
-
-          </form>
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Control Sidebar -->
   <aside class="control-sidebar control-sidebar-dark">
     <!-- Control sidebar content goes here -->
@@ -224,6 +190,8 @@ if (!empty($_SESSION["user"])) {
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <!-- Bootstrap 4 -->
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
 <!-- DataTables  & Plugins -->
 <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
@@ -271,6 +239,7 @@ if (!empty($_SESSION["user"])) {
           $('#lbl_modalidad').text(response.modalidad);
           $('#lbl_monto_cuota').text(response.monto_cuota);
           $('#lbl_interes_semanal').text(response.interes_semanal);
+          $('#lbl_cliente').text(response.nombre);
           
         },
         error: function() {
@@ -320,6 +289,56 @@ if (!empty($_SESSION["user"])) {
     });
     
     loadData(id);
+
+
+    // creacion de prestamos
+    $("#formabono").submit(function(event) {
+                
+                event.preventDefault();
+                
+                // Crear un objeto con los datos del formulario
+                var formData = {
+                id_prestamo: $("#lbl_prestamo").text(),
+                monto_abono: $("#montoAbonado").val(),
+                fecha_abono: $("#fechaAbono").val(),
+                es_prorroga: $("#esProrroga").prop("checked")
+            };
+                
+                // Convertir el objeto a JSON
+                var jsonData = JSON.stringify(formData);
+                
+                $.ajax({
+                    type: "POST",
+                    url: "servicio_abono.php",
+                    data: jsonData,
+                    contentType: "application/json", // Indicar que se envía JSON
+                    success: function(response) {
+                      Swal.fire({
+                                  icon: 'success',
+                                  title: `${response.message}`,
+                                  text: ``,
+                                  timer: 5000,
+                                  showConfirmButton: false
+                              });
+
+                      $("#montoAbonado").val('');
+                      $("#fechaAbono").val('');
+                      $('#esProrroga').prop('checked', false);
+                        
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                                    icon: 'error',
+                                    title: `${response.error}`,
+                                    text: `Si el problema persiste contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+                    }
+                });
+            });
+
+
 });
 
 </script>

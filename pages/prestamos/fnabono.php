@@ -12,8 +12,8 @@ class Abono {
     // Crear un nuevo abono
     public function crearAbono($id_prestamo, $fecha_abono, $monto_abonado, $es_prorroga) {
         try {
-            $query = "INSERT INTO abono (id_prestamo, fecha_abono, monto_abonado, es_prorroga) 
-                      VALUES (:id_prestamo, :fecha_abono, :monto_abonado, :es_prorroga)";
+            $query = "INSERT INTO abono (id_prestamo, fecha_abono, monto_abonado, es_prorroga, usuario_creo) 
+                      VALUES (:id_prestamo, :fecha_abono, :monto_abonado, :es_prorroga, :usuariocreo)";
             $stmt = $this->conn->prepare($query);
 
             // Limpiar y vincular los parámetros
@@ -21,6 +21,7 @@ class Abono {
             $stmt->bindParam(":fecha_abono", $fecha_abono);
             $stmt->bindParam(":monto_abonado", $monto_abonado);
             $stmt->bindParam(":es_prorroga", $es_prorroga, PDO::PARAM_BOOL);
+            $stmt->bindParam(":usuariocreo", $_SESSION["carterausuario"]);
 
             // Ejecutar la consulta
             if ($stmt->execute()) {
