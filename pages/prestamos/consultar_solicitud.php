@@ -1,6 +1,7 @@
 <?php
 require_once '../usuarios/reg.php';
 require_once 'solicitud_service.php';
+require_once '../../menu_builder.php';
 
 try {
   $pdo = $base_de_datos;
@@ -29,6 +30,8 @@ if (isset($_GET['id_solicitud'])) {
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="../../plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
   <!-- DataTables -->
   <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
   <link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
@@ -40,7 +43,12 @@ if (isset($_GET['id_solicitud'])) {
 <!-- Site wrapper -->
 <div class="wrapper">
   <!-- Navbar -->
-  <?php require_once '../../menu.php'; ?>
+  <?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
   <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->
@@ -315,7 +323,7 @@ if (isset($_GET['id_solicitud'])) {
 
             <!-- Fila 1: Boton para cargar tabla de amortizacion -->
             <div class="row"> <!-- mt-3 para agregar un margen superior -->
-            <button id="cargarTabla" type="button" class="btn btn-primary btn-sm ml-2">
+            <button id="cargar_tbcalendariopago" type="button" class="btn btn-primary btn-sm ml-2">
                 <i class=""></i> Cargar tabla
               </button>
               
@@ -328,10 +336,10 @@ if (isset($_GET['id_solicitud'])) {
             <div class="row">
             
             <div class="row table-responsive">
-          <table id="amortizacionTable" class="table table-bordered table-striped" style="width:100%">
+          <table id="tb_calendarioPago" class="table table-bordered table-striped" style="width:100%">
               <thead>
                   <tr>
-                      <th><p class="small"><strong>Semana</strong></p></th>
+                      <th><p class="small"><strong>Modalidad</strong></p></th>
                       <th><p class="small"><strong>Fecha de pago</strong></p></th>
                       <th><p class="small"><strong>Cuota</strong></p></th>
                       <th><p class="small"><strong>Interes</strong></p></th>
@@ -363,12 +371,12 @@ if (isset($_GET['id_solicitud'])) {
                 </button>-->
                 <a href="creditos.php" class="btn btn-primary btn-sm" role="button"><i class="fas fa-search"></i> Buscar</a>
                 <!-- Botón Aprobar -->
-                <button type="button" class="btn btn-success btn-sm ml-2"
+                <button type="button" class="btn btn-success btn-sm ml-2 btn-approve"
                 data-toggle="modal" data-target="#prestamoModal">
                 <i class="fas fa-check"></i> Aprobar
                 </button>
                 <!-- Botón Rechazar -->
-                <button type="button" class="btn btn-danger btn-sm ml-2">
+                <button type="button" class="btn btn-danger btn-sm ml-2 btn-reject">
                 <i class="fas fa-times"></i> Rechazar
                 </button>
                 <!-- Botón Cancelar -->
@@ -506,6 +514,8 @@ if (isset($_GET['id_solicitud'])) {
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <!-- Bootstrap 4 -->
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
 <!-- DataTables  & Plugins -->
 <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
@@ -588,6 +598,71 @@ if (isset($_GET['id_solicitud'])) {
     // Cargar los datos al iniciar la página
     loadData(id);
 
+    $('#tb_calendarioPago').DataTable({
+        ajax: {
+            url: `servicio_calendariopago.php?id_solicitud=${id}`,
+            dataSrc: 'data',
+            error: function(xhr, error, thrown) {
+                console.log("Error en la carga de datos: ", error);
+                console.log("Estado: ", xhr.status);
+                console.log("Respuesta: ", xhr.responseText);
+            }
+        },
+        columns: [
+                { data: "modalidad"},
+                { data: "fecha_pago"},
+                { data: "monto_cuota"},
+                { data: "interes"},
+                { data: "principal"},
+                { data: "saldo"}
+              ],
+        initComplete: function(settings, json) {
+        // Verificar si hay datos en la respuesta
+                  if (json && json.data && json.data.length > 0) {
+                disableActionButtons("La solicitud ya fue aprobada.");
+                    Swal.fire({
+                icon: 'success',
+                title: 'La solicitud de crédito esta aprobada.',
+                text: `Hay ${json.data.length} pagos programados`,
+                timer: 5000,
+                showConfirmButton: false
+            });
+                  } else {
+                    Swal.fire({
+                icon: 'warning',
+                title: 'La solicitud de crédito esta pendiente.',
+                text: 'No se encontraron pagos programados. Se debe revisar.',
+                confirmButtonText: 'Entendido'
+            });
+                  }
+        }
+    });
+
+    $('#cargar_tbcalendariopago').on('click', function() {
+        if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
+            $('#tb_calendarioPago').DataTable().destroy();
+        }
+        $('#tb_calendarioPago').DataTable({
+            ajax: {
+            url: `servicio_calendariopago.php?id_solicitud=${id}`,
+            dataSrc: 'data',
+            error: function(xhr, error, thrown) {
+                console.log("Error en la carga de datos: ", error);
+                console.log("Estado: ", xhr.status);
+                console.log("Respuesta: ", xhr.responseText);
+            }
+        },
+        columns: [
+                { data: "modalidad"},
+                { data: "fecha_pago"},
+                { data: "monto_cuota"},
+                { data: "interes"},
+                { data: "principal"},
+                { data: "saldo"}
+              ]
+        });
+    });
+
 
     $('#cargar_tb_amortizado').on('click', function() {
         if ($.fn.DataTable.isDataTable('#amortizacionTb')) {
@@ -654,15 +729,39 @@ if (isset($_GET['id_solicitud'])) {
                     data: jsonData,
                     contentType: "application/json", // Indicar que se envía JSON
                     success: function(response) {
-                        alert("Prestamo registrado exitosamente");
-                        //$("#clienteForm")[0].reset();
+                      Swal.fire({
+                icon: 'success',
+                title: 'El prestamo fue aprobado y registrado exitosamente.',
+                text: `Hay ${json.data.length} pagos programados`,
+                timer: 5000,
+                showConfirmButton: false
+            });
+                        $('#prestamoModal').modal('hide'); // Cierra el modal después de guardar
                     },
                     error: function() {
-                        alert("Hubo un error al registrar el prestamo");
+                        Swal.fire({
+                icon: 'error',
+                title: 'Hubo un error al registrar el prestamo.',
+                text: `Si el problema persiste contacte al administrador.`,
+                timer: 5000,
+                showConfirmButton: false
+            });
                     }
                 });
             });
-  });
+
+            function disableActionButtons(reason) {
+              $('.btn-approve, .btn-reject').prop('disabled', true)
+                    .attr('title', reason)
+                    .tooltip('dispose').tooltip();
+            }
+
+            function enableActionButtons() {
+                $('.btn-approve, .btn-reject').prop('disabled', false)
+                    .removeAttr('title')
+                    .tooltip('dispose');
+            }
+              });
 </script>
 </body>
 </html>

@@ -66,11 +66,15 @@ class CalendarioPago {
     /**
      * Obtiene todos los pagos de un préstamo
      */
-    public function obtenerPorPrestamo($id_prestamo) {
+    public function obtenerPorPrestamo($id_solicitud) {
         try {
-            $sql = "SELECT * FROM calendariopago WHERE id_prestamo = :id_prestamo ORDER BY fecha_pago";
+            $sql = "SELECT b.modalidad, c.fecha_pago, c.monto_cuota, c.interes, c.principal, c.saldo from solicitudprestamo a 
+                    inner join prestamo b on a.id_solicitud = b.id_solicitud
+                    inner join calendariopago c on b.id_prestamo = c.id_prestamo
+                    where a.cod_solicitud = :id_solicitud
+                    ORDER BY c.fecha_pago";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([':id_prestamo' => $id_prestamo]);
+            $stmt->execute([':id_solicitud' => $id_solicitud]);
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {

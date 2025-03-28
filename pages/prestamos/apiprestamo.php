@@ -30,7 +30,7 @@ switch ($method) {
             }
         } elseif(isset($_GET['monto'])){
             $calendario = $_GET['monto'];
-            $result_calendario = $prestamoService->generarCalendarioPagos_simple(3000,20,2,fechaInicioStr: '2025-03-17');
+            //$result_calendario = $prestamoService->generarCalendarioPagos_simple(3000,20,2,fechaInicioStr: '2025-03-17');
             if($result_calendario){
                 echo json_encode($result_calendario);
             }else{

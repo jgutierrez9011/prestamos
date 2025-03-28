@@ -35,8 +35,8 @@ try {
     switch ($method) {
         case 'GET':
             // Obtener abonos por préstamo
-            if (isset($_GET['id_prestamo'])) {
-                $id_prestamo = $_GET['id_prestamo'];
+            if (isset($_GET['cod_solicitud'])) {
+                $id_prestamo = $_GET['cod_solicitud'];
                 $abonos = $abono->obtenerAbonosPorPrestamo($id_prestamo);
                 echo json_encode($abonos);
             } else {

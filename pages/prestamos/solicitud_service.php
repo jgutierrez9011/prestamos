@@ -47,7 +47,8 @@ class SolicitudPrestamo {
                     a.gastos_negocio, 
                     a.cuotas_credito,
                     a.gastos_familiares, 
-                    a.utilidad_final
+                    a.utilidad_final,
+					e.id_prestamo
                 FROM 
                     SolicitudPrestamo a 
                 LEFT JOIN 
@@ -55,9 +56,11 @@ class SolicitudPrestamo {
                 LEFT JOIN 
                     estatus_solicitud c ON a.idestatus = c.idestatus
                 LEFT JOIN 
-                    tblcatusuario d ON a.usuario_creo = d.intid 
+                    tblcatusuario d ON a.usuario_creo = d.intid
+				LEFT JOIN
+				     prestamo e on a.id_solicitud = e.id_solicitud
                 WHERE 
-                    cod_solicitud = ?
+                    a.cod_solicitud = ?
             ");
             
             $stmt->execute([$id_solicitud]);

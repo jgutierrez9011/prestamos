@@ -16,17 +16,16 @@ try {
 
     switch ($method) {
         case 'GET':
-            if (isset($request[0])) {
-                if (isset($request[1]) && $request[0] == 'prestamo') {
+                if (isset($_GET['id_solicitud'])) {
                     // GET /servicio_calendariopago/prestamo/{id_prestamo}
-                    $response = $calendarioPago->obtenerPorPrestamo($request[1]);
-                } else {
+                    $response = $calendarioPago->obtenerPorPrestamo($_GET['id_solicitud']);
+                } elseif(isset($_GET['id_pago'])) {
                     // GET /servicio_calendariopago/{id_pago}
-                    $response = $calendarioPago->obtener($request[0]);
+                    $response = $calendarioPago->obtener($_GET['id_pago']);
+                }else{
+                    throw new Exception("Parámetros inválidos");
                 }
-            } else {
-                throw new Exception("Parámetros inválidos");
-            }
+            
             break;
 
         case 'POST':

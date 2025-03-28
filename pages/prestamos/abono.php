@@ -1,5 +1,6 @@
 <?php
 require_once  '../usuarios/reg.php';
+require_once '../../menu_builder.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,7 +25,12 @@ require_once  '../usuarios/reg.php';
 <div class="wrapper">
   <!-- Navbar -->
 <!-- INICIA EL MENU -->
-<?php require_once '../../menu.php'; ?>
+<?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
 <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->
@@ -59,18 +65,48 @@ require_once  '../usuarios/reg.php';
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <p><strong>ID Préstamo:</strong> 12345</p>
-                        <p><strong>Monto Aprobado:</strong> $10,000.00</p>
-                        <p><strong>Interés:</strong> 5.00%</p>
-                        <p><strong>Plazo:</strong> 12 meses</p>
-                        <p><strong>Fecha de Aprobación:</strong> 2023-10-01</p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">ID Préstamo:</strong>
+                    <span id="lbl_prestamo" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Monto Aprobado:</strong>
+                    <span id="lbl_monto_aprobado" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Interés:</strong>
+                    <span id="lbl_interes" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Plazo:</strong>
+                    <span id="lbl_plazo" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Fecha de Aprobación:</strong>
+                    <span id="lbl_fecha_aprobacion" class="badge badge-secondary">No asignado</span>
+                    </p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Saldo Pendiente:</strong> $8,500.00</p>
-                        <p><strong>Fecha Primera Cuota:</strong> 2023-11-01</p>
-                        <p><strong>Modalidad:</strong> Semanal</p>
-                        <p><strong>Monto por Cuota:</strong> $875.00</p>
-                        <p><strong>Interés Semanal:</strong> $50.00</p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Saldo Pendiente:</strong>
+                    <span id="lbl_saldo_pendiente" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Fecha Primera Cuota:</strong>
+                    <span id="lbl_primera_cuota" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Modalidad:</strong>
+                    <span id="lbl_modalidad" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Monto por Cuota:</strong>
+                    <span id="lbl_monto_cuota" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Interés Semanal:</strong>
+                    <span id="lbl_interes_semanal" class="badge badge-secondary">No asignado</span>
+                    </p>
                     </div>
                 </div>
             </div>
@@ -112,7 +148,7 @@ require_once  '../usuarios/reg.php';
                 Calendario de Pagos
             </div>
             <div class="card-body">
-                <table class="table table-bordered">
+                <table id="tb_calendarioPago" class="table table-bordered">
                     <thead>
                         <tr>
                             <th>Semana</th>
@@ -123,33 +159,6 @@ require_once  '../usuarios/reg.php';
                             <th>Saldo Pendiente</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>2023-11-01</td>
-                            <td>$875.00</td>
-                            <td>$50.00</td>
-                            <td>$825.00</td>
-                            <td>$9,175.00</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>2023-11-08</td>
-                            <td>$875.00</td>
-                            <td>$50.00</td>
-                            <td>$825.00</td>
-                            <td>$8,350.00</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>2023-11-15</td>
-                            <td>$875.00</td>
-                            <td>$50.00</td>
-                            <td>$825.00</td>
-                            <td>$7,525.00</td>
-                        </tr>
-                        <!-- Más filas según el plazo -->
-                    </tbody>
                 </table>
             </div>
         </div>
@@ -235,10 +244,45 @@ require_once  '../usuarios/reg.php';
 <!-- Page specific script -->
 <script>
   $(function () {
-    $('#clientesTable').DataTable({
+    // Obtener el parámetro de la URL (id o cédula)
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
+
+        // Cargar los datos guardados
+        function loadData(id) {
+      if (!id) {
+        alert('No se proporcionó un ID válido.');
+        return;
+      }
+
+      // Realizar la solicitud AJAX
+      $.ajax({
+        url: `apiprestamo.php?id_prestamo=${id}`, // Enviar el ID como parámetro GET
+        method: 'GET',
+        success: function(response) {
+          // Llenar los campos con los datos obtenidos
+          $('#lbl_prestamo').text(response.id_prestamo);
+          $('#lbl_monto_aprobado').text(response.monto_aprobado);
+          $('#lbl_interes').text(response.interes);
+          $('#lbl_plazo').text(response.plazo);
+          $('#lbl_fecha_aprobacion').text(response.fecha_aprobacion);
+          $('#lbl_saldo_pendiente').text(response.saldo);
+          $('#lbl_primera_cuota').text(response.fecha_primer_cuota);
+          $('#lbl_modalidad').text(response.modalidad);
+          $('#lbl_monto_cuota').text(response.monto_cuota);
+          $('#lbl_interes_semanal').text(response.interes_semanal);
+          
+        },
+        error: function() {
+          alert('Hubo un error al cargar los datos.');
+        }
+      });
+    }
+
+    $('#tb_calendarioPago').DataTable({
         ajax: {
-            url: 'fnprestamos.php',
-            dataSrc: '',
+            url: `servicio_calendariopago.php?id_solicitud=${id}`,
+            dataSrc: 'data',
             error: function(xhr, error, thrown) {
                 console.log("Error en la carga de datos: ", error);
                 console.log("Estado: ", xhr.status);
@@ -246,48 +290,36 @@ require_once  '../usuarios/reg.php';
             }
         },
         columns: [
-            { data: "cod_solicitud" },
-            { data: "nombre" },
-            { data: "fecha_solicitud" },
-            { data: "monto_solicitado" },
-            { data: "estatus" },
-            { data: "plazo_solicitado" },
-            { data: "tasa" },
-            { data: "oficial_credito" },
-            {
-                data: "cod_solicitud",
-                render: function(data, type, row) {
-                return `
-                    <a href="consultar_solicitud.php?id_solicitud=${data}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-pencil-alt"></i>
-                    </a>
-                `;
-            },
-                orderable: false,
-                searchable: false
-            },
-            {
-    data: "cod_solicitud",
-    render: function(data, type, row) {
-        return `
-            <a href="consultar_solicitud.php?id_solicitud=${data}" 
-               class="btn btn-sm btn-success" 
-               data-toggle="tooltip" 
-               data-placement="top" 
-               title="Aplicar Pago">
-                <i class="fas fa-money-bill-wave"></i>
-            </a>
-        `;
-    }
-}
-            
-        ]
+                { data: "modalidad"},
+                { data: "fecha_pago"},
+                { data: "monto_cuota"},
+                { data: "interes"},
+                { data: "principal"},
+                { data: "saldo"}
+              ],
+        initComplete: function(settings, json) {
+        // Verificar si hay datos en la respuesta
+                  if (json && json.data && json.data.length > 0) {
+                disableActionButtons("La solicitud ya fue aprobada.");
+                    Swal.fire({
+                icon: 'success',
+                title: 'La solicitud de crédito esta aprobada.',
+                text: `Hay ${json.data.length} pagos programados`,
+                timer: 5000,
+                showConfirmButton: false
+            });
+                  } else {
+                    Swal.fire({
+                icon: 'warning',
+                title: 'La solicitud de crédito esta pendiente.',
+                text: 'No se encontraron pagos programados. Se debe revisar.',
+                confirmButtonText: 'Entendido'
+            });
+                  }
+        }
     });
-
-    /*$(document).on('click', '.edit-btn', function() {
-        var clienteId = $(this).data('id');
-        alert('ID del Cliente: ' + clienteId);
-    });*/
+    
+    loadData(id);
 });
 
 </script>

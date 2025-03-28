@@ -18,10 +18,13 @@ class PrestamoService {
     }
 
     // Obtener un préstamo por ID
-    public function getPrestamo($id_prestamo) {
-        $sql = "SELECT * FROM prestamo WHERE id_prestamo = :id_prestamo";
+    public function getPrestamo($cod_solicitud) {
+        $sql = "SELECT b.*, c.nombre FROM solicitudPrestamo a 
+                inner join prestamo b on a.id_solicitud = b.id_solicitud
+                inner join clientes c on a.idcliente = c.idcliente
+                WHERE cod_solicitud = :cod_solicitud";
         $stmt = $this->base_de_datos->prepare($sql);
-        $stmt->execute(['id_prestamo' => $id_prestamo]);
+        $stmt->execute(['cod_solicitud' => $cod_solicitud]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
