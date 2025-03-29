@@ -13,6 +13,8 @@ require_once '../../menu_builder.php';
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="../../plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
 </head>
@@ -373,6 +375,8 @@ if (!empty($_SESSION["user"])) {
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <!-- Bootstrap 4 -->
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
 <!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
 <!-- AdminLTE for demo purposes -->
@@ -454,13 +458,28 @@ if (!empty($_SESSION["user"])) {
                     data: JSON.stringify(data),
                     contentType: "application/json", // Indicar que se envía JSON
                     success: function(response) {
-                        alert("Cliente guardado exitosamente");
+                        //alert("Cliente guardado exitosamente");
+                        Swal.fire({
+                                    icon: 'success',
+                                    title: `${response.message}`,
+                                    text: ``,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+
                         $("#form1")[0].reset();
                         $("#form2")[0].reset();
                         $("#form3")[0].reset();
                     },
                     error: function() {
-                        alert("Hubo un error al guardar el cliente");
+                        //alert("Hubo un error al guardar el cliente");
+                        Swal.fire({
+                                    icon: 'error',
+                                    title: 'Hubo un error al registrar la solicitud de crédito.',
+                                    text: `Si el problema persiste contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
                     }
                 });
 

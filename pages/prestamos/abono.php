@@ -84,7 +84,7 @@ if (!empty($_SESSION["user"])) {
                     <span id="lbl_interes" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
-                    <strong class="font-size-base">Plazo:</strong>
+                    <strong class="font-size-base">Plazo (meses):</strong>
                     <span id="lbl_plazo" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
@@ -93,6 +93,10 @@ if (!empty($_SESSION["user"])) {
                     </p>
                     </div>
                     <div class="col-md-6">
+                    <p class="mb-2">
+                    <strong class="font-size-base">Total a pagar:</strong>
+                    <span id="lbl_total_a_pagar" class="badge badge-secondary">No asignado</span>
+                    </p>
                     <p class="mb-2">
                     <strong class="font-size-base">Saldo Pendiente:</strong>
                     <span id="lbl_saldo_pendiente" class="badge badge-secondary">No asignado</span>
@@ -151,9 +155,32 @@ if (!empty($_SESSION["user"])) {
         <!-- Card de Calendario de Pagos -->
         <div class="card">
             <div class="card-header bg-info text-white">
+                Control de Pagos
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="tb_controlPago" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Monto</th>
+                            <th>concepto</th>
+                            <th>saldo</th>
+                            <th>Firma</th>
+                        </tr>
+                    </thead>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de Calendario de Pagos -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
                 Calendario de Pagos
             </div>
             <div class="card-body">
+              <div class="table-responsive">
                 <table id="tb_calendarioPago" class="table table-bordered">
                     <thead>
                         <tr>
@@ -166,6 +193,7 @@ if (!empty($_SESSION["user"])) {
                         </tr>
                     </thead>
                 </table>
+                </div>
             </div>
         </div>
 
@@ -216,6 +244,34 @@ if (!empty($_SESSION["user"])) {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
 
+    function inicializarDataTableCalendarioPago(id) {
+
+if ($.fn.DataTable.isDataTable('#tb_controlPago')) {
+      $('#tb_controlPago').DataTable().destroy();
+  }
+  
+$('#tb_controlPago').DataTable({
+  ajax: {
+      url: `servicio_abono.php?cod_prestamo=${id}`,
+      dataSrc: '',
+      error: function(xhr, error, thrown) {
+          console.log("Error en la carga de datos: ", error);
+          console.log("Estado: ", xhr.status);
+          console.log("Respuesta: ", xhr.responseText);
+      }
+  },
+  columns: [
+      { data: "fecha_creo" },
+      { data: "monto_abonado" },
+      { data: "concepto" },
+      { data: "saldo" },
+      { data: "ejecutivo" }
+  ],
+  responsive: true,
+  order: [[0, 'desc']] // Ordenar por fecha descendente
+});
+}
+
         // Cargar los datos guardados
         function loadData(id) {
       if (!id) {
@@ -234,12 +290,15 @@ if (!empty($_SESSION["user"])) {
           $('#lbl_interes').text(response.interes);
           $('#lbl_plazo').text(response.plazo);
           $('#lbl_fecha_aprobacion').text(response.fecha_aprobacion);
-          $('#lbl_saldo_pendiente').text(response.saldo);
+          $('#lbl_saldo_pendiente').text(response.saldo_pendiente);
           $('#lbl_primera_cuota').text(response.fecha_primer_cuota);
           $('#lbl_modalidad').text(response.modalidad);
           $('#lbl_monto_cuota').text(response.monto_cuota);
           $('#lbl_interes_semanal').text(response.interes_semanal);
           $('#lbl_cliente').text(response.nombre);
+          $('#lbl_total_a_pagar').text(response.montotal);
+
+          inicializarDataTableCalendarioPago(response.id_prestamo);
           
         },
         error: function() {
@@ -249,6 +308,8 @@ if (!empty($_SESSION["user"])) {
     }
 
     $('#tb_calendarioPago').DataTable({
+        responsive: true,
+        order: [[0, 'desc']], // Ordenar por fecha descendente
         ajax: {
             url: `servicio_calendariopago.php?id_solicitud=${id}`,
             dataSrc: 'data',
@@ -290,6 +351,8 @@ if (!empty($_SESSION["user"])) {
     
     loadData(id);
 
+   
+
 
     // creacion de prestamos
     $("#formabono").submit(function(event) {
@@ -313,6 +376,9 @@ if (!empty($_SESSION["user"])) {
                     data: jsonData,
                     contentType: "application/json", // Indicar que se envía JSON
                     success: function(response) {
+
+                      loadData(id);
+
                       Swal.fire({
                                   icon: 'success',
                                   title: `${response.message}`,

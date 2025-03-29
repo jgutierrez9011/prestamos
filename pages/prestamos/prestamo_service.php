@@ -19,9 +19,13 @@ class PrestamoService {
 
     // Obtener un préstamo por ID
     public function getPrestamo($cod_solicitud) {
-        $sql = "SELECT b.*, c.nombre FROM solicitudPrestamo a 
+        $sql = "SELECT c.nombre, b.*, d.abonado, coalesce(b.montotal - d.abonado,b.montotal)  as saldo_pendiente, d.cantidad_abonos
+                FROM solicitudPrestamo a 
                 inner join prestamo b on a.id_solicitud = b.id_solicitud
                 inner join clientes c on a.idcliente = c.idcliente
+                left join (SELECT id_prestamo, count(1) cantidad_abonos, sum(monto_abonado) abonado
+                FROM public.abono 
+                GROUP BY id_prestamo) d on b.id_prestamo = d.id_prestamo
                 WHERE cod_solicitud = :cod_solicitud";
         $stmt = $this->base_de_datos->prepare($sql);
         $stmt->execute(['cod_solicitud' => $cod_solicitud]);

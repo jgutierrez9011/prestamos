@@ -69,7 +69,7 @@ switch ($method) {
 
             http_response_code(201); // Creado
             echo json_encode([
-            "message" => "Préstamo creado", 
+            "message" => "El prestamo fue aprobado y registrado exitosamente", 
             "id_prestamo" => $id_prestamo,
             "cuotas_programadas" => count($calendario)
             ]);

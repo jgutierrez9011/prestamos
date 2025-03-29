@@ -399,7 +399,7 @@ if (!empty($_SESSION["user"])) {
 
   <!-- Modal -->
   <div class="modal fade" id="prestamoModal" tabindex="-1" aria-labelledby="prestamoModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="prestamoModalLabel">Resolución de comite</h5>
@@ -594,10 +594,13 @@ if (!empty($_SESSION["user"])) {
         }
       });
     }
+    
+    function inicializarDataTableCalendarioPago(id) {
 
-    // Cargar los datos al iniciar la página
-    loadData(id);
-
+      if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
+            $('#tb_calendarioPago').DataTable().destroy();
+        }
+        
     $('#tb_calendarioPago').DataTable({
         ajax: {
             url: `servicio_calendariopago.php?id_solicitud=${id}`,
@@ -609,34 +612,39 @@ if (!empty($_SESSION["user"])) {
             }
         },
         columns: [
-                { data: "modalidad"},
-                { data: "fecha_pago"},
-                { data: "monto_cuota"},
-                { data: "interes"},
-                { data: "principal"},
-                { data: "saldo"}
-              ],
+            { data: "modalidad" },
+            { data: "fecha_pago" },
+            { data: "monto_cuota" },
+            { data: "interes" },
+            { data: "principal" },
+            { data: "saldo" }
+        ],
         initComplete: function(settings, json) {
-        // Verificar si hay datos en la respuesta
-                  if (json && json.data && json.data.length > 0) {
+            // Verificar si hay datos en la respuesta
+            if (json && json.data && json.data.length > 0) {
                 disableActionButtons("La solicitud ya fue aprobada.");
-                    Swal.fire({
-                icon: 'success',
-                title: 'La solicitud de crédito esta aprobada.',
-                text: `Hay ${json.data.length} pagos programados`,
-                timer: 5000,
-                showConfirmButton: false
-            });
-                  } else {
-                    Swal.fire({
-                icon: 'warning',
-                title: 'La solicitud de crédito esta pendiente.',
-                text: 'No se encontraron pagos programados. Se debe revisar.',
-                confirmButtonText: 'Entendido'
-            });
-                  }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'La solicitud de crédito ya fue aprobada.',
+                    text: `Hay ${json.data.length} pagos programados`,
+                    timer: 5000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'La solicitud de crédito esta pendiente.',
+                    text: 'No se encontraron pagos programados. Se debe revisar.',
+                    confirmButtonText: 'Entendido'
+                });
+            }
         }
     });
+}
+    // Cargar los datos al iniciar la página
+    loadData(id);
+
+    inicializarDataTableCalendarioPago(id);
 
     $('#cargar_tbcalendariopago').on('click', function() {
         if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
@@ -729,25 +737,34 @@ if (!empty($_SESSION["user"])) {
                     data: jsonData,
                     contentType: "application/json", // Indicar que se envía JSON
                     success: function(response) {
+
+                      disableActionButtons("La solicitud ya fue aprobada.");
+
                       Swal.fire({
-                icon: 'success',
-                title: 'El prestamo fue aprobado y registrado exitosamente.',
-                text: `Hay ${json.data.length} pagos programados`,
-                timer: 5000,
-                showConfirmButton: false
-            });
+                                    icon: 'success',
+                                    title: `${response.message}`,
+                                    text: `Hay ${response.cuotas_programadas} pagos programados`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+
                         $('#prestamoModal').modal('hide'); // Cierra el modal después de guardar
+
+                        inicializarDataTableCalendarioPago(id);
+
                     },
                     error: function() {
                         Swal.fire({
-                icon: 'error',
-                title: 'Hubo un error al registrar el prestamo.',
-                text: `Si el problema persiste contacte al administrador.`,
-                timer: 5000,
-                showConfirmButton: false
-            });
+                                    icon: 'error',
+                                    title: 'Hubo un error al registrar el prestamo.',
+                                    text: `Si el problema persiste contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
                     }
                 });
+
+
             });
 
             function disableActionButtons(reason) {

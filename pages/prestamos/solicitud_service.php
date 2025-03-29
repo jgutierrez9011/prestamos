@@ -140,7 +140,7 @@ class SolicitudPrestamo {
             $_SESSION["idusuario"], $recurrente
         ]);
 
-        return ["message" => "Solicitud creada exitosamente"];
+        return ["message" => "Solicitud de credito registrada exitosamente."];
 
         }catch(PDOException $e) {
            // Captura errores específicos de PDO
