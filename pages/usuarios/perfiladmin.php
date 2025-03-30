@@ -1,76 +1,81 @@
 <?php
-require_once  'reg.php';
+require_once 'reg.php';
 require_once '../../menu_builder.php';
 
-function limpiar($tags){
-  $tags = trim($tags);
-  return $tags;
+// Iniciar sesión y verificar autenticación
+/*session_start();
+if (empty($_SESSION["user"])) {
+    header("Location: ../../login.php");
+    exit();
+}*/
+
+// Función mejorada para limpiar datos
+function sanitizeInput($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
 }
 
-if(!empty($_GET['id']))
-{
-
-  $codigo = $_GET['id'];
-  $usuario = $_SESSION['user'];
-
-     /*Muestra las pantallas por perfil*/
-  $sentencia = $base_de_datos->query("SELECT a.idperfilusrfrm, b.strformulario, a.bolactivo, c.strperfil
-        FROM tblcatperfilusrfrm as a
-        inner join tblcatformularios as b on a.idfrm = b.idfrm
-        inner join tblcatperfilusr as c on a.idperfil = c.idperfil
-        WHERE a.idperfil= $codigo");
-  $pantallas = $sentencia->fetch(PDO::FETCH_OBJ);
-
-
+// Procesar cambios de estado
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (!empty($_GET['cambiomnu']) && !empty($_GET['es']) && !empty($_GET['cod'])) {
+        // Cambiar estado de menú
+        $id = (int)$_GET['cambiomnu'];
+        $estado = $_GET['es'] === 'Activo' ? '0' : '1';
+        $codigo = (int)$_GET['cod'];
+        
+        $sentencia = $base_de_datos->prepare("UPDATE tblcatmenuperfil SET bolactivo = ? WHERE intidmenuperfil = ?");
+        $sentencia->execute([$estado, $id]);
+        
+        $_SESSION['mensaje'] = "Estado del menú actualizado correctamente";
+        header('Location: perfiladmin.php?id='.$codigo);
+        exit();
+    }
+    
+    if (!empty($_GET['cambio']) && !empty($_GET['es']) && !empty($_GET['cod'])) {
+        // Cambiar estado de formulario
+        $id = (int)$_GET['cambio'];
+        $estado = $_GET['es'] === 'Activo' ? '0' : '1';
+        $codigo = (int)$_GET['cod'];
+        
+        $sentencia = $base_de_datos->prepare("UPDATE tblcatperfilusrfrm SET bolactivo = ? WHERE idperfilusrfrm = ?");
+        $sentencia->execute([$estado, $id]);
+        
+        $_SESSION['mensaje'] = "Estado del formulario actualizado correctamente";
+        header('Location: perfiladmin.php?id='.$codigo);
+        exit();
+    }
 }
 
-if((!empty($_GET['cambiomnu'])) && (!empty($_GET['es'])))
-{
-
-  $cambio=limpiar($_GET['cambiomnu']);
-  $estado_u=limpiar($_GET['es']);
-  $id_usu=limpiar($_GET['cod']);
-  if($estado_u =='Activo'){
-
-    $sentencia = $base_de_datos->prepare("UPDATE tblcatmenuperfil SET bolactivo= '0'WHERE intidmenuperfil = $cambio");
-    $sentencia->execute();
-
-  }else{
-
-    $sentencia = $base_de_datos->prepare("UPDATE tblcatmenuperfil SET bolactivo= '1' WHERE intidmenuperfil = $cambio");
-    $sentencia->execute();
-
-  }
-  header('Location: perfiladmin.php?id='.$id_usu);
-}
-
-
-if((!empty($_GET['cambio'])) && (!empty($_GET['es'])))
-{
-
-  $cambio=limpiar($_GET['cambio']);
-  $estado_u=limpiar($_GET['es']);
-  $id_usu=limpiar($_GET['cod']);
-  if($estado_u =='Activo'){
-
-    $sentencia = $base_de_datos->prepare("UPDATE tblcatperfilusrfrm SET bolactivo  =  '0' WHERE idperfilusrfrm = $cambio");
-    $sentencia->execute();
-
-  }else{
-
-    $sentencia = $base_de_datos->prepare("UPDATE tblcatperfilusrfrm SET bolactivo  =  '1' WHERE idperfilusrfrm = $cambio");
-    $sentencia->execute();
-
-  }
-  header('Location: perfiladmin.php?id='.$id_usu);
+// Obtener datos del perfil
+$perfil = null;
+if (!empty($_GET['id'])) {
+    $codigo = (int)$_GET['id'];
+    
+    $sentencia = $base_de_datos->prepare("SELECT c.strperfil 
+          FROM tblcatperfilusrfrm as a
+          INNER JOIN tblcatformularios as b ON a.idfrm = b.idfrm
+          INNER JOIN tblcatperfilusr as c ON a.idperfil = c.idperfil
+          WHERE a.idperfil = ? LIMIT 1");
+    $sentencia->execute([$codigo]);
+    $perfil = $sentencia->fetch(PDO::FETCH_OBJ);
+    
+    if (!$perfil) {
+        $_SESSION['mensaje'] = "Perfil no encontrado";
+        header('Location: perfil.php');
+        exit();
+    }
+} else {
+    header('Location: perfil.php');
+    exit();
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?php require_once '../../titulo.php'; ?> | Blank Page</title>
+  <title><?php require_once '../../titulo.php'; ?> | Administrar Perfil</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -78,201 +83,157 @@ if((!empty($_GET['cambio'])) && (!empty($_GET['es'])))
   <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
+  <style>
+    .menu-item { font-weight: bold; }
+    .submenu-item { padding-left: 20px; }
+    .status-btn { min-width: 80px; }
+  </style>
 </head>
 <body class="hold-transition sidebar-mini">
-<!-- Site wrapper -->
 <div class="wrapper">
   <!-- Navbar -->
-<!-- INICIA EL MENU -->
-<?php //require_once '../../menu.php';
-if (!empty($_SESSION["user"])) {
+  <?php 
   $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
   echo $menuBuilder->buildMenu();
-}
-?>
-<!-- TERMINA EL MENU -->
+  ?>
 
-  <!-- Content Wrapper. Contains page content -->
+  <!-- Content Wrapper -->
   <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>Editar perfil</h1>
+            <h1>Administrar Perfil: <?= htmlspecialchars($perfil->strperfil) ?></h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="perfil.php">Control de usuarios</a></li>
-              <li class="breadcrumb-item active">Editar perfil</li>
+              <li class="breadcrumb-item active">Administrar perfil</li>
             </ol>
           </div>
         </div>
-      </div><!-- /.container-fluid -->
+      </div>
     </section>
 
-
-
-    <!-- Main content -->
     <section class="content">
-
-      <!-- Default box -->
       <div class="card card-primary card-outline">
         <div class="card-header">
           <h3 class="card-title">
             <i class="fas fa-edit"></i>
-            Perfil : <?php echo $pantallas->strperfil; ?></h3>
-
+            Configuración del Perfil
+          </h3>
           <div class="card-tools">
-            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse">
               <i class="fas fa-minus"></i>
-            </button>
-            <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
-              <i class="fas fa-times"></i>
             </button>
           </div>
         </div>
+        
         <div class="card-body">
+          <!-- Mostrar mensajes -->
+          <?php if (!empty($_SESSION['mensaje'])): ?>
+            <div class="alert alert-info alert-dismissible">
+              <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+              <?= $_SESSION['mensaje'] ?>
+            </div>
+            <?php unset($_SESSION['mensaje']); ?>
+          <?php endif; ?>
 
           <!-- Nav tabs -->
-          <ul class="nav nav-tabs" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="home" data-toggle="pill" href="#home" role="tab" aria-controls="home" aria-selected="true">Menú Management</a>
-              </li>
-              <li><a href="#profile" data-toggle="tab">  </a>
-              </li>
+          <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="menu-tab" data-toggle="tab" href="#menu" role="tab">
+                <i class="fas fa-bars"></i> Gestión de Menús
+              </a>
+            </li>
           </ul>
 
           <!-- Tab panes -->
-          <div class="tab-content">
-              <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home">
-                  <br>
-                  <!--Tabla que muestra los menus por perfil-->
-                  <div class="row table-responsive">
-                    <table class="table table-bordered">
-                      <tr class="well">
-                            <td><strong>Descripcion del menu</strong></td>
-                            <td width="20%"></td>
-                      </tr>
-                        <?php
-                        $sentencia = $base_de_datos->query("SELECT a.intidmenuperfil, b.strmenu, a.bolactivo, c.strperfil, b.strtipomenu
-                              from tblcatmenuperfil as a
-                              inner join tblcatmenu as b on a.intidmenu = b.intidmenu
-                              inner join tblcatperfilusr as c on a.idperfil = c.idperfil
-                              where a.idperfil = $codigo and (b.strnivelmenu = '1')");
-                        $lista_menu = $sentencia->fetchAll(PDO::FETCH_OBJ);
+          <div class="tab-content pt-3">
+            <div class="tab-pane fade show active" id="menu" role="tabpanel">
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th>Elemento del Menú</th>
+                      <th width="150px">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php
+                    // Obtener menús principales
+                    $sentencia = $base_de_datos->prepare("SELECT a.intidmenuperfil, b.strmenu, a.bolactivo, b.strtipomenu
+                          FROM tblcatmenuperfil as a
+                          INNER JOIN tblcatmenu as b ON a.intidmenu = b.intidmenu
+                          INNER JOIN tblcatperfilusr as c ON a.idperfil = c.idperfil
+                          WHERE a.idperfil = ? AND b.strnivelmenu = '1'");
+                    $sentencia->execute([$codigo]);
+                    $menus = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
-                    foreach($lista_menu as $row_menu){
-
-                      if($row_menu->bolactivo ==  0){
-
-                        $color_menu  ='btn btn-danger btn-xs';
-                        $estado_menu = 'Inactivo';
-
-                      }else{
-
-                        $color_menu='btn btn-primary btn-xs';
-                        $estado_menu = 'Activo';
-
-                      }
-                      ?>
-                      <tr>
-                        <td><strong>+ <?php echo $row_menu->strmenu; ?></strong></td>
-                          <td>
-                              <center>
-                                  <div class="btn-group btn-group-xs">
-                                      <a href="perfiladmin.php?cambiomnu=<?php echo $row_menu->intidmenuperfil; ?>&es=<?php echo $estado_menu; ?>&cod=<?php echo $codigo; ?>" role="button"   class="<?php echo $color_menu; ?>" ><strong><?php echo $estado_menu; ?></strong></a>
-                                  </div>
-                              </center>
-                          </td>
-                      </tr>
-                      <?php
-
-                      $sentencia_sub = $base_de_datos->query("SELECT a.idperfilusrfrm, b.strformulario, a.bolactivo, c.strperfil, b.strkeymenu, a.idfrm, a.idperfil
-                                 FROM tblcatperfilusrfrm as a
-                                 inner join tblcatformularios as b on a.idfrm = b.idfrm
-                                 inner join tblcatperfilusr as c on a.idperfil = c.idperfil
-                                 WHERE a.idperfil= $codigo and b.strkeymenu = '$row_menu->strtipomenu'
-                                 order by a.idperfilusrfrm asc");
-                       $resul_sub = $sentencia_sub->fetchAll(PDO::FETCH_OBJ);
-
-                       $estado_sub = '';
-
-                       $sentencia_contar = $base_de_datos->query("SELECT count(*) contar
-                                  FROM tblcatperfilusrfrm as a
-                                  inner join tblcatformularios as b on a.idfrm = b.idfrm
-                                  inner join tblcatperfilusr as c on a.idperfil = c.idperfil
-                                  WHERE a.idperfil= $codigo and b.strkeymenu = '$row_menu->strtipomenu'");
-                       $cantidad_filas = $sentencia_contar->fetch(PDO::FETCH_OBJ);
-
-                       $filas_sub = $cantidad_filas->contar;
-
-                       if($filas_sub > 0)
-                       {
-
-                         foreach ($resul_sub as $row_sub){
-
-                         if($row_sub->bolactivo =='0'){
-
-                                  $color_sub  ='btn btn-danger btn-xs';
-                                  $estado_sub = 'Inactivo';
-
-                         }else{
-                                  $color_sub ='btn btn-primary btn-xs';
-                                  $estado_sub = 'Activo';
-
-                                }
-
-
-                        ?>
-                        <tr>
-                          <td><a href="perfiladmindet.php?formdet=<?php echo $row_sub->idfrm;?>&perfil=<?php echo $row_sub->idperfil;?>" >- <?php echo $row_sub->strformulario; ?></a></td>
-                            <td>
-                                <center>
-                                    <div class="btn-group btn-group-xs">
-                                        <a href="perfiladmin.php?cambio=<?php echo $row_sub->idperfilusrfrm; ?>&es=<?php echo $estado_sub; ?>&cod=<?php echo $codigo; ?>" role="button"   class="<?php echo $color_sub; ?>" ><strong><?php echo $estado_sub; ?></strong></a>
-                                    </div>
-                                </center>
-                            </td>
-                        </tr>
-                      <?php } ?>
-                        <?php } ?>
-                        <?php } ?>
-                    </table>
-                        <div align="left"><a href="perfil.php" class="btn btn-info btn-sm" role="button"><i class="glyphicon glyphicon-menu-left"></i> <strong>Regresar a perfiles</strong></a></div>
-                  </div>
+                    foreach($menus as $menu):
+                        $activo = $menu->bolactivo == '1';
+                        $color = $activo ? 'btn-success' : 'btn-danger';
+                        $estado = $activo ? 'Activo' : 'Inactivo';
+                    ?>
+                    <tr class="menu-item">
+                      <td><?= htmlspecialchars($menu->strmenu) ?></td>
+                      <td class="text-center">
+                        <a href="perfiladmin.php?cambiomnu=<?= $menu->intidmenuperfil ?>&es=<?= $estado ?>&cod=<?= $codigo ?>" 
+                           class="btn btn-sm status-btn <?= $color ?>">
+                          <?= $estado ?>
+                        </a>
+                      </td>
+                    </tr>
+                    
+                    <?php
+                    // Obtener submenús/formularios para este menú
+                    $sentencia_sub = $base_de_datos->prepare("SELECT a.idperfilusrfrm, b.strformulario, a.bolactivo, a.idfrm, a.idperfil
+                             FROM tblcatperfilusrfrm as a
+                             INNER JOIN tblcatformularios as b ON a.idfrm = b.idfrm
+                             INNER JOIN tblcatperfilusr as c ON a.idperfil = c.idperfil
+                             WHERE a.idperfil = ? AND b.strkeymenu = ?
+                             ORDER BY a.idperfilusrfrm ASC");
+                    $sentencia_sub->execute([$codigo, $menu->strtipomenu]);
+                    $submenus = $sentencia_sub->fetchAll(PDO::FETCH_OBJ);
+                    
+                    foreach ($submenus as $submenu):
+                        $activo_sub = $submenu->bolactivo == '1';
+                        $color_sub = $activo_sub ? 'btn-success' : 'btn-danger';
+                        $estado_sub = $activo_sub ? 'Activo' : 'Inactivo';
+                    ?>
+                    <tr class="submenu-item">
+                      <td>
+                        <a href="perfiladmindet.php?formdet=<?= $submenu->idfrm ?>&perfil=<?= $submenu->idperfil ?>">
+                          <i class="fas fa-file-alt"></i> <?= htmlspecialchars($submenu->strformulario) ?>
+                        </a>
+                      </td>
+                      <td class="text-center">
+                        <a href="perfiladmin.php?cambio=<?= $submenu->idperfilusrfrm ?>&es=<?= $estado_sub ?>&cod=<?= $codigo ?>" 
+                           class="btn btn-sm status-btn <?= $color_sub ?>">
+                          <?= $estado_sub ?>
+                        </a>
+                      </td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
               </div>
-              <div class="tab-pane fade" id="profile">
-                  <br>
-
+              
+              <div class="mt-3">
+                <a href="perfil.php" class="btn btn-info">
+                  <i class="fas fa-arrow-left"></i> Volver a Perfiles
+                </a>
               </div>
+            </div>
           </div>
-
         </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
-
-        </div>
-        <!-- /.card-footer-->
       </div>
-      <!-- /.card -->
-
     </section>
-    <!-- /.content -->
   </div>
-  <!-- /.content-wrapper -->
 
-  <!-- FOOTER -->
   <?php require_once '../../footer.php'; ?>
-  <!-- FOOTER -->
-
-  <!-- Control Sidebar -->
-  <aside class="control-sidebar control-sidebar-dark">
-    <!-- Control sidebar content goes here -->
-  </aside>
-  <!-- /.control-sidebar -->
 </div>
-<!-- ./wrapper -->
 
 <!-- jQuery -->
 <script src="../../plugins/jquery/jquery.min.js"></script>
@@ -280,7 +241,15 @@ if (!empty($_SESSION["user"])) {
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
-<!-- AdminLTE for demo purposes -->
-<script src="../../dist/js/demo.js"></script>
+<script>
+// Cerrar automáticamente las alertas después de 5 segundos
+$(document).ready(function() {
+  setTimeout(function() {
+    $(".alert").fadeTo(500, 0).slideUp(500, function(){
+      $(this).remove(); 
+    });
+  }, 5000);
+});
+</script>
 </body>
 </html>

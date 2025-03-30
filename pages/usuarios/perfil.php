@@ -1,10 +1,79 @@
 <?php
-require_once  'reg.php';
+require_once 'reg.php';
 require_once '../../menu_builder.php';
 
-function limpiar($tags){
-  $tags = trim($tags);
-  return $tags;
+// Función para limpiar y sanitizar datos
+function limpiar($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+}
+
+// Verificar sesión y permisos
+/*session_start();
+if (empty($_SESSION["user"])) {
+    header("Location: ../../login.php");
+    exit();
+}*/
+
+// Procesar formularios
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!empty($_POST['nombre'])) {
+        $nombre = limpiar($_POST['nombre']);
+        $conexion = $base_de_datos; // Asumiendo que reg.php establece esta conexión
+        
+        try {
+            if (!empty($_POST['id'])) {
+                // Actualizar perfil existente
+                $id = (int)$_POST['id'];
+                $sentencia = $conexion->prepare("UPDATE tblcatperfilusr SET strperfil = ? WHERE idperfil = ?");
+                $sentencia->execute([$nombre, $id]);
+                $_SESSION['mensaje'] = "Perfil actualizado correctamente";
+                $_SESSION['tipo_mensaje'] = "success";
+            } else {
+                // Crear nuevo perfil
+                $conexion->beginTransaction();
+                
+                // Insertar perfil
+                $sentencia = $conexion->prepare("INSERT INTO tblcatperfilusr(strperfil, bolactivo) VALUES (?, 'True') RETURNING idperfil");
+                $sentencia->execute([$nombre]);
+                $id_perfil = $sentencia->fetchColumn();
+                
+                // Insertar formularios asociados
+                $stmt_form = $conexion->prepare("INSERT INTO tblcatperfilusrfrm (idfrm, idperfil, bolactivo) VALUES (?, ?, 'False')");
+                $formularios = $conexion->query("SELECT idfrm FROM tblcatformularios");
+                foreach ($formularios as $row) {
+                    $stmt_form->execute([$row['idfrm'], $id_perfil]);
+                }
+                
+                // Insertar menús asociados
+                $stmt_menu = $conexion->prepare("INSERT INTO tblcatmenuperfil(idperfil, intidmenu, bolactivo) VALUES (?, ?, 'False')");
+                $menus = $conexion->query("SELECT intidmenu FROM tblcatmenu");
+                foreach ($menus as $row) {
+                    $stmt_menu->execute([$id_perfil, $row['intidmenu']]);
+                }
+                
+                // Insertar detalles de formularios
+                $stmt_detalle = $conexion->prepare("INSERT INTO tblcatperfilusrfrmdetalle(idfrmdetalle, idperfil, bolactivo) VALUES (?, ?, 'False')");
+                $detalles = $conexion->query("SELECT idfrmdetalle FROM tblcatformulariodetalle ORDER BY idfrmdetalle, idfrm");
+                foreach ($detalles as $row) {
+                    $stmt_detalle->execute([$row['idfrmdetalle'], $id_perfil]);
+                }
+                
+                $conexion->commit();
+                $_SESSION['mensaje'] = "Perfil creado correctamente";
+                $_SESSION['tipo_mensaje'] = "success";
+            }
+            
+            // Redirigir para evitar reenvío del formulario
+            header("Location: ".$_SERVER['PHP_SELF']);
+            exit();
+        } catch (PDOException $e) {
+            $conexion->rollBack();
+            $_SESSION['mensaje'] = "Error: " . $e->getMessage();
+            $_SESSION['tipo_mensaje'] = "danger";
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -12,7 +81,7 @@ function limpiar($tags){
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?php require_once '../../titulo.php'; ?> | Blank Page</title>
+  <title><?php require_once '../../titulo.php'; ?> | Perfiles de Usuario</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -22,21 +91,15 @@ function limpiar($tags){
   <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
 </head>
 <body class="hold-transition sidebar-mini">
-<!-- Site wrapper -->
 <div class="wrapper">
   <!-- Navbar -->
-<!-- INICIA EL MENU -->
-<?php //require_once '../../menu.php';
-if (!empty($_SESSION["user"])) {
+  <?php 
   $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
   echo $menuBuilder->buildMenu();
-}
-?>
-<!-- TERMINA EL MENU -->
+  ?>
 
-  <!-- Content Wrapper. Contains page content -->
+  <!-- Content Wrapper -->
   <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
@@ -50,269 +113,133 @@ if (!empty($_SESSION["user"])) {
             </ol>
           </div>
         </div>
-      </div><!-- /.container-fluid -->
+      </div>
     </section>
 
-
-
-    <!-- Main content -->
     <section class="content">
-
-      <!-- Default box -->
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Lista de perfiles de usuario</h3>
-
           <div class="card-tools">
-            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse">
               <i class="fas fa-minus"></i>
-            </button>
-            <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
-              <i class="fas fa-times"></i>
             </button>
           </div>
         </div>
+        
         <div class="card-body">
+          <!-- Mostrar mensajes -->
+          <?php if (!empty($_SESSION['mensaje'])): ?>
+            <div class="alert alert-<?= $_SESSION['tipo_mensaje'] ?> alert-dismissible">
+              <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+              <?= $_SESSION['mensaje'] ?>
+            </div>
+            <?php unset($_SESSION['mensaje'], $_SESSION['tipo_mensaje']); ?>
+          <?php endif; ?>
 
-          <div class="row ">
-            <a href="#new" role="button" class="btn btn-primary" data-toggle="modal"><strong>Crear nuevo perfil</strong></a>
+          <div class="row">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#newModal">
+              <i class="fas fa-plus"></i> Crear nuevo perfil
+            </button>
           </div>
 
           <br>
 
-          <?php
-
-          /*if(!empty($_POST['nombre']))
-              {
-                      $conexion = conexion_bd(1);
-                      $nombre=limpiar($_POST['nombre']);
-                      if(!empty($_POST['id'])){
-                        $id=limpiar($_POST['id']);
-                        pg_query($conexion," UPDATE tblcatperfilusr SET strperfil='$nombre'  WHERE idperfil = $id ");
-                        echo mensajes("El perfil ha sido actualizado con exito","verde");
-                      }else{
-
-                        pg_query($conexion,"INSERT INTO tblcatperfilusr(strperfil, bolactivo) VALUES ('$nombre', 'True');");
-
-                        $sql=pg_query($conexion,"SELECT MAX(idperfil) as idperfil FROM tblcatperfilusr");
-                        if($row=pg_fetch_array($sql)){	$id_perfil=$row['idperfil'];		}
-
-                        $sql=pg_query($conexion,"SELECT idfrm, strformulario, strnombreform, bolestado FROM tblcatformularios;");
-
-                        while($row=pg_fetch_row($sql)){
-                          $id_formulario=$row[0];
-                          pg_query($conexion,"INSERT INTO tblcatperfilusrfrm (idfrm, idperfil, bolactivo) VALUES ( $id_formulario, $id_perfil, 'False')");
-                        }
-
-                        $sql2=pg_query($conexion,"SELECT intidmenu, strmenu, strtipomenu, strnivelmenu, bolactivo FROM tblcatmenu;");
-                        while($row=pg_fetch_row($sql2)){
-                          $id_menu=$row[0];
-                          pg_query($conexion,"INSERT INTO tblcatmenuperfil(idperfil, intidmenu, bolactivo) VALUES ( $id_perfil, $id_menu, 'False')");
-                        }
-
-                        $sql3=pg_query($conexion,"SELECT idfrmdetalle, idfrm, strnombreelemento, strtipotag, bolestado from tblcatformulariodetalle order by idfrmdetalle asc, idfrm asc;");
-                        while($row=pg_fetch_row($sql3)){
-                          $id_frmdet=$row[0];
-                          pg_query($conexion,"INSERT INTO tblcatperfilusrfrmdetalle(idfrmdetalle, idperfil, bolactivo) VALUES ( $id_frmdet, $id_perfil, 'False')");
-                        }
-
-                        echo mensajes("El perfil ha sido registrado con exito","verde");
-                      }
-              } */
-           ?>
-
-           <div class="row table-responsive">
-             <table class="table table-bordered">
-               <tr class="well">
-                   <td><strong>Descripcion de perfil</strong></td>
-                     <td width="20%"></td>
-                 </tr>
-                 <?php
-
-                $sentencia = $base_de_datos->query("SELECT idperfil, strperfil, bolactivo FROM tblcatperfilusr;");
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead class="thead-dark">
+                <tr>
+                  <th>Descripción de perfil</th>
+                  <th width="20%">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+                $sentencia = $base_de_datos->query("SELECT idperfil, strperfil FROM tblcatperfilusr ORDER BY strperfil");
                 $perfiles = $sentencia->fetchAll(PDO::FETCH_OBJ);
-
-                foreach($perfiles as $perfil){
-                  $nn = 0;
-                  $url = $perfil->idperfil;
+                
+                foreach($perfiles as $perfil):
+                  // Contar formularios activos para este perfil
+                  $sentencia = $base_de_datos->prepare("SELECT COUNT(*) FROM tblcatperfilusrfrm WHERE idperfil = ? AND bolactivo = 'true'");
+                  $sentencia->execute([$perfil->idperfil]);
+                  $num_formularios = $sentencia->fetchColumn();
                   
-                  // Consulta corregida - usando el idperfil del objeto $perfil actual
-                  $sentencia = $base_de_datos->prepare("SELECT a.idperfilusrfrm, b.strformulario, a.bolactivo
-                                                      FROM tblcatperfilusrfrm as a
-                                                      INNER JOIN tblcatformularios as b ON a.idfrm = b.idfrm
-                                                      WHERE a.idperfil = :idperfil AND a.bolactivo = '1'");
-                  $sentencia->execute([':idperfil' => $perfil->idperfil]);
-                  $perfiles_usuarios = $sentencia->fetchAll(PDO::FETCH_OBJ);
-                  
-                  $nn = count($perfiles_usuarios); // Contamos directamente los resultados
-                  
-                  if($nn == 0){
-                      $color = 'btn btn-danger btn-xs';
-                  } else {
-                      $color = 'btn btn-primary btn-xs';
-                  }
-           ?>
-                 <tr>
-                   <td><?php echo $perfil->strperfil; ?></td>
-                     <td>
-                         <center>
-                             <div class="btn-group btn-group-xs">
-                                 <a data-target="#m<?php echo $perfil->idperfil; ?>" role="button"   class="btn btn-default btn-xs" data-toggle="modal"><i class="fa fa-edit"></i> <strong>Editar Perfil</strong></a>
-                                 <a href="perfiladmin.php?id=<?php echo $url; ?>" class="<?php echo $color; ?>"><i class="fa fa-list-ul"></i> <strong>Admin</strong></a>
-                             </div>
-                         </center>
-                     </td>
-                 </tr>
+                  $color = ($num_formularios == 0) ? 'btn-danger' : 'btn-primary';
+                ?>
+                <tr>
+                  <td><?= htmlspecialchars($perfil->strperfil) ?></td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-default" data-toggle="modal" data-target="#editModal<?= $perfil->idperfil ?>">
+                        <i class="fas fa-edit"></i> Editar
+                      </button>
+                      <a href="perfiladmin.php?id=<?= $perfil->idperfil ?>" class="btn <?= $color ?>">
+                        <i class="fas fa-list-ul"></i> Admin
+                      </a>
+                    </div>
+                  </td>
+                </tr>
 
-                 <!-- Modal -->
-                 <div id="m<?php echo $perfil->idperfil; ?>" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                   <div class="modal-dialog modal-md">
-                     <div class="modal-content">
-                             <div class="modal-header">
-                               <h4 class="modal-title">Actualizar Perfil</h4>
-                               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                 <span aria-hidden="true">&times;</span>
-                               </button>
-                             </div>
-                      <div class="modal-body">
-
-                        <form name="foms" action="" method="post">
-                          <div class="form-group">
-                            <strong>Descripcion del perfil</strong><br>
-                              <input type="hidden" name="id" class="form-control" value="<?php echo $perfil->strperfil; ?>">
-                              <input type="text" name="nombre" class="form-control" autocomplete="off" required value="<?php echo $perfil->strperfil; ?>">
-                           </div>
-                          <div class="modal-footer">
-                              <button class="btn" data-dismiss="modal" aria-hidden="true"><strong>Cerrar</strong></button>
-                              <button type="submit" class="btn btn-primary"><strong>Actualizar</strong></button>
-                          </div>
-                        </form>
-
+                <!-- Modal de Edición -->
+                <div class="modal fade" id="editModal<?= $perfil->idperfil ?>">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h4 class="modal-title">Editar Perfil</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
                       </div>
-
-                     </div>
-                   </div>
-                 </div>
-
-                 <?php } ?>
-             </table>
-
-           </div>
-
+                      <form method="POST" action="">
+                        <div class="modal-body">
+                          <input type="hidden" name="id" value="<?= $perfil->idperfil ?>">
+                          <div class="form-group">
+                            <label>Descripción del perfil</label>
+                            <input type="text" name="nombre" class="form-control" required 
+                                   value="<?= htmlspecialchars($perfil->strperfil) ?>">
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <!-- /.card-body -->
-        <div class="card-footer">
-
-        </div>
-        <!-- /.card-footer-->
       </div>
-      <!-- /.card -->
-
     </section>
-    <!-- /.content -->
   </div>
-  <!-- /.content-wrapper -->
 
-  <!-- FOOTER -->
-  <?php require_once '../../footer.php'; ?>
-  <!-- FOOTER -->
-  <!-- Modal -->
- <div id="new" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-   <div class="modal-dialog modal-md">
+  <!-- Modal de Creación -->
+  <div class="modal fade" id="newModal">
+    <div class="modal-dialog">
       <div class="modal-content">
-
-         <div class="modal-header">
-           <h4 class="modal-title">Registrar nuevo perfil</h4>
-           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
-           </button>
-         </div>
-
-         <div class="modal-body">
-           <form name="xx" action="" method="post">
-             <div class="form-group">
-               <strong>Descripcion del perfil</strong><br>
-               <input type="text" name="nombre" class="form-control" autocomplete="off" required value="">
-             </div>
-           <div class="modal-footer">
-               <button class="btn" data-dismiss="modal" aria-hidden="true"><strong>Cerrar</strong></button>
-               <button type="submit" class="btn btn-primary"><strong>Registrar</strong></button>
-           </div>
-           </form>
-         </div>
+        <div class="modal-header">
+          <h4 class="modal-title">Nuevo Perfil</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <form method="POST" action="">
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Descripción del perfil</label>
+              <input type="text" name="nombre" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Crear Perfil</button>
+          </div>
+        </form>
       </div>
-   </div>
- </div>
- <?php
+    </div>
+  </div>
 
-
- if(!empty($_POST['nombre']))
-     {
-
-             $nombre=limpiar($_POST['nombre']);
-             if(!empty($_POST['id'])){
-               $id=limpiar($_POST['id']);
-
-               $sentencia = $base_de_datos->prepare("UPDATE tblcatperfilusr SET strperfil='$nombre'  WHERE idperfil = $id");
-               $resultado = $sentencia->execute([$nombre, $edad, $id]);
-
-               echo mensajes("El perfil ha sido actualizado con exito","verde");
-
-             }else{
-
-               $sentencia = $base_de_datos->prepare("INSERT INTO tblcatperfilusr(strperfil, bolactivo) VALUES ('$nombre', 'True');");
-               $resultado = $sentencia->execute();
-
-               $sql="SELECT MAX(idperfil) as idperfil FROM tblcatperfilusr";
-
-               if( $row_result=$base_de_datos->query($sql))
-               {
-               $row = $row_result->fetch(PDO::FETCH_NUM);
-               $id_perfil=$row[0];
-               }
-
-               $sentencia = $base_de_datos->query("SELECT idfrm, strformulario, strnombreform, bolestado FROM tblcatformularios;");
-               $formularios = $sentencia->fetchAll(PDO::FETCH_OBJ);
-
-               foreach($formularios as $row){
-                 $id_formulario=$row->idfrm;
-
-                 $sentencia = $base_de_datos->prepare("INSERT INTO tblcatperfilusrfrm (idfrm, idperfil, bolactivo) VALUES ( $id_formulario, $id_perfil, 'False')");
-                 $sentencia->execute();
-               }
-
-               $sentencia = $base_de_datos->query("SELECT intidmenu, strmenu, strtipomenu, strnivelmenu, bolactivo FROM tblcatmenu;");
-               $menus = $sentencia->fetchAll(PDO::FETCH_OBJ);
-
-
-               foreach($menus as $row){
-                 $id_menu=$row->intidmenu;
-                 $sentencia = $base_de_datos->prepare("INSERT INTO tblcatmenuperfil(idperfil, intidmenu, bolactivo) VALUES ( $id_perfil, $id_menu, 'False')");
-                 $sentencia->execute();
-
-               }
-
-               $sentencia = $base_de_datos->query("SELECT idfrmdetalle, idfrm, strnombreelemento, strtipotag, bolestado from tblcatformulariodetalle order by idfrmdetalle asc, idfrm asc;");
-               $formulario_detalle = $sentencia->fetchAll(PDO::FETCH_OBJ);
-
-               foreach($formulario_detalle as $row){
-                 $id_frmdet=$row->idfrmdetalle;
-                 $sentencia = $base_de_datos->prepare("INSERT INTO tblcatperfilusrfrmdetalle(idfrmdetalle, idperfil, bolactivo) VALUES ( $id_frmdet, $id_perfil, 'False')");
-                 $sentencia->execute();
-               }
-
-               echo mensajes("El perfil ha sido registrado con exito","verde");
-             }
-     }
-  ?>
-
-  <!-- Control Sidebar -->
-  <aside class="control-sidebar control-sidebar-dark">
-    <!-- Control sidebar content goes here -->
-  </aside>
-  <!-- /.control-sidebar -->
+  <?php require_once '../../footer.php'; ?>
 </div>
-<!-- ./wrapper -->
 
 <!-- jQuery -->
 <script src="../../plugins/jquery/jquery.min.js"></script>
@@ -320,7 +247,15 @@ if (!empty($_SESSION["user"])) {
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
-<!-- AdminLTE for demo purposes -->
-<script src="../../dist/js/demo.js"></script>
+<script>
+// Cerrar automáticamente las alertas después de 5 segundos
+$(document).ready(function() {
+  setTimeout(function() {
+    $(".alert").fadeTo(500, 0).slideUp(500, function(){
+      $(this).remove(); 
+    });
+  }, 5000);
+});
+</script>
 </body>
 </html>
