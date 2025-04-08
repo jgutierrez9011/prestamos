@@ -23,7 +23,7 @@ switch ($method) {
             $solicitud = $solicitudBL->getSolicitud($id_solicitud);
             echo json_encode($solicitud);
         } else {
-            $solicitudes = $solicitudBL->getAllSolicitudes();
+            $solicitudes = $solicitudBL->getAllSolicitudes($_SESSION["perfilusuario"],$_SESSION["carterausuario"]);
             echo json_encode($solicitudes);
         }
         break;

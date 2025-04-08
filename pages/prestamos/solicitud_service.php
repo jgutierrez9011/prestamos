@@ -83,28 +83,40 @@ class SolicitudPrestamo {
         }
     }
 
-    public function getAllSolicitudes() {
-        try{
-            $stmt = $this->base_de_datos->query("SELECT a.id_solicitud, a.cod_solicitud, b.nombre, a.fecha_creo fecha_solicitud, a.monto_solicitado, 
+    public function getAllSolicitudes($rol_usuario, $idcartera) {
+        try {
+            $sql = "SELECT a.id_solicitud, a.cod_solicitud, b.nombre, a.fecha_creo fecha_solicitud, a.monto_solicitado, 
                                 c.nombre estatus , a.plazo_solicitado, a.tasa, 
-                                concat(d.strpnombre,' ',d.strsnombre,' ',d.strpapellido,' ',d.strsapellido) oficial_credito
+                                concat(d.strpnombre,' ',d.strsnombre,' ',d.strpapellido,' ',d.strsapellido) oficial_credito,
+								 e.id_prestamo, f.idcartera, f.descripcion
                                 from SolicitudPrestamo a 
                                 left join clientes b on a.idcliente = b.idcliente
                                 left join estatus_solicitud c on a.idestatus = c.idestatus
-                                left join tblcatusuario d on a.usuario_creo = d.intid");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        }catch(PDOException $e) {
-             // Captura errores específicos de PDO
-             http_response_code(500);
-             echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
-
-        }catch (Exception $e) {
-            // Captura cualquier otra excepción
+                                left join tblcatusuario d on a.usuario_creo = d.intid
+								 left join prestamo e on a.id_solicitud = e.id_solicitud
+								 left join tblcatcartera f on a.idcartera = f.idcartera";
+            
+            // Añadir condición WHERE según el rol
+            if ($rol_usuario == 'Administrador') {
+                // Administrador ve todas las solicitudes
+                $stmt = $this->base_de_datos->query($sql);
+            } else {
+                // Otros roles filtran por idcartera (asumiendo que existe a.idcartera)
+                $sql .= " WHERE a.idcartera = :idcartera";
+                $stmt = $this->base_de_datos->prepare($sql);
+                $stmt->bindParam(':idcartera', $idcartera, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+        } catch(PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+        } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(["error" => $e->getMessage()]);
         }
-        
     }
 
     public function createSolicitud($data) {
