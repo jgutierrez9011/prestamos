@@ -12,10 +12,22 @@ try {
   exit;
 }
 
+// En tu página principal (donde cargas la solicitud)
 if (isset($_GET['id_solicitud'])) {
   $id_solicitud = $_GET['id_solicitud'];
-  //Cambia el estado de la solicitud a En revision
-  $estadoSolicitud = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"],2,$id_solicitud);
+  
+  // Primero obtener el estado actual para verificar si necesita cambio
+  $solicitudActual = $solicitudBL->getSolicitud($id_solicitud);
+  
+  // Solo cambiar a "En revisión" si está en estado "Pendiente" (idestatus=1)
+  if ($solicitudActual['estatus'] == 'Pendiente') {
+      $resultado = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"], 2, $id_solicitud);
+      
+      if (isset($resultado['error'])) {
+          // Manejar el error adecuadamente
+          error_log("Error al actualizar estado: " . $resultado['error']);
+      }
+  }
 }
 
 ?>

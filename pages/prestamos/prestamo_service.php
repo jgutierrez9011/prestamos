@@ -62,7 +62,7 @@ class PrestamoService {
             'monto_aprobado' => $data['monto_aprobado'],
             'interes' => $data['interes'],
             'plazo' => $data['plazo'],
-            'saldo' => $data['saldo'],
+            'saldo' => round($montoTotal,2),
             'fecha_primer_cuota' => $data['fecha_primer_cuota'],
             'comentario' => $data['comentario'],
             'usuario_creo' => $_SESSION["idusuario"],

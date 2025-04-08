@@ -12,8 +12,14 @@ class Abono {
     // Crear un nuevo abono
     public function crearAbono($id_prestamo, $fecha_abono, $monto_abonado, $es_prorroga) {
         try {
-            $query = "INSERT INTO abono (id_prestamo, fecha_abono, monto_abonado, es_prorroga, usuario_creo, fecha_creo) 
-                      VALUES (:id_prestamo, :fecha_abono, :monto_abonado, :es_prorroga, :usuariocreo, current_timestamp)";
+            //$query = "INSERT INTO abono (id_prestamo, fecha_abono, monto_abonado, es_prorroga, usuario_creo, fecha_creo) 
+               //       VALUES (:id_prestamo, :fecha_abono, :monto_abonado, :es_prorroga, :usuariocreo, current_timestamp)";
+            $query = "SELECT registrar_abono_y_actualizar_cuotas(
+                    :id_prestamo, 
+                    :monto_abonado,
+                    :usuariocreo, 
+                    :es_prorroga,  
+                    :fecha_abono)";
             $stmt = $this->conn->prepare($query);
 
             // Limpiar y vincular los parámetros

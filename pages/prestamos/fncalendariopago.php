@@ -68,7 +68,7 @@ class CalendarioPago {
      */
     public function obtenerPorPrestamo($id_solicitud) {
         try {
-            $sql = "SELECT b.modalidad, c.fecha_pago, c.monto_cuota, c.interes, c.principal, c.saldo from solicitudprestamo a 
+            $sql = "SELECT b.modalidad, c.fecha_pago, c.monto_cuota, c.interes, c.principal, c.saldo, c.estado, c.saldo_cuota from solicitudprestamo a 
                     inner join prestamo b on a.id_solicitud = b.id_solicitud
                     inner join calendariopago c on b.id_prestamo = c.id_prestamo
                     where a.cod_solicitud = :id_solicitud

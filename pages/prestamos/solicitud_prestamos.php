@@ -490,6 +490,12 @@ if (!empty($_SESSION["user"])) {
             var cedula = $('#cedula').val(); // Obtiene el valor del input de cédula
 
             if (cedula) {
+              Swal.fire({
+              title: 'Buscando cliente...',
+              allowOutsideClick: false,
+              didOpen: () => Swal.showLoading()
+               });   
+
                 // Realiza la solicitud POST
                 $.ajax({
                     url: '../clientes/fncliente.php', // Cambia esto por la URL de tu API
@@ -499,6 +505,18 @@ if (!empty($_SESSION["user"])) {
                     success: function(response) {
                         // Maneja la respuesta exitosa
                         customer = response.cliente;
+
+                        Swal.close();
+                        if (response.error) {
+                          Swal.fire('Error', response.message, 'error');
+                          return;
+                        }
+                        
+                        //const customer = response.cliente;
+                        if (!customer) {
+                          Swal.fire('No encontrado', 'No se encontró un cliente con esa cédula', 'info');
+                          return;
+                        }
 
                 $("#cedula").val(customer.cedula) ,
                 $("#nombre").val(customer.nombre) 
@@ -523,7 +541,8 @@ if (!empty($_SESSION["user"])) {
                     }
                 });
             } else {
-                alert('Por favor, introduce una cédula válida.'); // Validación si el campo está vacío
+              Swal.fire('Error', 'Por favor ingrese una cédula válida', 'error'); // Validación si el campo está vacío
+              return;
             }
         });
 

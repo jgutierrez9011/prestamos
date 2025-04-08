@@ -195,19 +195,14 @@ class SolicitudPrestamo {
 
     public function updateSolicitudEstado($usuario, $estatus, $codsolicitud) {
         try {
-            // Validar que el estado sea permitido
-            /*$estatusPermitidos = [1, 2]; // Estados válidos para la actualización
-            if (!in_array($estatus, $estatusPermitidos)) {
-                return ["error" => "Estado no permitido"];
-            }*/
-    
+            
             // Preparar la consulta
             $stmt = $this->base_de_datos->prepare("
                 UPDATE SolicitudPrestamo SET
                     idestatus = ?, 
                     fecha_modifico = current_timestamp, 
                     usuario_modifico = ?
-                WHERE id_solicitud = ? AND idestatus NOT IN (3,4,5,6,7)
+                WHERE cod_solicitud = ?
             ");
             
             $stmt->execute([$estatus, $usuario, $codsolicitud]);

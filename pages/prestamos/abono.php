@@ -147,7 +147,7 @@ if (!empty($_SESSION["user"])) {
                             </label>
                         </div>
                     </div>
-                    <button type="submit" form="formabono" class="btn btn-primary">Aplicar Abono</button>
+                    <button type="submit" form="formabono" class="btn btn-primary btnAplicaAbono">Aplicar Abono</button>
                 </form>
             </div>
         </div>
@@ -190,6 +190,8 @@ if (!empty($_SESSION["user"])) {
                             <th>Interés</th>
                             <th>Cuota Capital</th>
                             <th>Saldo Pendiente</th>
+                            <th>Estado</th>
+                            <th>Saldo pendiente de cuota</th>
                         </tr>
                     </thead>
                 </table>
@@ -244,7 +246,58 @@ if (!empty($_SESSION["user"])) {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
 
-    function inicializarDataTableCalendarioPago(id) {
+function inicializarDataTableCalendarioPago(id) {
+
+if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
+      $('#tb_calendarioPago').DataTable().destroy();
+  }
+  
+  $('#tb_calendarioPago').DataTable({
+        responsive: true,
+        order: [[0, 'desc']], // Ordenar por fecha descendente
+        ajax: {
+            url: `servicio_calendariopago.php?id_solicitud=${id}`,
+            dataSrc: 'data',
+            error: function(xhr, error, thrown) {
+                console.log("Error en la carga de datos: ", error);
+                console.log("Estado: ", xhr.status);
+                console.log("Respuesta: ", xhr.responseText);
+            }
+        },
+        columns: [
+                { data: "modalidad"},
+                { data: "fecha_pago"},
+                { data: "monto_cuota"},
+                { data: "interes"},
+                { data: "principal"},
+                { data: "saldo"},
+                { data: "estado"},
+                { data: "saldo_cuota"}
+              ],
+        initComplete: function(settings, json) {
+        // Verificar si hay datos en la respuesta
+                  if (json && json.data && json.data.length > 0) {
+                
+                    Swal.fire({
+                icon: 'success',
+                title: 'La solicitud de crédito esta aprobada.',
+                text: `Hay ${json.data.length} pagos programados`,
+                timer: 5000,
+                showConfirmButton: false
+            });
+                  } else {
+                    Swal.fire({
+                icon: 'warning',
+                title: 'La solicitud de crédito esta pendiente.',
+                text: 'No se encontraron pagos programados. Se debe revisar.',
+                confirmButtonText: 'Entendido'
+            });
+                  }
+        }
+    })
+}
+
+function inicializarDataTableAbono(id) {
 
 if ($.fn.DataTable.isDataTable('#tb_controlPago')) {
       $('#tb_controlPago').DataTable().destroy();
@@ -272,8 +325,14 @@ $('#tb_controlPago').DataTable({
 });
 }
 
+function disableActionButtons(reason) {
+              $('.btnAplicaAbono').prop('disabled', true)
+                    .attr('title', reason)
+                    .tooltip('dispose').tooltip();
+            }
+
         // Cargar los datos guardados
-        function loadData(id) {
+function loadData(id) {
       if (!id) {
         alert('No se proporcionó un ID válido.');
         return;
@@ -298,7 +357,11 @@ $('#tb_controlPago').DataTable({
           $('#lbl_cliente').text(response.nombre);
           $('#lbl_total_a_pagar').text(response.montotal);
 
-          inicializarDataTableCalendarioPago(response.id_prestamo);
+          if(response.saldo_pendiente <= 0){disableActionButtons("No hay saldo pendiente.");}
+
+          inicializarDataTableCalendarioPago(id);
+          inicializarDataTableAbono(response.id_prestamo);
+          
           
         },
         error: function() {
@@ -307,52 +370,7 @@ $('#tb_controlPago').DataTable({
       });
     }
 
-    $('#tb_calendarioPago').DataTable({
-        responsive: true,
-        order: [[0, 'desc']], // Ordenar por fecha descendente
-        ajax: {
-            url: `servicio_calendariopago.php?id_solicitud=${id}`,
-            dataSrc: 'data',
-            error: function(xhr, error, thrown) {
-                console.log("Error en la carga de datos: ", error);
-                console.log("Estado: ", xhr.status);
-                console.log("Respuesta: ", xhr.responseText);
-            }
-        },
-        columns: [
-                { data: "modalidad"},
-                { data: "fecha_pago"},
-                { data: "monto_cuota"},
-                { data: "interes"},
-                { data: "principal"},
-                { data: "saldo"}
-              ],
-        initComplete: function(settings, json) {
-        // Verificar si hay datos en la respuesta
-                  if (json && json.data && json.data.length > 0) {
-                disableActionButtons("La solicitud ya fue aprobada.");
-                    Swal.fire({
-                icon: 'success',
-                title: 'La solicitud de crédito esta aprobada.',
-                text: `Hay ${json.data.length} pagos programados`,
-                timer: 5000,
-                showConfirmButton: false
-            });
-                  } else {
-                    Swal.fire({
-                icon: 'warning',
-                title: 'La solicitud de crédito esta pendiente.',
-                text: 'No se encontraron pagos programados. Se debe revisar.',
-                confirmButtonText: 'Entendido'
-            });
-                  }
-        }
-    });
-    
-    loadData(id);
-
-   
-
+  loadData(id);
 
     // creacion de prestamos
     $("#formabono").submit(function(event) {
