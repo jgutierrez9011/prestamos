@@ -73,6 +73,7 @@ class PrestamoService {
             'monto_cuota' => round($pagoSemanal,2),
             'interessemanal' => round($interesSemanal, 2)
         ]);
+
         
         return $this->base_de_datos->lastInsertId();
 

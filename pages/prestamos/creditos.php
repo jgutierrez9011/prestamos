@@ -90,6 +90,7 @@ if (!empty($_SESSION["user"])) {
               <thead>
                   <tr>
                       <th><p class="small"><strong>Código</strong></p></th>
+                      <th><p class="small"><strong>Cartera</strong></p></th>
                       <th><p class="small"><strong>Cliente</strong></p></th>
                       <th><p class="small"><strong>Fecha Solicitud</strong></p></th>
                       <th><p class="small"><strong>Monto Solicitado</strong></p></th>
@@ -196,8 +197,8 @@ if (!empty($_SESSION["user"])) {
 <script src="../../dist/js/demo.js"></script>
 <!-- Page specific script -->
 <script>
+  
   $(function () {
-    
     $('#clientesTable').DataTable({
         ajax: {
             url: 'fnprestamos.php',
@@ -210,6 +211,7 @@ if (!empty($_SESSION["user"])) {
         },
         columns: [
             { data: "cod_solicitud" },
+            { data: "descripcion" },
             { data: "nombre" },
             { data: "fecha_solicitud" },
             { data: "monto_solicitado" },
@@ -220,65 +222,38 @@ if (!empty($_SESSION["user"])) {
             {
                 data: "cod_solicitud",
                 render: function(data, type, row) {
-                return `
-                    <a href="consultar_solicitud.php?id_solicitud=${data}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-pencil-alt"></i>
-                    </a>
-                `;
-            },
+                    return `
+                        <a href="consultar_solicitud.php?id_solicitud=${data}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
+                    `;
+                },
                 orderable: false,
                 searchable: false
             },
             {
-    data: "cod_solicitud",
-    render: function(data, type, row) {
-        return `
-            <a href="abono.php?id_solicitud=${data}" 
-               class="btn btn-sm btn-success" 
-               data-toggle="tooltip" 
-               data-placement="top" 
-               title="Aplicar Pago">
-                <i class="fas fa-money-bill-wave"></i>
-            </a>
-        `;
-    }
-}
-            
+                data: "cod_solicitud",
+                render: function(data, type, row) {
+                    // Verificar si id_prestamo es nulo
+                    const isDisabled = row.id_prestamo === null;
+                    
+                    return `
+                        <a href="abono.php?id_solicitud=${data}" 
+                           class="btn btn-sm btn-success ${isDisabled ? 'disabled' : ''}" 
+                           data-toggle="tooltip" 
+                           data-placement="top" 
+                           title="${isDisabled ? 'Primero debe aprobar el préstamo' : 'Aplicar Pago'}"
+                           ${isDisabled ? 'onclick="return false;"' : ''}>
+                            <i class="fas fa-money-bill-wave"></i>
+                        </a>
+                    `;
+                },
+                orderable: false,
+                searchable: false
+            }
         ]
     });
-
-    /*$(document).on('click', '.edit-btn', function() {
-        var clienteId = $(this).data('id');
-        alert('ID del Cliente: ' + clienteId);
-    });*/
 });
-
-</script>
-
-<script>
-
-$(document).ready(function(){
-
-  $(document).on('click', '.edit_data', function(){
-
-       var employee_id = $(this).attr("id");
-       var estado = $("#estado_" + employee_id).val();
-
-       $('#idempleado').val(employee_id);
-       $('#estado_usuario').val(estado);
-
-         if(estado == '1'){
-           $("#inactivar").show();
-           $("#activar").hide();
-         }else {
-           $("#inactivar").hide();
-           $("#activar").show();
-         }
-
-       });
-
-  });
-
 </script>
 </body>
 </html>

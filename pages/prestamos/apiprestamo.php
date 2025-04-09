@@ -12,6 +12,7 @@ $prestamoService = new PrestamoService($base_de_datos);
 $PrestamoSolicitud = new SolicitudPrestamo($base_de_datos);
 $calendarioPago = new CalendarioPago($base_de_datos);
 
+
 // Obtener la solicitud HTTP
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -65,6 +66,24 @@ switch ($method) {
                     $pagoProgramado['saldo_pendiente']
                 );
             }
+                
+                // If utilizado para realizar el cambio de estado de la solicitud de prestamo a aprobada
+                if (isset($data['cod_solicitud'])) {
+                    $id_solicitud = $data['cod_solicitud'];
+                    
+                    // Primero obtener el estado actual para verificar si necesita cambio
+                    $solicitudActual = $PrestamoSolicitud->getSolicitud($id_solicitud);
+                    
+                    // Solo cambiar a "En revisión" si está en estado "Pendiente" (idestatus=1)
+                    if ($solicitudActual['estatus'] == 'En revisión') {
+                        $resultado = $PrestamoSolicitud->updateSolicitudEstado($_SESSION["idusuario"], 3, $id_solicitud);
+                        
+                        if (isset($resultado['error'])) {
+                            // Manejar el error adecuadamente
+                            error_log("Error al actualizar estado: " . $resultado['error']);
+                        }
+                    }
+                }
     
 
             http_response_code(201); // Creado

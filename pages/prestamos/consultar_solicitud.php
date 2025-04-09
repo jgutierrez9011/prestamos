@@ -176,6 +176,7 @@ if (!empty($_SESSION["user"])) {
                 <div class="form-group">
                 <label for="monto_solicitado">Monto Solicitado:</label>
                 <input type="text" class="form-control form-control-sm" id="monto_solicitado" name="monto_solicitado" readonly>
+                <input type="hidden" class="form-control form-control-sm" id="cod_solicitud" name="cod_solicitud" readonly>
                 </div>
             </div>
             <!-- Plazo -->
@@ -596,6 +597,8 @@ if (!empty($_SESSION["user"])) {
           $('#cuotas_credito').val(response.cuotas_credito);
           $('#gastos_familiares').val(response.gastos_familiares);
           $('#utilidad_final').val(response.utilidad_final);
+          $('#cod_solicitud').val(response.cod_solicitud);
+          
 
           $("#monto_aprobado").val(response.monto_solicitado),
           $("#interes").val(response.tasa),
@@ -737,7 +740,8 @@ if (!empty($_SESSION["user"])) {
                 plazo: $("#plazo").val(),
                 saldo: $("#cuota").val(),
                 fecha_primer_cuota: $("#primer_cuota").val(),
-                comentario: $("#comentario").val()
+                comentario: $("#comentario").val(),
+                cod_solicitud: $('#cod_solicitud').val()
             };
                 
                 // Convertir el objeto a JSON
