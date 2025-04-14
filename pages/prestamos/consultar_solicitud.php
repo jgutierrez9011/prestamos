@@ -602,7 +602,47 @@ if (!empty($_SESSION["user"])) {
 
           $("#monto_aprobado").val(response.monto_solicitado),
           $("#interes").val(response.tasa),
-          $("#plazo").val(response.plazo_solicitado)
+          $("#plazo").val(response.plazo_solicitado);
+          
+          inicializarDataTableCalendarioPago(id);
+
+          if(response.estatus === 'Aprobada' || response.estatus === 'Rechazada'){
+
+            disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
+
+            if(response.estatus === 'Aprobada'){
+
+              Swal.fire({
+                    icon: 'success',
+                    title: 'La solicitud de crédito ya fue aprobada.',
+                    text: `La solicitud ha sido aprobada y el préstamo puede ser desembolsado.`,
+                    timer: 5000,
+                    showConfirmButton: false
+                });
+
+            }else{
+
+              Swal.fire({
+                    icon: 'info',
+                    title: 'La solicitud de crédito fue rechazada.',
+                    text: 'La solicitud fue denegada por el comité de crédito.',
+                    confirmButtonText: 'Entendido'
+                });
+
+               
+
+            }
+            
+
+          }else{
+            Swal.fire({
+                    icon: 'warning',
+                    title: 'La solicitud de crédito esta pendiente.',
+                    text: 'La solicitud está siendo evaluada por el comité de crédito.',
+                    confirmButtonText: 'Entendido'
+                });
+          }
+
         },
         error: function() {
           alert('Hubo un error al cargar los datos.');
@@ -636,8 +676,8 @@ if (!empty($_SESSION["user"])) {
         ],
         initComplete: function(settings, json) {
             // Verificar si hay datos en la respuesta
-            if (json && json.data && json.data.length > 0) {
-                disableActionButtons("La solicitud ya fue aprobada.");
+            /*if (json && json.data && json.data.length > 0) {
+                //disableActionButtons("La solicitud ya fue aprobada.");
                 Swal.fire({
                     icon: 'success',
                     title: 'La solicitud de crédito ya fue aprobada.',
@@ -652,14 +692,14 @@ if (!empty($_SESSION["user"])) {
                     text: 'No se encontraron pagos programados. Se debe revisar.',
                     confirmButtonText: 'Entendido'
                 });
-            }
+            }*/
         }
     });
 }
     // Cargar los datos al iniciar la página
     loadData(id);
 
-    inicializarDataTableCalendarioPago(id);
+    //inicializarDataTableCalendarioPago(id);
 
     $('#cargar_tbcalendariopago').on('click', function() {
         if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
@@ -754,7 +794,7 @@ if (!empty($_SESSION["user"])) {
                     contentType: "application/json", // Indicar que se envía JSON
                     success: function(response) {
 
-                      disableActionButtons("La solicitud ya fue aprobada.");
+                      //disableActionButtons("La solicitud ya fue aprobada.");
 
                       Swal.fire({
                                     icon: 'success',
@@ -766,7 +806,9 @@ if (!empty($_SESSION["user"])) {
 
                         $('#prestamoModal').modal('hide'); // Cierra el modal después de guardar
 
-                        inicializarDataTableCalendarioPago(id);
+                        //inicializarDataTableCalendarioPago(id);
+
+                        loadData(id);
 
                     },
                     error: function() {
@@ -783,17 +825,70 @@ if (!empty($_SESSION["user"])) {
 
             });
 
-            function disableActionButtons(reason) {
+    function disableActionButtons(reason) {
               $('.btn-approve, .btn-reject').prop('disabled', true)
                     .attr('title', reason)
                     .tooltip('dispose').tooltip();
             }
 
-            function enableActionButtons() {
+    function enableActionButtons() {
                 $('.btn-approve, .btn-reject').prop('disabled', false)
                     .removeAttr('title')
                     .tooltip('dispose');
             }
+    
+    // Función para cambiar el estado (con AJAX y SweetAlert2)
+function cambiarEstadoSolicitud(estatus,codigoSolicitud) {
+    Swal.fire({
+        title: '¿Rechazar solicitud?',
+        text: `¿Estás seguro de rechazar la solicitud ${codigoSolicitud}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, rechazar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'fnprestamos.php',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: 'cambiar_estado',
+                    codigo_solicitud: codigoSolicitud,
+                    estatus: estatus
+                }),
+                success: function(response) {
+                    Swal.fire({
+                        title: '¡Rechazado!',
+                        text: 'La solicitud ha sido rechazada.',
+                        icon: 'success'
+                    }).then(() => {
+                        location.reload(); // Recargar para ver cambios
+                    });
+                    disableActionButtons("La solicitud ya fue aprobada.");
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Ocurrió un error al rechazar: ' + xhr.responseJSON?.error || 'Error desconocido',
+                        icon: 'error'
+                    });
+                }
+            });
+        }
+    });
+}
+
+$(document).on('click', '.btn-reject', function() {
+        const codigoSolicitud = $('#cod_solicitud').val();
+        cambiarEstadoSolicitud(
+            4,  // estatus
+            codigoSolicitud // código de solicitud
+        );
+    });
+            
               });
 </script>
 </body>

@@ -74,12 +74,12 @@ switch ($method) {
                     // Primero obtener el estado actual para verificar si necesita cambio
                     $solicitudActual = $PrestamoSolicitud->getSolicitud($id_solicitud);
                     
-                    // Solo cambiar a "En revisión" si está en estado "Pendiente" (idestatus=1)
+                    // Solo cambiar a "Aprobada" si está en estado "En revisión" (idestatus=1)
                     if ($solicitudActual['estatus'] == 'En revisión') {
                         $resultado = $PrestamoSolicitud->updateSolicitudEstado($_SESSION["idusuario"], 3, $id_solicitud);
                         
                         if (isset($resultado['error'])) {
-                            // Manejar el error adecuadamente
+                            // Manejar el error
                             error_log("Error al actualizar estado: " . $resultado['error']);
                         }
                     }

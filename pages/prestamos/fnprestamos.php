@@ -29,12 +29,46 @@ switch ($method) {
         break;
 
     case 'POST':
-        $data = json_decode(file_get_contents(filename: "php://input"), true);
-        $response = $solicitudBL->createSolicitud($data);
-        echo json_encode($response);
+        $data = json_decode(file_get_contents("php://input"), true);
+        
+        // Si se envía una acción de cambio de estado (nuevo endpoint)
+        if (isset($data['action']) && $data['action'] === 'cambiar_estado') {
+
+            $requiredFields = ['codigo_solicitud', 'estatus'];
+            foreach ($requiredFields as $field) {
+                if (!isset($data[$field])) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "Falta el campo requerido: $field"]);
+                    exit;
+                }
+            }
+
+            // Primero obtener el estado actual para verificar si necesita cambio
+            $solicitudActual = $solicitudBL->getSolicitud($data['codigo_solicitud']);
+
+            if ($solicitudActual['estatus'] == 'Pendiente' || $solicitudActual['estatus'] == 'En revisión') {
+
+                // Llamar al método para actualizar el estado
+                $response = $solicitudBL->updateSolicitudEstado(
+                $_SESSION["idusuario"],
+                $data['estatus'],
+                $data['codigo_solicitud']);
+
+                echo json_encode($response);
+            }
+            
+            
+        } 
+        // Si es una creación normal
+        else {
+            $response = $solicitudBL->createSolicitud($data);
+            echo json_encode($response);
+        }
         break;
 
+
     case 'PUT':
+
         $data = json_decode(file_get_contents("php://input"), true);
         $response = $solicitudBL->updateSolicitud($data);
         echo json_encode($response);
