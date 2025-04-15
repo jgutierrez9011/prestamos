@@ -357,6 +357,7 @@ function loadData(id) {
           $('#lbl_cliente').text(response.nombre);
           $('#lbl_total_a_pagar').text(response.montotal);
 
+
           if(response.saldo_pendiente <= 0){disableActionButtons("No hay saldo pendiente.");}
 
           inicializarDataTableCalendarioPago(id);
@@ -382,7 +383,8 @@ function loadData(id) {
                 id_prestamo: $("#lbl_prestamo").text(),
                 monto_abono: $("#montoAbonado").val(),
                 fecha_abono: $("#fechaAbono").val(),
-                es_prorroga: $("#esProrroga").prop("checked")
+                es_prorroga: $("#esProrroga").prop("checked"),
+                id_solicitud: id
             };
                 
                 // Convertir el objeto a JSON

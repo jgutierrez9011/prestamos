@@ -8,6 +8,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 
 // Incluir la lógica de negocio
 require_once 'fnabono.php';
+require_once 'solicitud_service.php';
 
 // Obtener la conexión a la base de datos (debes configurar esto)
 /*require_once 'config/database.php';
@@ -19,6 +20,8 @@ try {
     //$solicitudBL = new SolicitudPrestamo($pdo);
     // Instanciar la clase Abono
     $abono = new Abono($pdo);
+
+    $solicitudBL = new SolicitudPrestamo($pdo);
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(["error" => "Error de conexión: " . $e->getMessage()]);
@@ -53,8 +56,39 @@ try {
                 isset($data["id_prestamo"],$data["fecha_abono"],$data["monto_abono"])
             ) {
                 if ($abono->crearAbono($data["id_prestamo"], $data["fecha_abono"], $data["monto_abono"], $data["es_prorroga"])) {
+                    
+                    $saldoPrestamo = $abono->obtenerSaldoPorPrestamo($data["id_prestamo"]);
+
+                   // echo $saldoPrestamo["saldo"];
+
+                   //echo "<script>console.log(" . $saldoPrestamo["saldo"] . ");</script>";
+
+                    if($saldoPrestamo["saldo"] <= 0.00){
+
+                        // Primero obtener el estado actual para verificar si necesita cambio
+                            $solicitudActual = $solicitudBL->getSolicitud($data["id_solicitud"]);
+                            // Solo cambiar a "En revisión" si está en estado "Pendiente" (idestatus=1)
+                        
+                            //echo "<script>console.log(" . $solicitudActual['estatus']. ");</script>";
+
+                            if ($solicitudActual['estatus'] === 'Aprobada') {
+
+                                $resultado = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"], 7, $data["id_solicitud"]);
+                                //print_r($resultado);
+                                //echo "<script>console.log(" . $resultado . ");</script>";
+
+                                if (isset($resultado['error'])) {
+                                    // Manejar el error adecuadamente
+                                    error_log("Error al actualizar estado: " . $resultado['error']);
+                                }
+
+                            }
+
+                    }
+                    
                     http_response_code(201); // Created
                     echo json_encode(["message" => "Abono creado correctamente."]);
+
                 } else {
                     http_response_code(500); // Internal Server Error
                     echo json_encode(["error" => "No se pudo crear el abono."]);

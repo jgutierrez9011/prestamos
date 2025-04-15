@@ -76,6 +76,23 @@ class Abono {
         }
     }
 
+    // Obtener todos los abonos de un préstamo
+    public function obtenerSaldoPorPrestamo($id_prestamo) {
+        try {
+            $query = "select saldo from prestamo where id_prestamo = :id_prestamo";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":id_prestamo", $id_prestamo);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Captura errores específicos de PDO
+            throw new Exception("Error en la base de datos: " . $e->getMessage());
+        } catch (Exception $e) {
+            // Captura cualquier otra excepción
+            throw new Exception($e->getMessage());
+        }
+    }
+
     // Actualizar un abono existente
     public function actualizarAbono($id_abono, $fecha_abono, $monto_abonado, $es_prorroga) {
         try {
