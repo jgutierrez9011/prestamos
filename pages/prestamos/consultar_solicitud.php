@@ -635,12 +635,31 @@ if (!empty($_SESSION["user"])) {
             
 
           }else{
-            Swal.fire({
+
+                    if(response.estatus === 'Cancelado'){
+
+                      disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
+
+                    Swal.fire({
+                          icon: 'info',
+                          title: 'La solicitud de crédito ya fue cancelada.',
+                          text: `El préstamo ha sido pagado en su totalidad y se ha cerrado.`,
+                          timer: 5000,
+                          showConfirmButton: false
+                      });
+
+                    }else{
+
+                      Swal.fire({
                     icon: 'warning',
                     title: 'La solicitud de crédito esta pendiente.',
                     text: 'La solicitud está siendo evaluada por el comité de crédito.',
                     confirmButtonText: 'Entendido'
                 });
+
+                    }
+
+            
           }
 
         },

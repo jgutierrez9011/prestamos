@@ -61,26 +61,27 @@ if (!empty($_SESSION["user"])) {
 
         <!-- Card de Información del Préstamo -->
         <div class="card mb-4">
+            
             <div class="card-header bg-primary text-white">
-                Información del Préstamo
-            </div>
+    <i class="fas fa-file-invoice-dollar mr-2"></i> Información del Préstamo
+</div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
                     <p class="mb-2">
-                    <strong class="font-size-base">ID Préstamo:</strong>
+                    <strong class="font-size-base"> ID Préstamo:</strong>
                     <span id="lbl_prestamo" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
-                    <strong class="font-size-base">Cliente:</strong>
+                    <strong class="font-size-base"> Cliente:</strong>
                     <span id="lbl_cliente" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
-                    <strong class="font-size-base">Monto Aprobado:</strong>
+                    <strong class="font-size-base"> Monto Aprobado:</strong>
                     <span id="lbl_monto_aprobado" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
-                    <strong class="font-size-base">Interés:</strong>
+                    <strong class="font-size-base"><i class="fas fa-percentage mr-1"></i> Interés:</strong>
                     <span id="lbl_interes" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
@@ -124,9 +125,9 @@ if (!empty($_SESSION["user"])) {
 
         <!-- Card de Formulario para Aplicar Abonos -->
         <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                Registrar Abono
-            </div>
+        <div class="card-header bg-success text-white">
+    <i class="fas fa-hand-holding-usd mr-2"></i> Registrar Abono
+</div>
             <div class="card-body">
                 <form id="formabono">
                     <div class="form-row">
@@ -147,16 +148,18 @@ if (!empty($_SESSION["user"])) {
                             </label>
                         </div>
                     </div>
-                    <button type="submit" form="formabono" class="btn btn-primary btnAplicaAbono">Aplicar Abono</button>
+                    <button type="submit" form="formabono" class="btn btn-primary btnAplicaAbono">
+                    <i class="fas fa-paper-plane mr-2"></i>Aplicar Abono
+                    </button>
                 </form>
             </div>
         </div>
 
         <!-- Card de Calendario de Pagos -->
         <div class="card">
-            <div class="card-header bg-info text-white">
-                Control de Pagos
-            </div>
+        <div class="card-header bg-info text-white">
+        <i class="fas fa-calendar-check mr-2"></i> Control de Pagos
+        </div>
             <div class="card-body">
               <div class="table-responsive">
                 <table id="tb_controlPago" class="table table-bordered">
@@ -176,9 +179,9 @@ if (!empty($_SESSION["user"])) {
 
         <!-- Card de Calendario de Pagos -->
         <div class="card">
-            <div class="card-header bg-info text-white">
-                Calendario de Pagos
-            </div>
+        <div class="card-header bg-info text-white">
+        <i class="fas fa-calendar-check mr-2"></i> Calendario de Pagos
+        </div>
             <div class="card-body">
               <div class="table-responsive">
                 <table id="tb_calendarioPago" class="table table-bordered">
@@ -235,6 +238,7 @@ if (!empty($_SESSION["user"])) {
 <script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
 <script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
 <script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+
 <!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
 <!-- AdminLTE for demo purposes -->

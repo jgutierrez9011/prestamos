@@ -51,7 +51,7 @@
                 <p>
                   <?= htmlspecialchars($item['strmenu']) ?>
                   <?php if (!empty($item['submenus'])): ?>
-                    <i class='right fas fa-angle-left'></i>
+                    <i class='right fas fa-angle-left text-warning'></i>
                   <?php endif; ?>
                 </p>
               </a>
