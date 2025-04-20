@@ -200,59 +200,64 @@ if (!empty($_SESSION["user"])) {
   
   $(function () {
     $('#clientesTable').DataTable({
-        ajax: {
-            url: 'fnprestamos.php',
-            dataSrc: '',
-            error: function(xhr, error, thrown) {
-                console.log("Error en la carga de datos: ", error);
-                console.log("Estado: ", xhr.status);
-                console.log("Respuesta: ", xhr.responseText);
-            }
+    ajax: {
+      url: 'fnprestamos.php',
+      dataSrc: '',
+      error: function(xhr, error, thrown) {
+        console.log("Error en la carga de datos: ", error);
+        console.log("Estado: ", xhr.status);
+        console.log("Respuesta: ", xhr.responseText);
+      }
+    },
+    columns: [
+      { data: "cod_solicitud" },
+      { data: "descripcion" },
+      { data: "nombre" },
+      { data: "fecha_solicitud" },
+      { data: "monto_solicitado" },
+      { data: "estatus" },
+      { data: "plazo_solicitado" },
+      { data: "tasa" },
+      { data: "oficial_credito" },
+      {
+        data: "cod_solicitud",
+        render: function(data, type, row) {
+          return `
+            <div class="dropdown">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownDetalle${data}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Opciones
+              </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownDetalle${data}">
+                <a class="dropdown-item" href="consultar_solicitud.php?id_solicitud=${data}">Ver detalle</a>
+                <a class="dropdown-item" href="../../pages/garantia/garantia.php?id_solicitud=${data}">Agregar garantía</a>
+                <a class="dropdown-item" href="../../pages/obligaciones/obligaciones.php?id_solicitud=${data}">Agregar obligaciones</a>
+              </div>
+            </div>
+          `;
         },
-        columns: [
-            { data: "cod_solicitud" },
-            { data: "descripcion" },
-            { data: "nombre" },
-            { data: "fecha_solicitud" },
-            { data: "monto_solicitado" },
-            { data: "estatus" },
-            { data: "plazo_solicitado" },
-            { data: "tasa" },
-            { data: "oficial_credito" },
-            {
-                data: "cod_solicitud",
-                render: function(data, type, row) {
-                    return `
-                        <a href="consultar_solicitud.php?id_solicitud=${data}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-pencil-alt"></i>
-                        </a>
-                    `;
-                },
-                orderable: false,
-                searchable: false
-            },
-            {
-                data: "cod_solicitud",
-                render: function(data, type, row) {
-                    // Verificar si id_prestamo es nulo
-                    const isDisabled = row.id_prestamo === null;
-                    
-                    return `
-                        <a href="abono.php?id_solicitud=${data}" 
-                           class="btn btn-sm btn-success ${isDisabled ? 'disabled' : ''}" 
-                           data-toggle="tooltip" 
-                           data-placement="top" 
-                           title="${isDisabled ? 'Primero debe aprobar el préstamo' : 'Aplicar Pago'}"
-                           ${isDisabled ? 'onclick="return false;"' : ''}>
-                            <i class="fas fa-money-bill-wave"></i>
-                        </a>
-                    `;
-                },
-                orderable: false,
-                searchable: false
-            }
-        ]
-    });
+        orderable: false,
+        searchable: false
+      },
+      {
+        data: "cod_solicitud",
+        render: function(data, type, row) {
+          const isDisabled = row.id_prestamo === null;
+          return `
+            <a href="abono.php?id_solicitud=${data}" 
+               class="btn btn-sm btn-success ${isDisabled ? 'disabled' : ''}" 
+               data-toggle="tooltip" 
+               data-placement="top" 
+               title="${isDisabled ? 'Primero debe aprobar el préstamo' : 'Aplicar Pago'}"
+               ${isDisabled ? 'onclick="return false;"' : ''}>
+              <i class="fas fa-money-bill-wave"></i>
+            </a>
+          `;
+        },
+        orderable: false,
+        searchable: false
+      }
+    ]
+  });
 });
 </script>
 </body>
