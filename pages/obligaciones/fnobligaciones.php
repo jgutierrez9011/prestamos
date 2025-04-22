@@ -70,11 +70,13 @@ class ObligacionFinanciera {
 
     public function obtenerPorId($id) {
         try {
-            $query = "SELECT * FROM obligacionesfinancieras WHERE id_obligacion = :id";
+            $query = "SELECT a.* FROM obligacionesfinancieras a 
+                      inner join solicitudprestamo b on a.id_solicitud = b.id_solicitud
+                      where b.id_solicitud = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
             $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             throw new Exception("Error al obtener obligación: " . $e->getMessage());
         }

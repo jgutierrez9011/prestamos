@@ -5,6 +5,7 @@ require_once 'fngarantia.php';        // clase Garantia
 header('Content-Type: application/json');
 
 $accion = $_POST['accion'] ?? '';
+$id_solicitud = $_POST['id_solicitud'] ?? '';
 $respuesta = ['success' => false, 'mensaje' => 'Acción no válida'];
 
 try {
@@ -14,6 +15,10 @@ try {
     switch ($accion) {
         case 'listar':
             $respuesta = $garantia->listar();
+            break;
+
+        case 'listarporid':
+            $respuesta = $garantia->obtenerPorId($id_solicitud);
             break;
 
         case 'insertar':

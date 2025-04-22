@@ -5,6 +5,7 @@ require_once 'fnobligaciones.php';
 header('Content-Type: application/json');
 
 $accion = $_POST['accion'] ?? '';
+$id_solicitud = $_POST['id_solicitud'] ?? '';
 $respuesta = ['success' => false, 'mensaje' => 'Acción no válida'];
 
 try {
@@ -15,7 +16,9 @@ try {
         case 'listar':
             $respuesta = $obligacion->listar();
             break;
-
+        case 'listarporid':
+            $respuesta = $obligacion->obtenerPorId($id_solicitud);
+            break;
         case 'insertar':
             $id_solicitud = $_POST['id_solicitud'] ?? 0;
             $institucion = $_POST['institucion'] ?? '';

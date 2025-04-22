@@ -10,6 +10,9 @@ require_once '../usuarios/reg.php';
 
   <!-- CSS -->
   <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
+     <!-- SweetAlert2 -->
+     <link rel="stylesheet" href="../../plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+
   <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
 </head>
@@ -26,6 +29,86 @@ require_once '../usuarios/reg.php';
     </section>
 
     <section class="content">
+
+       <!-- Sección para mostrar la información del cliente -->
+       <div id="client-info" class="card collapsed-card">
+            <div class="card-header">
+              <h3 class="card-title">Información del Cliente</h3>
+              <div class="card-tools">
+                  <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+            </div>
+            <div class="card-body">
+               <div class="form-row">
+                 <div class="form-group col-md-4">
+                    <label>Solicitud</label>
+                    <input type="text" class="form-control form-control-sm" name="cod_solicitud" id="cod_solicitud" readonly>
+                 </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-4">
+                  <label for="cedula">Cédula</label>
+                  <input type="text" class="form-control form-control-sm" id="cedula" name="cedula" readonly>
+                </div>
+                <div class="form-group col-md-4">
+                  <label for="nombre">Nombre</label>
+                  <input type="text" class="form-control form-control-sm" id="nombre" name="nombre" readonly>
+                </div>
+                <div class="form-group col-md-4">
+                  <label for="telefono">Teléfono</label>
+                  <input type="text" class="form-control form-control-sm" id="telefono" name="telefono" readonly>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-4">
+                  <label for="estado_civil">Estado Civil</label>
+                  <input type="text" class="form-control form-control-sm" id="estado_civil" name="estado_civil" readonly>
+                </div>
+                <div class="form-group col-md-4">
+                  <label for="tipo_vivienda">Tipo de Vivienda</label>
+                  <input type="text" class="form-control form-control-sm" id="tipo_vivienda" name="tipo_vivienda" readonly>
+                </div>
+                <div class="form-group col-md-4">
+                  <label for="anos_habitar">Años de Habitar</label>
+                  <input type="text" class="form-control form-control-sm" id="anos_habitar" name="anos_habitar" readonly>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-12">
+                  <label for="direccion_domicilio">Dirección del Domicilio</label>
+                  <input type="text" class="form-control form-control-sm" id="direccion_domicilio" name="direccion_domicilio" readonly>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-4">
+                  <label for="actividad_economica">Actividad Económica</label>
+                  <input type="text" class="form-control form-control-sm" id="actividad_economica" name="actividad_economica" readonly>
+                </div>
+                <div class="form-group col-md-4">
+                  <label for="rubro">Rubro</label>
+                  <input type="text" class="form-control form-control-sm" id="rubro" name="rubro" readonly>
+                </div>
+                <div class="form-group col-md-4">
+                  <label for="tipo_local">Tipo de Local</label>
+                  <input type="text" class="form-control form-control-sm" id="tipo_local" name="tipo_local" readonly>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-4">
+                  <label for="tiempo_operar">Tiempo de Operar</label>
+                  <input type="text" class="form-control form-control-sm" id="tiempo_operar" name="tiempo_operar" readonly>
+                </div>
+                <div class="form-group col-md-8">
+                  <label for="direccion_negocio">Dirección del Negocio</label>
+                  <input type="text" class="form-control form-control-sm" id="direccion_negocio" name="direccion_negocio" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
       <div class="card">
         <div class="card-body">
           <table id="tablaObligaciones" class="display">
@@ -61,8 +144,8 @@ require_once '../usuarios/reg.php';
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label>ID Solicitud</label>
-            <input type="number" name="id_solicitud" class="form-control" required>
+           <!-- <label>ID Solicitud</label> -->
+            <input type="hidden" name="id_solicitud" id="id_solicitud" class="form-control" readonly>
           </div>
           <div class="form-group">
             <label>Institución</label>
@@ -102,8 +185,8 @@ require_once '../usuarios/reg.php';
         <div class="modal-body">
           <input type="hidden" name="id_obligacion" id="editId">
           <div class="form-group">
-            <label>ID Solicitud</label>
-            <input type="number" name="id_solicitud" id="editSolicitud" class="form-control" required>
+           <!-- <label>ID Solicitud</label> -->
+            <input type="hidden" name="id_solicitud" id="editSolicitud" class="form-control" readonly>
           </div>
           <div class="form-group">
             <label>Institución</label>
@@ -156,15 +239,106 @@ require_once '../usuarios/reg.php';
 <!-- JS -->
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
+
 <script src="../../dist/js/adminlte.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script>
   $(document).ready(function () {
+
+ // Obtener el parámetro de la URL (id o cédula)
+ const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
+
+    // Realizar la solicitud AJAX
+    $.ajax({
+        url: `../../pages/prestamos/fnprestamos.php?id_solicitud=${id}`, // Enviar el ID como parámetro GET
+        method: 'GET',
+        success: function(response) {
+          // Llenar los campos con los datos obtenidos
+          $('#id_solicitud').val(response.id_solicitud);
+          $('#cedula').val(response.cedula);
+          $('#nombre').val(response.nombre);
+          $('#telefono').val(response.telefono);
+          $('#estado_civil').val(response.estado_civil);
+          $('#tipo_vivienda').val(response.tipo_vivienda);
+          $('#anos_habitar').val(response.anos_habitar);
+          $('#direccion_domicilio').val(response.direccion_domicilio);
+          $('#actividad_economica').val(response.actividad_economica);
+          $('#rubro').val(response.rubro);
+          $('#tipo_local').val(response.tipo_local);
+          $('#tiempo_operar').val(response.tiempo_operar);
+          $('#direccion_negocio').val(response.direccion_negocio);
+          $('#cod_solicitud').val(response.cod_solicitud);
+
+          if(response.estatus === 'Aprobada' || response.estatus === 'Rechazada'){
+
+            disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
+
+            if(response.estatus === 'Aprobada'){
+
+              Swal.fire({
+                    icon: 'success',
+                    title: 'La solicitud de crédito ya fue aprobada.',
+                    text: `La solicitud ha sido aprobada y el préstamo puede ser desembolsado.`,
+                    timer: 5000,
+                    showConfirmButton: false
+                });
+
+            }else{
+
+              Swal.fire({
+                    icon: 'info',
+                    title: 'La solicitud de crédito fue rechazada.',
+                    text: 'La solicitud fue denegada por el comité de crédito.',
+                    confirmButtonText: 'Entendido'
+                });
+
+               
+
+            }
+            
+
+          }else{
+
+                    if(response.estatus === 'Cancelado'){
+
+                      //disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
+
+                    Swal.fire({
+                          icon: 'info',
+                          title: 'La solicitud de crédito ya fue cancelada.',
+                          text: `El préstamo ha sido pagado en su totalidad y se ha cerrado.`,
+                          timer: 5000,
+                          showConfirmButton: false
+                      });
+
+                    }else{
+
+                      Swal.fire({
+                    icon: 'warning',
+                    title: 'La solicitud de crédito esta pendiente.',
+                    text: 'La solicitud está siendo evaluada por el comité de crédito.',
+                    confirmButtonText: 'Entendido'
+                });
+
+                    }
+
+            
+          }
+
+        },
+        error: function() {
+          alert('Hubo un error al cargar los datos.');
+        }
+      });
+
     const tabla = $('#tablaObligaciones').DataTable({
       ajax: {
         url: 'servicio_obligaciones.php',
         type: 'POST',
-        data: { accion: 'listar' },
+        data: { accion: 'listarporid', id_solicitud: id},
         dataSrc: ''
       },
       columns: [
