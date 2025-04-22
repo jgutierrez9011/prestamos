@@ -58,7 +58,10 @@ switch ($method) {
             }
             
             
-        } 
+        } elseif (isset($data['action']) && $data['action'] === 'promedio_venta') {
+            $response = $solicitudBL->calcularPromedioVentas($data['tipo'],$data['buena'],$data['media'],$data['baja']);
+            echo json_encode($response);
+        }
         // Si es una creación normal
         else {
             $response = $solicitudBL->createSolicitud($data);

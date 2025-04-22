@@ -200,20 +200,20 @@ if (!empty($_SESSION["user"])) {
 
               <div class="form-group">
                                 <label for="montoSolicitado">Monto Solicitado:</label>
-                                <input type="number" class="form-control form-control-sm" id="monto_solicitado" name="monto_solicitado" required>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="monto_solicitado" name="monto_solicitado" required>
                             </div>
                             <div class="form-group">
                                 <label for="plazoSolicitado">Plazo Solicitado (meses):</label>
-                                <input type="number" class="form-control form-control-sm" id="plazo_solicitado" name="plazo_solicitado" required>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="plazo_solicitado" name="plazo_solicitado" required>
                             </div>
                             <div class="form-group">
                                 <label for="tasa">Tasa (%):</label>
-                                <input type="number" class="form-control form-control-sm" id="tasa" name="tasa" required>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="tasa" name="tasa" required>
                             </div>
-                            <div class="form-group">
+                           <!-- <div class="form-group">
                                 <label for="garantia">Garantía:</label>
                                 <input type="text" class="form-control form-control-sm" id="garantia" name="garantia" required>
-                            </div>
+                            </div> -->
 
                 <button type="button" id="back-btn-1" class="btn btn-secondary">Atrás</button>
                 <button type="button" id="next-btn-2" class="btn btn-primary" disabled>Siguiente</button>
@@ -247,7 +247,7 @@ if (!empty($_SESSION["user"])) {
         <!-- Tipo de Promedio -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="tipoPromedio">Tipo de Promedio:</label>
+            <label for="tipoPromedio">Tipo promedio:</label>
                                 <select class="form-control form-control-sm" id="tipo_promedio" name="tipo_promedio" required>
                                     <option value="Diario">Diario</option>
                                     <option value="Semanal">Semanal</option>
@@ -258,30 +258,38 @@ if (!empty($_SESSION["user"])) {
         <div class="col-md-2">
           <div class="form-group">
             <label for="venta_promedio_bueno">Buena:</label>
-            <input type="text" class="form-control form-control-sm" id="venta_promedio_bueno" name="venta_promedio_bueno" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="venta_promedio_bueno" name="venta_promedio_bueno" required>
           </div>
         </div>
         <!-- Venta Promedio Diaria Mediana -->
         <div class="col-md-2">
           <div class="form-group">
             <label for="venta_promedio_mediano">Mediana:</label>
-            <input type="text" class="form-control form-control-sm" id="venta_promedio_mediano" name="venta_promedio_mediano" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="venta_promedio_mediano" name="venta_promedio_mediano" required>
           </div>
         </div>
         <!-- Venta Promedio Diaria Baja -->
         <div class="col-md-2">
           <div class="form-group">
             <label for="venta_promedio_bajo">Baja:</label>
-            <input type="text" class="form-control form-control-sm" id="venta_promedio_bajo" name="venta_promedio_bajo" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="venta_promedio_bajo" name="venta_promedio_bajo" required>
           </div>
         </div>
         <!-- Promedio de Venta -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="promedio_venta">Promedio de Venta:</label>
-            <input type="text" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" required>
+            <label for="promedio_venta">Venta prom.:</label>
+            <div class="input-group">
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" readonly required>
+                    <div class="input-group-append">
+                          <button class="btn btn-sm btn-outline-secondary" type="button" id="btnCalVentaPromedio">
+                              <i class="fas fa-calculator"></i>
+                          </button>
+                    </div>
+              </div>
           </div>
         </div>
+
       </div> <!-- Fin de la fila 1 -->
     </fieldset>
 
@@ -293,19 +301,23 @@ if (!empty($_SESSION["user"])) {
           <legend class="w-auto">Ingresos</legend>
           <div class="form-group">
             <label for="ventas_mensuales">Ingresos Ventas Mensuales:</label>
-            <input type="text" class="form-control form-control-sm" id="ventas_mensuales" name="ventas_mensuales" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="ventas_mensuales" name="ventas_mensuales" required>
           </div>
           <div class="form-group">
             <label for="otros_ingresos_negocio">Otros Ingresos del Negocio:</label>
-            <input type="text" class="form-control form-control-sm" id="otros_ingresos_negocio" name="otros_ingresos_negocio" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="otros_ingresos_negocio" name="otros_ingresos_negocio" required>
           </div>
           <div class="form-group">
             <label for="aportes_familiares">Aportes Familiares:</label>
-            <input type="text" class="form-control form-control-sm" id="aportes_familiares" name="aportes_familiares" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="aportes_familiares" name="aportes_familiares" required>
           </div>
           <div class="form-group">
             <label for="otros_ingresos">Otros Ingresos:</label>
-            <input type="text" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" required>
+          </div>
+          <div class="form-group">
+            <label for="total_ingresos">Total Ingresos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_ingresos" name="total_ingresos" required>
           </div>
         </fieldset>
       </div>
@@ -316,19 +328,23 @@ if (!empty($_SESSION["user"])) {
           <legend class="w-auto">Gastos</legend>
           <div class="form-group">
             <label for="gasto_costo_venta">Gastos de Costos de Venta:</label>
-            <input type="text" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
           </div>
           <div class="form-group">
             <label for="gastos_negocio">Gastos del Negocio:</label>
-            <input type="text" class="form-control form-control-sm" id="gastos_negocio" name="gastos_negocio" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gastos_negocio" name="gastos_negocio" required>
           </div>
           <div class="form-group">
             <label for="cuotas_credito">Cuotas de Crédito:</label>
-            <input type="text" class="form-control form-control-sm" id="cuotas_credito" name="cuotas_credito" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="cuotas_credito" name="cuotas_credito" required>
           </div>
           <div class="form-group">
             <label for="gastos_familiares">Gastos Familiares:</label>
-            <input type="text" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" required>
+          </div>
+          <div class="form-group">
+            <label for="total_gastos">Total gastos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_gastos" name="total_gastos" required>
           </div>
         </fieldset>
       </div>
@@ -339,7 +355,7 @@ if (!empty($_SESSION["user"])) {
       <div class="col-md-12">
         <div class="form-group">
           <label for="utilidad_final">Utilidad Final:</label>
-          <input type="text" class="form-control form-control-sm" id="utilidad_final" name="utilidad_final" required>
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="utilidad_final" name="utilidad_final" required>
         </div>
       </div>
     </div> <!-- Fin de la fila 3 -->
@@ -450,8 +466,6 @@ if (!empty($_SESSION["user"])) {
   
 
       // Envía los datos a la API
-
-
       $.ajax({
                     type: "POST",
                     url: "fnprestamos.php",
@@ -485,7 +499,7 @@ if (!empty($_SESSION["user"])) {
 
     });
 
-
+    /*Buscar cliente*/
     $('#searchButton').click(function() {
             var cedula = $('#cedula').val(); // Obtiene el valor del input de cédula
 
@@ -545,9 +559,57 @@ if (!empty($_SESSION["user"])) {
               return;
             }
         });
+    
+    function enviarDatosPromedio(tipoPromedio, ventaBuena, ventaMedia, ventaBaja) {
+    $.ajax({
+        url: 'fnprestamos.php', // Reemplaza con la ruta a tu archivo PHP
+        type: 'POST',
+        dataType: 'json',
+        data: JSON.stringify({
+            action:'promedio_venta',
+            tipo: tipoPromedio,
+            buena: ventaBuena,
+            media: ventaMedia,
+            baja: ventaBaja
+        }),
+        success: function(response) {
+            if (typeof response === 'object' && response.error) {
+                console.error('Error:', response.error);
+                alert('Ocurrió un error: ' + response.error);
+            } else {
+                console.log('Resultado:', response.venta_promedio);
+                // Aquí puedes hacer algo con el resultado, como mostrarlo en el HTML
+                $('#promedio_venta').val(response.venta_promedio);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error en la solicitud:', error);
+            alert('Error al procesar la solicitud');
+        }
+    });
+};
+
+$('#btnCalVentaPromedio').click(function() {
+    // Obtener valores
+            const tipo = $('#tipo_promedio').val();
+            const buena = parseFloat($('#venta_promedio_bueno').val()) || 0;
+            const media = parseFloat($('#venta_promedio_mediano').val()) || 0;
+            const baja = parseFloat($('#venta_promedio_bajo').val()) || 0;
+            
+            // Validar
+            if (isNaN(buena) || isNaN(media) || isNaN(baja)) {
+                alert('Por favor ingrese valores válidos');
+                return;
+            }
+
+            enviarDatosPromedio(tipo, buena, media, baja);
+});
+
 
 
   });
+
+
 </script>
 </body>
 </html>

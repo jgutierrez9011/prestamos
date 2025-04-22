@@ -130,9 +130,9 @@ class SolicitudPrestamo {
                 promedio_venta, ventas_mensuales, otros_ingresos_negocio, aportes_familiares,
                 otros_ingresos, gasto_costo_venta, gastos_negocio, cuotas_credito,
                 gastos_familiares, utilidad_final, tipo_promedio, idcartera, idestatus,
-                fecha_creo, usuario_creo, tipo_cliente
+                fecha_creo, usuario_creo, tipo_cliente, total_ingreso, total_gasto
             ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp, ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp, ?, ?, ?, ?
             )
         ");
 
@@ -149,7 +149,7 @@ class SolicitudPrestamo {
             $data['aportes_familiares'], $data['otros_ingresos'], $data['gasto_costo_venta'],
             $data['gastos_negocio'], $data['cuotas_credito'], $data['gastos_familiares'],
             $data['utilidad_final'], $data['tipo_promedio'], $_SESSION["carterausuario"], 1,
-            $_SESSION["idusuario"], $recurrente
+            $_SESSION["idusuario"], $recurrente, $data['total_ingresos'], $data['total_gastos']
         ]);
 
         return ["message" => "Solicitud de credito registrada exitosamente."];
@@ -231,6 +231,20 @@ class SolicitudPrestamo {
         } catch (Exception $e) {
             return ["error" => $e->getMessage()];
         }
+    }
+
+    function calcularPromedioVentas($tipoPromedio, $ventaBuena, $ventaMedia, $ventaBaja) {
+        $promedio = ($ventaBuena + $ventaMedia + $ventaBaja) / 3;
+        
+        if (strtolower($tipoPromedio) == 'diario') {
+            $resultado = $promedio * 30;
+        } elseif (strtolower($tipoPromedio) == 'semanal') {
+            $resultado = $promedio * 4;
+        } else {
+            return ['error' => "Tipo de promedio no válido. Use 'diario' o 'semanal'."];
+        }
+        
+        return ['venta_promedio' => round($resultado, 2)];
     }
     
 }
