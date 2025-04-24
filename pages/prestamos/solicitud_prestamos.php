@@ -240,7 +240,7 @@ if (!empty($_SESSION["user"])) {
               </div>
               <div class="card-body">
 
-                                <!-- Fila 1: Tipo de Promedio, Ventas Promedio y Promedio de Venta -->
+    <!-- Fila 1: Tipo de Promedio, Ventas Promedio y Promedio de Venta -->
     <fieldset class="border p-2 mb-3">
       <legend class="w-auto">Ventas Promedio</legend>
       <div class="row">
@@ -281,11 +281,11 @@ if (!empty($_SESSION["user"])) {
             <label for="promedio_venta">Venta prom.:</label>
             <div class="input-group">
                 <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" readonly required>
-                    <div class="input-group-append">
+                    <!--<div class="input-group-append">
                           <button class="btn btn-sm btn-outline-secondary" type="button" id="btnCalVentaPromedio">
                               <i class="fas fa-calculator"></i>
                           </button>
-                    </div>
+                    </div>-->
               </div>
           </div>
         </div>
@@ -317,7 +317,7 @@ if (!empty($_SESSION["user"])) {
           </div>
           <div class="form-group">
             <label for="total_ingresos">Total Ingresos:</label>
-            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_ingresos" name="total_ingresos" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_ingresos" name="total_ingresos" readonly required>
           </div>
         </fieldset>
       </div>
@@ -327,7 +327,7 @@ if (!empty($_SESSION["user"])) {
         <fieldset class="border p-2">
           <legend class="w-auto">Gastos</legend>
           <div class="form-group">
-            <label for="gasto_costo_venta">Gastos de Costos de Venta:</label>
+            <label for="gasto_costo_venta">Costos de Venta:</label>
             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
           </div>
           <div class="form-group">
@@ -344,7 +344,7 @@ if (!empty($_SESSION["user"])) {
           </div>
           <div class="form-group">
             <label for="total_gastos">Total gastos:</label>
-            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_gastos" name="total_gastos" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_gastos" name="total_gastos" readonly required>
           </div>
         </fieldset>
       </div>
@@ -360,6 +360,7 @@ if (!empty($_SESSION["user"])) {
       </div>
     </div> <!-- Fin de la fila 3 -->
                 <button type="button" id="back-btn-2" class="btn btn-secondary">Atrás</button>
+                <button type="button" class="btn btn-info" id="btnCalVentaPromedio"><i class="fas fa-calculator"></i> Calcular</button>
                 <button type="submit" class="btn btn-success" disabled>Enviar</button>
 
               </div>
@@ -577,9 +578,8 @@ if (!empty($_SESSION["user"])) {
                 console.error('Error:', response.error);
                 alert('Ocurrió un error: ' + response.error);
             } else {
-                console.log('Resultado:', response.venta_promedio);
                 // Aquí puedes hacer algo con el resultado, como mostrarlo en el HTML
-                $('#promedio_venta').val(response.venta_promedio);
+                $('#promedio_venta').val(response.venta_promedio.toFixed(2));
             }
         },
         error: function(xhr, status, error) {
@@ -603,9 +603,75 @@ $('#btnCalVentaPromedio').click(function() {
             }
 
             enviarDatosPromedio(tipo, buena, media, baja);
+            calcularIngreso();
+            calcularGasto();
+            cacularUtilidad();
+          
 });
 
+function calcularIngreso() {
+    // 1. Objeto para mapear los IDs y valores
+    const ingresos = {
+        ventasMensuales: parseFloat($('#ventas_mensuales').val()) || 0,
+        otroIngresoNegocio: parseFloat($('#otros_ingresos_negocio').val()) || 0,
+        aportesFamiliares: parseFloat($('#aportes_familiares').val()) || 0,
+        otrosIngresos: parseFloat($('#otros_ingresos').val()) || 0
+    };
 
+    // 2. Validación más limpia
+    if (Object.values(ingresos).some(isNaN)) {
+        alert('Por favor ingrese valores válidos en todos los campos numéricos');
+        return;
+    }
+
+    // 3. Cálculo más legible
+    const totalIngreso = Object.values(ingresos).reduce((sum, value) => sum + value, 0);
+    
+    // 4. Formateo mejorado
+    $('#total_ingresos').val(totalIngreso.toFixed(2));
+}
+
+const calcularGasto = () => {
+   // 1. Objeto para mapear los IDs y valores
+   const gastos = {
+        costoVenta: parseFloat($('#gasto_costo_venta').val()) || 0,
+        gastosNegocio: parseFloat($('#gastos_negocio').val()) || 0,
+        cuotasCredito: parseFloat($('#cuotas_credito').val()) || 0,
+        gastosFamiliares: parseFloat($('#gastos_familiares').val()) || 0
+    };
+
+    // 2. Validación más limpia
+    if (Object.values(gastos).some(isNaN)) {
+        alert('Por favor ingrese valores válidos en todos los campos numéricos');
+        return;
+    }
+
+    // 3. Cálculo más legible
+    const totalGastos = Object.values(gastos).reduce((sum, value) => sum + value, 0);
+    
+    // 4. Formateo mejorado
+    $('#total_gastos').val(totalGastos.toFixed(2));
+}
+
+const cacularUtilidad = () =>{
+   // 1. Objeto para mapear los IDs y valores
+   const utilidad = {
+        totalIngresos: parseFloat($('#total_ingresos').val()) || 0,
+        totalGastos: parseFloat($('#total_gastos').val()) || 0
+    };
+
+    // 2. Validación más limpia
+    if (Object.values(utilidad).some(isNaN)) {
+        alert('Por favor ingrese valores válidos en todos los campos numéricos');
+        return;
+    }
+
+    // 3. Cálculo más legible
+    const totalUtilidad = utilidad.totalIngresos - utilidad.totalGastos;
+    
+    // 4. Formateo mejorado
+    $('#utilidad_final').val(totalUtilidad.toFixed(2));
+}
 
   });
 
