@@ -48,7 +48,12 @@ class SolicitudPrestamo {
                     a.cuotas_credito,
                     a.gastos_familiares, 
                     a.utilidad_final,
-					e.id_prestamo
+					e.id_prestamo,
+                    coalesce(a.costo_unitario,0.00) costo_unitario,
+                    coalesce(a.precio_venta,0.00) precio_venta,
+                    coalesce(a.unidades_producidas,0.00) unidades_producidas,
+                    a.total_ingreso,
+                    a.total_gasto
                 FROM 
                     SolicitudPrestamo a 
                 LEFT JOIN 
@@ -122,35 +127,71 @@ class SolicitudPrestamo {
     public function createSolicitud($data) {
         try{
 
-            $stmt = $this->base_de_datos->prepare("
-            INSERT INTO SolicitudPrestamo (
-                cod_solicitud, idcliente, actividad_economica, direccion_negocio, telefono, tipo_local,
-                tiempo_operar, rubro, monto_solicitado, plazo_solicitado, tasa,
-                venta_promedio_bueno, venta_promedio_mediano, venta_promedio_bajo,
-                promedio_venta, ventas_mensuales, otros_ingresos_negocio, aportes_familiares,
-                otros_ingresos, gasto_costo_venta, gastos_negocio, cuotas_credito,
-                gastos_familiares, utilidad_final, tipo_promedio, idcartera, idestatus,
-                fecha_creo, usuario_creo, tipo_cliente, total_ingreso, total_gasto
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp, ?, ?, ?, ?
-            )
-        ");
+            $tipo_cliente = cliente_existe($data['idcliente']);
+            $recurrente = ($tipo_cliente > 0) ? 'Recurrente' : 'Nuevo';
+            $numero_solicitud = seq_solicitud_credito() + 1;
+            
+            
+            if($data['rubro']==='comercio' || $data['rubro']==='servicio'){
 
-        $tipo_cliente = cliente_existe($data['idcliente']);
-        $recurrente = ($tipo_cliente > 0) ? 'Recurrente' : 'Nuevo';
-        $numero_solicitud = seq_solicitud_credito() + 1;
-          //echo $numero_solicitud;
-        $stmt->execute([
-            $numero_solicitud, $data['idcliente'], $data['actividad_economica'], $data['direccion_negocio'],
-            $data['telefono'], $data['tipo_local'], $data['tiempo_operar'], $data['rubro'],
-            $data['monto_solicitado'], $data['plazo_solicitado'], $data['tasa'],
-            $data['venta_promedio_bueno'], $data['venta_promedio_mediano'], $data['venta_promedio_bajo'],
-            $data['promedio_venta'], $data['ventas_mensuales'], $data['otros_ingresos_negocio'],
-            $data['aportes_familiares'], $data['otros_ingresos'], $data['gasto_costo_venta'],
-            $data['gastos_negocio'], $data['cuotas_credito'], $data['gastos_familiares'],
-            $data['utilidad_final'], $data['tipo_promedio'], $_SESSION["carterausuario"], 1,
-            $_SESSION["idusuario"], $recurrente, $data['total_ingresos'], $data['total_gastos']
-        ]);
+                $stmt = $this->base_de_datos->prepare("
+                        INSERT INTO SolicitudPrestamo (
+                            cod_solicitud, idcliente, actividad_economica, direccion_negocio, telefono, tipo_local,
+                            tiempo_operar, rubro, monto_solicitado, plazo_solicitado, tasa,
+                            venta_promedio_bueno, venta_promedio_mediano, venta_promedio_bajo,
+                            promedio_venta, ventas_mensuales, otros_ingresos_negocio, aportes_familiares,
+                            otros_ingresos, gasto_costo_venta, gastos_negocio, cuotas_credito,
+                            gastos_familiares, utilidad_final, tipo_promedio, idcartera, idestatus,
+                            fecha_creo, usuario_creo, tipo_cliente, total_ingreso, total_gasto
+                        ) VALUES (
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp, ?, ?, ?, ?
+                        )
+                    ");
+
+                    
+                    $stmt->execute([
+                        $numero_solicitud, $data['idcliente'], $data['actividad_economica'], $data['direccion_negocio'],
+                        $data['telefono'], $data['tipo_local'], $data['tiempo_operar'], $data['rubro'],
+                        $data['monto_solicitado'], $data['plazo_solicitado'], $data['tasa'],
+                        $data['venta_promedio_bueno'], $data['venta_promedio_mediano'], $data['venta_promedio_bajo'],
+                        $data['promedio_venta'], $data['ventas_mensuales'], $data['otros_ingresos_negocio'],
+                        $data['aportes_familiares'], $data['otros_ingresos'], $data['gasto_costo_venta'],
+                        $data['gastos_negocio'], $data['cuotas_credito'], $data['gastos_familiares'],
+                        $data['utilidad_final'], $data['tipo_promedio'], $_SESSION["carterausuario"], 1,
+                        $_SESSION["idusuario"], $recurrente, $data['total_ingresos'], $data['total_gastos']
+                    ]);
+
+            } else {
+
+                $stmt = $this->base_de_datos->prepare("
+                        INSERT INTO SolicitudPrestamo (
+                            cod_solicitud, idcliente, actividad_economica, direccion_negocio, telefono, tipo_local,
+                            tiempo_operar, rubro, monto_solicitado, plazo_solicitado, tasa,
+                            venta_promedio_bueno, venta_promedio_mediano, venta_promedio_bajo,
+                            promedio_venta, ventas_mensuales, otros_ingresos_negocio, aportes_familiares,
+                            otros_ingresos, gasto_costo_venta, gastos_negocio, cuotas_credito,
+                            gastos_familiares, utilidad_final, tipo_promedio, idcartera, idestatus,
+                            fecha_creo, usuario_creo, tipo_cliente, total_ingreso, total_gasto,costo_unitario,precio_venta,unidades_producidas
+                        ) VALUES (
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp, ?, ?, ?, ?,?,?,?
+                        )
+                    ");
+
+                    
+                    $stmt->execute([
+                        $numero_solicitud, $data['idcliente'], $data['actividad_economica'], $data['direccion_negocio'],
+                        $data['telefono'], $data['tipo_local'], $data['tiempo_operar'], $data['rubro'],
+                        $data['monto_solicitado'], $data['plazo_solicitado'], $data['tasa'],
+                        $data['venta_promedio_bueno'], $data['venta_promedio_mediano'], $data['venta_promedio_bajo'],
+                        $data['promedio_venta'], $data['ventas_mensuales'], $data['otros_ingresos_negocio'],
+                        $data['aportes_familiares'], $data['otros_ingresos'], $data['gasto_costo_venta'],
+                        $data['gastos_negocio'], $data['cuotas_credito'], $data['gastos_familiares'],
+                        $data['utilidad_final'], $data['tipo_promedio'], $_SESSION["carterausuario"], 1,
+                        $_SESSION["idusuario"], $recurrente, $data['total_ingresos'], $data['total_gastos'],$data['costo_unitario'],$data['precio_venta'],$data['unidad_producida']
+                    ]);
+
+            }
+            
 
         return ["message" => "Solicitud de credito registrada exitosamente."];
 

@@ -326,6 +326,20 @@ if (!empty($_SESSION["user"])) {
       <div class="col-md-6">
         <fieldset class="border p-2">
           <legend class="w-auto">Gastos</legend>
+
+                <!-- Campos para Producción -->
+          <div id="camposProduccion" style="display: none;">
+              <div class="form-group">
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="costo_unitario" name="costo_unitario" placeholder="Costo Unitario">
+              </div>
+              <div class="form-group">
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="precio_venta" name="precio_venta" placeholder="Precio de Venta">
+              </div>
+              <div class="form-group">
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="unidad_producida" name="unidad_producida" placeholder="Unidades Producidas">
+              </div>
+          </div>
+
           <div class="form-group">
             <label for="gasto_costo_venta">Costos de Venta:</label>
             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
@@ -400,13 +414,26 @@ if (!empty($_SESSION["user"])) {
 <script src="../../dist/js/demo.js"></script>
 <script>
   $(function () {
+
+    let valorSeleccionado = '';
     const forms = document.querySelectorAll('.form-step');
     const indicators = document.querySelectorAll('#step-indicators .nav-link');
+
     const buttons = {
       next1: document.getElementById('next-btn-1'),
       next2: document.getElementById('next-btn-2'),
       submit: document.querySelector('#form3 button[type="submit"]')
     };
+
+    $('#rubro').on('change', function () {
+      valorSeleccionado = $(this).val();
+      if (valorSeleccionado === 'produccion') {
+        $('#camposProduccion').slideDown();
+      } else {
+        $('#camposProduccion').slideUp();
+        $('#costo_unitario, #precio_venta, #unidad_producida').val('');
+      }
+    });
 
     // Función para mostrar el formulario y actualizar el tab activo
     function showForm(index) {
@@ -463,8 +490,6 @@ if (!empty($_SESSION["user"])) {
       formData3.forEach((value, key) => {
         data[key] = value;
       });
-
-  
 
       // Envía los datos a la API
       $.ajax({
@@ -606,6 +631,9 @@ $('#btnCalVentaPromedio').click(function() {
             calcularIngreso();
             calcularGasto();
             cacularUtilidad();
+            if(valorSeleccionado==='produccion'){
+              calcularCostoVenta();
+            }
           
 });
 
@@ -671,6 +699,27 @@ const cacularUtilidad = () =>{
     
     // 4. Formateo mejorado
     $('#utilidad_final').val(totalUtilidad.toFixed(2));
+}
+
+const calcularCostoVenta = () =>{
+  // 1. Objeto para mapear los IDs y valores
+  const montoCostoVenta = {
+        costoUnitario: parseFloat($('#costo_unitario').val()) || 0,
+        precioVenta: parseFloat($('#precio_venta').val()) || 0,
+        unidadProducida: parseFloat($('#unidad_producida').val()) || 0
+    };
+
+    // 2. Validación más limpia
+    if (Object.values(montoCostoVenta).some(isNaN)) {
+        alert('Por favor ingrese valores válidos en todos los campos numéricos');
+        return;
+    }
+
+    // 3. Cálculo más legible
+    const totalCostoVenta = ((montoCostoVenta.costoUnitario / montoCostoVenta.precioVenta) * montoCostoVenta.unidadProducida) || 0.00;
+    
+    // 4. Formateo mejorado
+    $('#gasto_costo_venta').val(totalCostoVenta.toFixed(2));
 }
 
   });

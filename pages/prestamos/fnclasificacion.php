@@ -7,7 +7,9 @@ require_once  '../usuarios/reg.php';
 
         $pdo = conexion_bd(3);
 
-        $stmt = $pdo->prepare("SELECT count(id_solicitud) cantidad FROM SolicitudPrestamo WHERE idcliente = :idcliente");
+        $stmt = $pdo->prepare("SELECT count(a.id_solicitud) cantidad 
+                                      FROM prestamo a inner join SolicitudPrestamo b on a.id_solicitud = b.id_solicitud
+                                      WHERE idcliente = :idcliente");
                 $stmt->execute([":idcliente" => $idcliente]);
                 $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
 

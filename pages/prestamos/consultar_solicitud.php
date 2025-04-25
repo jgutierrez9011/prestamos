@@ -197,12 +197,12 @@ if (!empty($_SESSION["user"])) {
 
             <!-- Fila 2: Garantía -->
             <div class="row mt-3"> <!-- mt-3 para agregar un margen superior -->
-            <div class="col-md-12">
+            <!--<div class="col-md-12">
                 <div class="form-group">
                 <label for="garantia">Garantía:</label>
                 <input type="text" class="form-control form-control-sm" id="garantia" name="garantia" readonly>
                 </div>
-            </div>
+            </div>-->
             </div> <!-- Fin de la fila 2 -->
         </div> <!-- Cierre del card-body -->
           </div>
@@ -225,7 +225,7 @@ if (!empty($_SESSION["user"])) {
         <!-- Tipo de Promedio -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="tipo_promedio">Tipo de Promedio:</label>
+            <label for="tipo_promedio">Tipo promedio:</label>
             <input type="text" class="form-control form-control-sm" id="tipo_promedio" name="tipo_promedio" readonly>
           </div>
         </div>
@@ -253,7 +253,7 @@ if (!empty($_SESSION["user"])) {
         <!-- Promedio de Venta -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="promedio_venta">Promedio de Venta:</label>
+            <label for="promedio_venta">Venta prom.:</label>
             <input type="text" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" readonly>
           </div>
         </div>
@@ -282,6 +282,10 @@ if (!empty($_SESSION["user"])) {
             <label for="otros_ingresos">Otros Ingresos:</label>
             <input type="text" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" readonly>
           </div>
+          <div class="form-group">
+            <label for="total_ingresos">Total Ingresos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_ingresos" name="total_ingresos" readonly required>
+          </div>
         </fieldset>
       </div>
 
@@ -289,6 +293,23 @@ if (!empty($_SESSION["user"])) {
       <div class="col-md-6">
         <fieldset class="border p-2">
           <legend class="w-auto">Gastos</legend>
+
+          <!-- Campos para Producción -->
+          <div id="camposProduccion" style="display: none;">
+              <div class="form-group">
+              <label for="lbl_costo_unitario">Costo unitario:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="costo_unitario" name="costo_unitario" readonly>
+              </div>
+              <div class="form-group">
+              <label for="lbl_precio_venta">Precio de venta:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="precio_venta" name="precio_venta" readonly>
+              </div>
+              <div class="form-group">
+                <label for="lbl_unidad_producida">Cantidad producida:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="unidad_producida" name="unidad_producida" readonly>
+              </div>
+          </div>
+
           <div class="form-group">
             <label for="gasto_costo_venta">Gastos de Costos de Venta:</label>
             <input type="text" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" readonly>
@@ -304,6 +325,10 @@ if (!empty($_SESSION["user"])) {
           <div class="form-group">
             <label for="gastos_familiares">Gastos Familiares:</label>
             <input type="text" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" readonly>
+          </div>
+          <div class="form-group">
+            <label for="total_gastos">Total gastos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_gastos" name="total_gastos" readonly required>
           </div>
         </fieldset>
       </div>
@@ -598,11 +623,26 @@ if (!empty($_SESSION["user"])) {
           $('#gastos_familiares').val(response.gastos_familiares);
           $('#utilidad_final').val(response.utilidad_final);
           $('#cod_solicitud').val(response.cod_solicitud);
+          $('#total_ingresos').val(response.total_ingreso);
+          $('#total_gastos').val(response.cod_solicitud);
           
 
           $("#monto_aprobado").val(response.monto_solicitado),
           $("#interes").val(response.tasa),
           $("#plazo").val(response.plazo_solicitado);
+
+          $("#costo_unitario").val(response.costo_unitario),
+          $("#precio_venta").val(response.precio_venta),
+          $("#unidad_producida").val(response.unidades_producidas);
+
+          if (response.rubro === 'produccion') 
+          {
+                $('#camposProduccion').slideDown();
+          } 
+          else 
+          {
+                $('#camposProduccion').slideUp();
+          }
           
           inicializarDataTableCalendarioPago(id);
 
