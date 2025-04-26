@@ -465,8 +465,21 @@ if (!empty($_SESSION["user"])) {
                             <input type="number" class="form-control" id="plazo" name="plazo" required>
                         </div>
                         <div class="form-group">
+
                             <label for="cuota">Cuota:</label>
-                            <input type="number" class="form-control" id="cuota" name="cuota" step="0.01" required>
+                            <div class="input-group">
+                              <input type="number" class="form-control" id="cuota" name="cuota" step="0.01" required>
+                                 <div class="input-group-append">
+                                      <button class="btn btn-sm btn-outline-secondary" type="button" id="cargar_tb_amortizado">
+                                          <i class="fas fa-calculator"></i> Calcular cuota y amortizacion
+                                      </button>
+                                 </div>
+                            
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha_desembolso">Fecha desembolso:</label>
+                            <input type="date" class="form-control" id="fecha_desembolso" name="fecha_desembolso" step="0.01" required>
                         </div>
                         <div class="form-group">
                             <label for="primer_cuota">Fecha primer cuota:</label>
@@ -491,13 +504,7 @@ if (!empty($_SESSION["user"])) {
         <div class="card-body">
 
 
-            <!-- Fila 1: Boton para cargar tabla de amortizacion -->
-            <div class="row"> <!-- mt-3 para agregar un margen superior -->
-            <button id="cargar_tb_amortizado" type="button" class="btn btn-primary btn-sm ml-2">
-                <i class=""></i> Cargar tabla
-              </button>
-              
-            </div> <!-- Fin de la fila 1 -->
+           
 
             <br>
 
@@ -533,7 +540,7 @@ if (!empty($_SESSION["user"])) {
                 </div>
             </div>
         </div>
-    </div>
+  </div>
 <!--Cierra el modal-dialog -->
 
   <!-- FOOTER -->
@@ -711,7 +718,7 @@ if (!empty($_SESSION["user"])) {
     
     function inicializarDataTableCalendarioPago(id) {
 
-      if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
+    if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
             $('#tb_calendarioPago').DataTable().destroy();
         }
         
@@ -754,10 +761,9 @@ if (!empty($_SESSION["user"])) {
             }*/
         }
     });
-}
+    }
     // Cargar los datos al iniciar la página
     loadData(id);
-
     //inicializarDataTableCalendarioPago(id);
 
     $('#cargar_tbcalendariopago').on('click', function() {
@@ -785,47 +791,57 @@ if (!empty($_SESSION["user"])) {
         });
     });
 
-
+//Tabla de amortizacion en pantalla de comite de resolucion
     $('#cargar_tb_amortizado').on('click', function() {
-        if ($.fn.DataTable.isDataTable('#amortizacionTb')) {
-            $('#amortizacionTb').DataTable().destroy();
-        }
-        $('#amortizacionTb').DataTable({
-            processing: true,
-            serverSide: false,
-            ajax: {
-                url: 'service_amortizacion.php',
-                type: 'POST',
-                contentType: 'application/json',
-                data: function() {
-                    return JSON.stringify({
-                        id_solicitud: $("#id_solicitud").val(),
-                        monto_aprobado: $("#monto_aprobado").val(),
-                        interes: $("#interes").val(),
-                        fecha_primer_cuota: $("#primer_cuota").val(),
-                        plazo: $("#plazo").val()
-                    });
-                },
-                dataSrc: '',
-                error: function(xhr, error, thrown) {
-                    console.error("Error en la carga de datos: ", error);
-                    console.error("Estado: ", xhr.status);
-                    console.error("Respuesta: ", xhr.responseText);
-                }
+
+    if ($.fn.DataTable.isDataTable('#amortizacionTb')) {
+        $('#amortizacionTb').DataTable().destroy();
+    }
+
+    var tabla = $('#amortizacionTb').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: 'service_amortizacion.php',
+            type: 'POST',
+            contentType: 'application/json',
+            data: function() {
+                return JSON.stringify({
+                    id_solicitud: $("#id_solicitud").val(),
+                    monto_aprobado: $("#monto_aprobado").val(),
+                    interes: $("#interes").val(),
+                    fecha_primer_cuota: $("#primer_cuota").val(),
+                    plazo: $("#plazo").val()
+                });
             },
-            columns: [
-                { data: "semana", title: "Semana" },
-                { data: "fecha_pago", title: "Fecha de pago" },
-                { data: "cuota", title: "Cuota" },
-                { data: "interes", title: "Interés" },
-                { data: "abono_capital", title: "Cuota a capital" },
-                { data: "saldo_pendiente", title: "Saldo pendiente" }
-            ]
-        });
+            dataSrc: function(json) {
+                // Si hay resultados, asignamos la primera cuota al input
+                if (json.length > 0) {
+                    var cuotaPrimeraSemana = json[0].cuota;
+                    $('#cuota').val(cuotaPrimeraSemana);
+                } else {
+                    $('#cuota').val(''); // Si no hay datos, limpiar
+                }
+                return json;
+            },
+            error: function(xhr, error, thrown) {
+                console.error("Error en la carga de datos: ", error);
+                console.error("Estado: ", xhr.status);
+                console.error("Respuesta: ", xhr.responseText);
+            }
+        },
+        columns: [
+            { data: "semana", title: "Semana" },
+            { data: "fecha_pago", title: "Fecha de pago" },
+            { data: "cuota", title: "Cuota" },
+            { data: "interes", title: "Interés" },
+            { data: "abono_capital", title: "Cuota a capital" },
+            { data: "saldo_pendiente", title: "Saldo pendiente" }
+        ]
     });
+});
+
     
-
-
     // creacion de prestamos
     $("#prestamoForm").submit(function(event) {
                 
@@ -838,6 +854,7 @@ if (!empty($_SESSION["user"])) {
                 interes: $("#interes").val(),
                 plazo: $("#plazo").val(),
                 saldo: $("#cuota").val(),
+                fecha_desembolso: $("#fecha_desembolso").val(),
                 fecha_primer_cuota: $("#primer_cuota").val(),
                 comentario: $("#comentario").val(),
                 cod_solicitud: $('#cod_solicitud').val()
@@ -897,7 +914,7 @@ if (!empty($_SESSION["user"])) {
             }
     
     // Función para cambiar el estado (con AJAX y SweetAlert2)
-function cambiarEstadoSolicitud(estatus,codigoSolicitud) {
+    function cambiarEstadoSolicitud(estatus,codigoSolicitud) {
     Swal.fire({
         title: '¿Rechazar solicitud?',
         text: `¿Estás seguro de rechazar la solicitud ${codigoSolicitud}?`,
@@ -940,14 +957,39 @@ function cambiarEstadoSolicitud(estatus,codigoSolicitud) {
     });
 }
 
-$(document).on('click', '.btn-reject', function() {
+    $(document).on('click', '.btn-reject', function() {
         const codigoSolicitud = $('#cod_solicitud').val();
         cambiarEstadoSolicitud(
             4,  // estatus
             codigoSolicitud // código de solicitud
         );
     });
-            
+
+    function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Agrega 0 si es necesario
+    const day = String(date.getDate()).padStart(2, '0'); // Agrega 0 si es necesario
+    return `${year}-${month}-${day}`;
+    }
+
+    // Función para actualizar la fecha de primer cuota
+    function actualizarPrimerCuota() {
+    const fechaDesembolsoVal = $('#fecha_desembolso').val();
+    if (fechaDesembolsoVal) {
+        const fechaDesembolso = new Date(fechaDesembolsoVal);
+        fechaDesembolso.setDate(fechaDesembolso.getDate() + 7); // Sumar 7 días
+        $('#primer_cuota').val(formatDate(fechaDesembolso));
+    }
+}
+
+    const hoy = new Date();
+    $('#fecha_desembolso').val(formatDate(hoy));
+    actualizarPrimerCuota();
+
+    $('#fecha_desembolso').on('change', function() {
+        actualizarPrimerCuota();
+    });
+
               });
 </script>
 </body>

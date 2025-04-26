@@ -54,8 +54,8 @@ class PrestamoService {
 
         $interesSemanal = $interesTotal / $plazoSemanas;
 
-        $sql = "INSERT INTO prestamo (id_solicitud, monto_aprobado, interes, plazo, saldo, fecha_primer_cuota, comentario, usuario_creo, monto_interes, montotal, frecuencia, modalidad, monto_cuota, interes_semanal)
-                VALUES (:id_solicitud, :monto_aprobado, :interes, :plazo, :saldo, :fecha_primer_cuota, :comentario, :usuario_creo, :interesTotal, :montototal, :frecuencia, :tipomodalidad, :monto_cuota, :interessemanal)";
+        $sql = "INSERT INTO prestamo (id_solicitud, monto_aprobado, interes, plazo, saldo, fecha_primer_cuota, comentario, usuario_creo, monto_interes, montotal, frecuencia, modalidad, monto_cuota, interes_semanal, fecha_desembolso)
+                VALUES (:id_solicitud, :monto_aprobado, :interes, :plazo, :saldo, :fecha_primer_cuota, :comentario, :usuario_creo, :interesTotal, :montototal, :frecuencia, :tipomodalidad, :monto_cuota, :interessemanal, :date_desembolso)";
         $stmt = $this->base_de_datos->prepare($sql);
         $stmt->execute([
             'id_solicitud' => $data['id_solicitud'],
@@ -71,7 +71,8 @@ class PrestamoService {
             'frecuencia' => $plazoSemanas,
             'tipomodalidad' => 'Semanal',
             'monto_cuota' => round($pagoSemanal,2),
-            'interessemanal' => round($interesSemanal, 2)
+            'interessemanal' => round($interesSemanal, 2),
+            'date_desembolso' => $data['fecha_desembolso']
         ]);
 
         
