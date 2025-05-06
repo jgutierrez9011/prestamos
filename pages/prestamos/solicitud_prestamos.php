@@ -87,21 +87,21 @@ if (!empty($_SESSION["user"])) {
                 </button>
             </div>
         </div>
-                               <input type="hidden" class="form-control form-control-sm" id="idcliente" name="idcliente" required>
+                               <input type="hidden" class="form-control form-control-sm" id="idcliente" name="idcliente" readonly required>
                             </div>
                             <div class="form-group col-md-4">
                                 <label for="nombre">Nombre</label>
-                                <input type="text" class="form-control form-control-sm" id="nombre" name="nombre" required>
+                                <input type="text" class="form-control form-control-sm" id="nombre" name="nombre" readonly required>
                             </div>
                             <div class="form-group col-md-4">
                                 <label for="telefono">Teléfono</label>
-                                <input type="text" class="form-control form-control-sm" id="telefono" name="telefono" required>
+                                <input type="text" class="form-control form-control-sm" id="telefono" name="telefono" readonly required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label for="estado_civil">Estado Civil</label>
-                                <select class="form-control form-control-sm" id="estado_civil" name="estado_civil" required>
+                                <select class="form-control form-control-sm" id="estado_civil" name="estado_civil" disabled required>
                                     <option value="">Seleccione...</option>
                                     <option value="soltero">Soltero</option>
                                     <option value="casado">Casado</option>
@@ -118,7 +118,7 @@ if (!empty($_SESSION["user"])) {
                             </div> -->
                             <div class="form-group col-md-4">
                                 <label for="tipo_vivienda">Tipo de Vivienda</label>
-                                <select class="form-control form-control-sm" id="tipo_vivienda" name="tipo_vivienda" required>
+                                <select class="form-control form-control-sm" id="tipo_vivienda" name="tipo_vivienda" disabled required>
                                     <option value="">Seleccione...</option>
                                     <option value="propio">Propio</option>
                                     <option value="renta">Renta</option>
@@ -127,14 +127,14 @@ if (!empty($_SESSION["user"])) {
                             </div>
                             <div class="form-group col-md-4">
                                 <label for="anos_habitar">Años de Habitar</label>
-                                <input type="number" class="form-control form-control-sm" id="anos_habitar" name="anos_habitar" min="0" required>
+                                <input type="number" class="form-control form-control-sm" id="anos_habitar" name="anos_habitar" min="0" readonly required>
                             </div>
                             
                         </div>
                         <div class="form-row">
                         <div class="form-group col-md-12">
                                 <label for="direccion_domicilio">Dirección del Domicilio</label>
-                                <input type="text" class="form-control form-control-sm" id="direccion_domicilio" name="direccion_domicilio" required>
+                                <input type="text" class="form-control form-control-sm" id="direccion_domicilio" name="direccion_domicilio" readonly required>
                             </div>
                         </div>
                         <div class="form-row">
@@ -173,7 +173,17 @@ if (!empty($_SESSION["user"])) {
                                 <input type="text" class="form-control form-control-sm" id="direccion_negocio" name="direccion_negocio" required>
                             </div>
                         </div>
-                <button type="button" id="next-btn-1" class="btn btn-primary" disabled>Siguiente</button>
+                        
+                        <div class="container mt-5">
+                            <div class="d-flex justify-content-start">
+                              <a href="../../pages/clientes/nuevo_cliente.php" class="btn btn-primary mr-2" role="button">
+                                Agregar cliente
+                              </a>
+                              <button type="button" id="next-btn-1" class="btn btn-primary" disabled>
+                                Siguiente
+                              </button>
+                            </div>
+                      </div>
                 
               </div>
               <div class="card-footer">
@@ -200,6 +210,7 @@ if (!empty($_SESSION["user"])) {
 
               <div class="form-group">
                                 <label for="montoSolicitado">Monto Solicitado:</label>
+                                <input type="hidden" id="cod_cartera" name="cod_cartera" class="form-control" value="<?php echo $_SESSION["carterausuario"] ?>">
                                 <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="monto_solicitado" name="monto_solicitado" required>
                             </div>
                             <div class="form-group">
@@ -281,11 +292,6 @@ if (!empty($_SESSION["user"])) {
             <label for="promedio_venta">Venta prom.:</label>
             <div class="input-group">
                 <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" readonly required>
-                    <!--<div class="input-group-append">
-                          <button class="btn btn-sm btn-outline-secondary" type="button" id="btnCalVentaPromedio">
-                              <i class="fas fa-calculator"></i>
-                          </button>
-                    </div>-->
               </div>
           </div>
         </div>
@@ -375,7 +381,7 @@ if (!empty($_SESSION["user"])) {
     </div> <!-- Fin de la fila 3 -->
                 <button type="button" id="back-btn-2" class="btn btn-secondary">Atrás</button>
                 <button type="button" class="btn btn-info" id="btnCalVentaPromedio"><i class="fas fa-calculator"></i> Calcular</button>
-                <button type="submit" class="btn btn-success" disabled>Enviar</button>
+                <button type="submit" class="btn btn-success" id="btn_enviar_solicitud" disabled>Enviar</button>
 
               </div>
               <div class="card-footer">
@@ -614,113 +620,179 @@ if (!empty($_SESSION["user"])) {
     });
 };
 
-$('#btnCalVentaPromedio').click(function() {
-    // Obtener valores
-            const tipo = $('#tipo_promedio').val();
-            const buena = parseFloat($('#venta_promedio_bueno').val()) || 0;
-            const media = parseFloat($('#venta_promedio_mediano').val()) || 0;
-            const baja = parseFloat($('#venta_promedio_bajo').val()) || 0;
-            
-            // Validar
-            if (isNaN(buena) || isNaN(media) || isNaN(baja)) {
-                alert('Por favor ingrese valores válidos');
-                return;
+    $('#btnCalVentaPromedio').click(function() {
+        // Obtener valores
+                const tipo = $('#tipo_promedio').val();
+                const buena = parseFloat($('#venta_promedio_bueno').val()) || 0;
+                const media = parseFloat($('#venta_promedio_mediano').val()) || 0;
+                const baja = parseFloat($('#venta_promedio_bajo').val()) || 0;
+                
+                // Validar
+                if (isNaN(buena) || isNaN(media) || isNaN(baja)) {
+                    alert('Por favor ingrese valores válidos');
+                    return;
+                }
+
+                enviarDatosPromedio(tipo, buena, media, baja);
+                calcularIngreso();
+                calcularGasto();
+                cacularUtilidad();
+              /*if(valorSeleccionado==='produccion'){
+                  calcularCostoVenta();
+                }*/
+              
+    });
+
+    function calcularIngreso() {
+        // 1. Objeto para mapear los IDs y valores
+        const ingresos = {
+            ventasMensuales: parseFloat($('#ventas_mensuales').val()) || 0,
+            otroIngresoNegocio: parseFloat($('#otros_ingresos_negocio').val()) || 0,
+            aportesFamiliares: parseFloat($('#aportes_familiares').val()) || 0,
+            otrosIngresos: parseFloat($('#otros_ingresos').val()) || 0
+        };
+
+        // 2. Validación más limpia
+        if (Object.values(ingresos).some(isNaN)) {
+            alert('Por favor ingrese valores válidos en todos los campos numéricos');
+            return;
+        }
+
+        // 3. Cálculo más legible
+        const totalIngreso = Object.values(ingresos).reduce((sum, value) => sum + value, 0);
+        
+        // 4. Formateo mejorado
+        $('#total_ingresos').val(totalIngreso.toFixed(2));
+    }
+
+    const calcularGasto = () => {
+      // 1. Objeto para mapear los IDs y valores
+      const gastos = {
+            costoVenta: parseFloat($('#gasto_costo_venta').val()) || 0,
+            gastosNegocio: parseFloat($('#gastos_negocio').val()) || 0,
+            cuotasCredito: parseFloat($('#cuotas_credito').val()) || 0,
+            gastosFamiliares: parseFloat($('#gastos_familiares').val()) || 0
+        };
+
+        // 2. Validación más limpia
+        if (Object.values(gastos).some(isNaN)) {
+            alert('Por favor ingrese valores válidos en todos los campos numéricos');
+            return;
+        }
+
+        // 3. Cálculo más legible
+        const totalGastos = Object.values(gastos).reduce((sum, value) => sum + value, 0);
+        
+        // 4. Formateo mejorado
+        $('#total_gastos').val(totalGastos.toFixed(2));
+    }
+
+    const cacularUtilidad = () =>{
+      // 1. Objeto para mapear los IDs y valores
+      const utilidad = {
+            totalIngresos: parseFloat($('#total_ingresos').val()) || 0,
+            totalGastos: parseFloat($('#total_gastos').val()) || 0
+        };
+
+        // 2. Validación más limpia
+        if (Object.values(utilidad).some(isNaN)) {
+            alert('Por favor ingrese valores válidos en todos los campos numéricos');
+            return;
+        }
+
+        // 3. Cálculo más legible
+        const totalUtilidad = utilidad.totalIngresos - utilidad.totalGastos;
+        
+        // 4. Formateo mejorado
+        $('#utilidad_final').val(totalUtilidad.toFixed(2));
+    }
+
+    // Ejecutar cuando el input de monto pierde el foco
+        $('#monto_solicitado').on('blur', function() {
+            var descripcion = $('#cod_cartera').val(); // Captura la descripción
+            var monto = $('#monto_solicitado').val(); // Captura el monto
+
+            if (descripcion.trim() !== '' && monto.trim() !== '') {
+                $.ajax({
+                    url: 'fnprestamos.php', // <-- Cambiar a tu ruta real
+                    method: 'POST',
+                    data: JSON.stringify({
+                        descripcion: descripcion,
+                        monto: monto,
+                        action: 'limite_credito'
+                    }),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.mensaje) {
+
+                          if(response.mensaje==='El monto está por debajo del mínimo permitido.' || response.mensaje==='El monto está por encima del máximo permitido.')
+                           {
+                               $('#btn_enviar_solicitud').hide();
+
+                               Swal.fire({
+                                    icon: 'warning',
+                                    title: `${response.mensaje}`,
+                                    text: `Si persiste en ingresar el monto, contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+
+                           }else{
+                               $('#btn_enviar_solicitud').show();
+                               //alert(response.mensaje);
+                           }
+                         
+                            
+
+                        } else {
+                            Swal.fire({
+                                    icon: 'warning',
+                                    title: `Respuesta inesperada.`,
+                                    text: `Por favor contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error en la solicitud AJAX:', error);
+                    }
+                });
             }
+        });
 
-            enviarDatosPromedio(tipo, buena, media, baja);
-            calcularIngreso();
-            calcularGasto();
-            cacularUtilidad();
-            if(valorSeleccionado==='produccion'){
-              calcularCostoVenta();
-            }
-          
-});
+        $('#ventas_mensuales').on('blur', function () {
+                  const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
+                  const rubro = $('#rubro').val();
 
-function calcularIngreso() {
-    // 1. Objeto para mapear los IDs y valores
-    const ingresos = {
-        ventasMensuales: parseFloat($('#ventas_mensuales').val()) || 0,
-        otroIngresoNegocio: parseFloat($('#otros_ingresos_negocio').val()) || 0,
-        aportesFamiliares: parseFloat($('#aportes_familiares').val()) || 0,
-        otrosIngresos: parseFloat($('#otros_ingresos').val()) || 0
-    };
+                  // Solo enviar datos adicionales si el rubro es Producción
+                  let data = {
+                      action: 'estimacion_costo',
+                      rubro: rubro,
+                      ventasMensuales: ventasMensuales
+                  };
 
-    // 2. Validación más limpia
-    if (Object.values(ingresos).some(isNaN)) {
-        alert('Por favor ingrese valores válidos en todos los campos numéricos');
-        return;
-    }
+                  if (rubro === 'producción') {
+                      data.costoUnitario = parseFloat($('#costo_unitario').val()) || 0;
+                      data.precioVenta = parseFloat($('#precio_venta').val()) || 0;
+                      data.unidadesProducidas = parseFloat($('#unidad_producida').val()) || 0;
+                  }
 
-    // 3. Cálculo más legible
-    const totalIngreso = Object.values(ingresos).reduce((sum, value) => sum + value, 0);
-    
-    // 4. Formateo mejorado
-    $('#total_ingresos').val(totalIngreso.toFixed(2));
-}
-
-const calcularGasto = () => {
-   // 1. Objeto para mapear los IDs y valores
-   const gastos = {
-        costoVenta: parseFloat($('#gasto_costo_venta').val()) || 0,
-        gastosNegocio: parseFloat($('#gastos_negocio').val()) || 0,
-        cuotasCredito: parseFloat($('#cuotas_credito').val()) || 0,
-        gastosFamiliares: parseFloat($('#gastos_familiares').val()) || 0
-    };
-
-    // 2. Validación más limpia
-    if (Object.values(gastos).some(isNaN)) {
-        alert('Por favor ingrese valores válidos en todos los campos numéricos');
-        return;
-    }
-
-    // 3. Cálculo más legible
-    const totalGastos = Object.values(gastos).reduce((sum, value) => sum + value, 0);
-    
-    // 4. Formateo mejorado
-    $('#total_gastos').val(totalGastos.toFixed(2));
-}
-
-const cacularUtilidad = () =>{
-   // 1. Objeto para mapear los IDs y valores
-   const utilidad = {
-        totalIngresos: parseFloat($('#total_ingresos').val()) || 0,
-        totalGastos: parseFloat($('#total_gastos').val()) || 0
-    };
-
-    // 2. Validación más limpia
-    if (Object.values(utilidad).some(isNaN)) {
-        alert('Por favor ingrese valores válidos en todos los campos numéricos');
-        return;
-    }
-
-    // 3. Cálculo más legible
-    const totalUtilidad = utilidad.totalIngresos - utilidad.totalGastos;
-    
-    // 4. Formateo mejorado
-    $('#utilidad_final').val(totalUtilidad.toFixed(2));
-}
-
-const calcularCostoVenta = () =>{
-  // 1. Objeto para mapear los IDs y valores
-  const montoCostoVenta = {
-        costoUnitario: parseFloat($('#costo_unitario').val()) || 0,
-        precioVenta: parseFloat($('#precio_venta').val()) || 0,
-        unidadProducida: parseFloat($('#unidad_producida').val()) || 0
-    };
-
-    // 2. Validación más limpia
-    if (Object.values(montoCostoVenta).some(isNaN)) {
-        alert('Por favor ingrese valores válidos en todos los campos numéricos');
-        return;
-    }
-
-    // 3. Cálculo más legible
-    const totalCostoVenta = ((montoCostoVenta.costoUnitario / montoCostoVenta.precioVenta) * montoCostoVenta.unidadProducida) || 0.00;
-    
-    // 4. Formateo mejorado
-    $('#gasto_costo_venta').val(totalCostoVenta.toFixed(2));
-}
+                  $.ajax({
+                      url: 'fnprestamos.php',
+                      method: 'POST',
+                      contentType: 'application/json',
+                      data: JSON.stringify(data),
+                      dataType: 'json',
+                      success: function (response) {
+                          $('#gasto_costo_venta').val(response);
+                      },
+                      error: function (err) {
+                          $('#gasto_costo_venta').val('');
+                          
+                      }
+                         });
+           });
 
   });
 

@@ -30,7 +30,6 @@ switch ($method) {
 
     case 'POST':
         $data = json_decode(file_get_contents("php://input"), true);
-        
         // Si se envía una acción de cambio de estado (nuevo endpoint)
         if (isset($data['action']) && $data['action'] === 'cambiar_estado') {
 
@@ -60,6 +59,19 @@ switch ($method) {
             
         } elseif (isset($data['action']) && $data['action'] === 'promedio_venta') {
             $response = $solicitudBL->calcularPromedioVentas($data['tipo'],$data['buena'],$data['media'],$data['baja']);
+            echo json_encode($response);
+        } elseif(isset($data['action']) && $data['action'] === 'limite_credito'){
+            $response = $solicitudBL->validarMontoCartera($data['descripcion'],$data['monto']);
+            echo json_encode($response);
+        } elseif(isset($data['action']) && $data['action'] === 'estimacion_costo'){
+
+            $rubro = $data['rubro'] ?? '';
+            $ventasMensuales = floatval($data['ventasMensuales'] ?? 0);
+            $costoUnitario = isset($data['costoUnitario']) ? floatval($data['costoUnitario']) : null;
+            $precioVenta = isset($data['precioVenta']) ? floatval($data['precioVenta']) : null;
+            $unidadesProducidas = isset($data['unidadesProducidas']) ? floatval($data['unidadesProducidas']) : null;
+
+            $response = $solicitudBL->calcularCostoVenta($rubro, $ventasMensuales, $costoUnitario, $precioVenta, $unidadesProducidas);
             echo json_encode($response);
         }
         // Si es una creación normal

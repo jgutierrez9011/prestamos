@@ -245,7 +245,10 @@ if (!empty($_SESSION["user"])) {
                         </div>
                         <div class="col-md-4">
                         <button type="submit" class="btn btn-primary">Guardar</button>
-                        <a href="clientes.php" class="btn btn-primary" role="button">Buscar</a>
+                        <a href="../../pages/prestamos/solicitud_prestamos.php" class="btn btn-primary" role="button">Nuevo credito</a>
+                        <?php if($_SESSION["perfilusuario"] === 'Administrador'){ ?>
+                            <a href="clientes.php" class="btn btn-primary" role="button">Buscar</a>
+                        <?php }?>
                         </div>
                         
                     </form>

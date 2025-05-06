@@ -287,6 +287,82 @@ class SolicitudPrestamo {
         
         return ['venta_promedio' => round($resultado, 2)];
     }
+
+    function validarMontoCartera($cod_cartera, $monto)
+    {
+            // Preparar la consulta para buscar los límites de la cartera
+            $sql = "SELECT monto_minimo, monto_maximo FROM public.tblcatcartera WHERE idcartera = :idcartera AND estado = true LIMIT 1";
+            $stmt = $this->base_de_datos->prepare($sql);
+            $stmt->bindParam(':idcartera', $cod_cartera, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $cartera = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($cartera) {
+                $montoMinimo = $cartera['monto_minimo'];
+                $montoMaximo = $cartera['monto_maximo'];
+
+                if ($monto < $montoMinimo) {
+                    return ['mensaje' => 'El monto está por debajo del mínimo permitido.'];
+                } elseif ($monto > $montoMaximo) {
+                    return ['mensaje' => 'El monto está por encima del máximo permitido.'];
+                } else {
+                    return ['mensaje' => 'El monto está dentro del rango permitido.'];
+                }
+            } else {
+                return ['mensaje' => 'Cartera no encontrada o inactiva.'];
+            }
+     }
+
+     
+     function calcularCostoVenta($rubro, $ventasMensuales, $costoUnitario = null, $precioVenta = null, $unidadesProducidas = null) {
+        try {
+            // Consultar configuración del rubro
+            $sql = "SELECT margen_venta, tipo_calculo 
+                    FROM configuracion_costo_venta 
+                    WHERE rubro = :rubro AND activo = true
+                    LIMIT 1";
+            
+            $stmt = $this->base_de_datos->prepare($sql);
+            $stmt->bindParam(':rubro', $rubro);
+            $stmt->execute();
+            $config = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if (!$config) {
+                throw new Exception("No se encontró configuración activa para el rubro: $rubro");
+            }
+    
+            $tipoCalculo = $config['tipo_calculo'];
+            $margenVenta = $config['margen_venta'];
+            $costoVenta = 0;
+    
+            // Cálculo basado en tipo
+            if ($tipoCalculo === 'POR_MARGEN') {
+                $costoVenta = (1 - ($margenVenta / 100)) * $ventasMensuales;
+    
+            } elseif ($tipoCalculo === 'COSTO_UNITARIO') {
+                // Validar solo si se necesita
+                if (!is_numeric($costoUnitario) || !is_numeric($precioVenta) || !is_numeric($unidadesProducidas) || $precioVenta == 0) {
+                    throw new Exception("Se requieren costoUnitario, precioVenta y unidadesProducidas válidos para el rubro Producción.");
+                }
+    
+                $totalCostoProduccion = $costoUnitario * $unidadesProducidas;
+                $totalVentasProduccion = $precioVenta * $unidadesProducidas;
+                $margenCostoVenta = $totalCostoProduccion / $totalVentasProduccion;
+    
+                $costoVenta = $ventasMensuales * $margenCostoVenta;
+            } else {
+                throw new Exception("Tipo de cálculo desconocido: $tipoCalculo");
+            }
+    
+            return round($costoVenta, 2);
+    
+        } catch (Exception $e) {
+            return "Error: " . $e->getMessage();
+        }
+    }
+    
+    
     
 }
 ?>
