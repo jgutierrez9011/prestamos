@@ -71,6 +71,7 @@ if (!empty($_SESSION["user"])) {
         <div class="row mb-2">
           <div class="col-sm-6">
             <h1>Consulta de Créditos</h1>
+            
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
@@ -380,8 +381,10 @@ if (!empty($_SESSION["user"])) {
                       <th><p class="small"><strong>Modalidad</strong></p></th>
                       <th><p class="small"><strong>Fecha de pago</strong></p></th>
                       <th><p class="small"><strong>Cuota</strong></p></th>
+                      <?php if($_SESSION['perfilusuario'] == 'Administrador'){?>
                       <th><p class="small"><strong>Interes</strong></p></th>
                       <th><p class="small"><strong>Abono a capital</strong></p></th>
+                      <?php }?>
                       <th><p class="small"><strong>Saldo pendiente</strong></p></th>
                   </tr>
               </thead>
@@ -408,6 +411,7 @@ if (!empty($_SESSION["user"])) {
                 <i class="fas fa-search"></i> Buscar
                 </button>-->
                 <a href="creditos.php" class="btn btn-primary btn-sm" role="button"><i class="fas fa-search"></i> Buscar</a>
+                <?php if($_SESSION['perfilusuario'] == 'Administrador'){?>
                 <!-- Botón Aprobar -->
                 <button type="button" class="btn btn-success btn-sm ml-2 btn-approve"
                 data-toggle="modal" data-target="#prestamoModal">
@@ -417,10 +421,11 @@ if (!empty($_SESSION["user"])) {
                 <button type="button" class="btn btn-danger btn-sm ml-2 btn-reject">
                 <i class="fas fa-times"></i> Rechazar
                 </button>
+                <?php } ?>
                 <!-- Botón Cancelar -->
-                <button type="button" class="btn btn-secondary btn-sm ml-2">
+                <!--<button type="button" class="btn btn-secondary btn-sm ml-2">
                 <i class="fas fa-ban"></i> Cancelar
-                </button>
+                </button> -->
             </div>
             </div> <!-- Fin de la fila de botones -->
         </div> <!-- Cierre del card-body -->
@@ -585,6 +590,45 @@ if (!empty($_SESSION["user"])) {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
 
+
+    const esAdmin = <?= $_SESSION['perfilusuario'] === 'Administrador' ? 'true' : 'false'; ?>;
+
+    const columnasCalendario = [
+            { data: "modalidad" },
+            { data: "fecha_pago" },
+            { data: "monto_cuota" }
+          ];
+
+          if (esAdmin) {
+            columnasCalendario.push(
+              { data: "interes" },
+              { data: "principal" }
+            );
+          }
+
+          columnasCalendario.push(
+            { data: "saldo" }
+          );
+
+          const columnasAmortizacion = [
+                        { data: "semana", title: "Semana" },
+                        { data: "fecha_pago", title: "Fecha de pago" },
+                        { data: "cuota", title: "Cuota" }
+                      ];
+
+                      if (esAdmin) {
+                        columnasAmortizacion.push(
+                          { data: "interes", title: "Interés" },
+                          { data: "abono_capital", title: "Cuota a capital" }
+                        );
+                      }
+
+                      columnasAmortizacion.push(
+                        { data: "saldo_pendiente", title: "Saldo pendiente" }
+                      );
+
+
+
     // Cargar los datos guardados
     function loadData(id) {
       if (!id) {
@@ -732,14 +776,7 @@ if (!empty($_SESSION["user"])) {
                 console.log("Respuesta: ", xhr.responseText);
             }
         },
-        columns: [
-            { data: "modalidad" },
-            { data: "fecha_pago" },
-            { data: "monto_cuota" },
-            { data: "interes" },
-            { data: "principal" },
-            { data: "saldo" }
-        ],
+        columns: columnasCalendario,
         initComplete: function(settings, json) {
             // Verificar si hay datos en la respuesta
             /*if (json && json.data && json.data.length > 0) {
@@ -780,14 +817,7 @@ if (!empty($_SESSION["user"])) {
                 console.log("Respuesta: ", xhr.responseText);
             }
         },
-        columns: [
-                { data: "modalidad"},
-                { data: "fecha_pago"},
-                { data: "monto_cuota"},
-                { data: "interes"},
-                { data: "principal"},
-                { data: "saldo"}
-              ]
+        columns: columnasCalendario
         });
     });
 
@@ -830,14 +860,7 @@ if (!empty($_SESSION["user"])) {
                 console.error("Respuesta: ", xhr.responseText);
             }
         },
-        columns: [
-            { data: "semana", title: "Semana" },
-            { data: "fecha_pago", title: "Fecha de pago" },
-            { data: "cuota", title: "Cuota" },
-            { data: "interes", title: "Interés" },
-            { data: "abono_capital", title: "Cuota a capital" },
-            { data: "saldo_pendiente", title: "Saldo pendiente" }
-        ]
+        columns: columnasAmortizacion
     });
 });
 
