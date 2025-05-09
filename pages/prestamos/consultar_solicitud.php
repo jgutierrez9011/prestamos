@@ -584,6 +584,8 @@ if (!empty($_SESSION["user"])) {
 <!-- AdminLTE for demo purposes -->
 <script src="../../dist/js/demo.js"></script>
 
+<script src="../../plugins/scripts/consultar_solicitud.js"></script>
+
 <script>
   $(function () {
     // Obtener el parámetro de la URL (id o cédula)

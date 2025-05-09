@@ -190,8 +190,10 @@ if (!empty($_SESSION["user"])) {
                             <th>Semana</th>
                             <th>Fecha de Pago</th>
                             <th>Cuota</th>
+                            <?php if($_SESSION['perfilusuario'] == 'Administrador'){?>
                             <th>Interés</th>
                             <th>Cuota Capital</th>
+                            <?php } ?>
                             <th>Saldo Pendiente</th>
                             <th>Estado</th>
                             <th>Saldo pendiente de cuota</th>
@@ -250,6 +252,30 @@ if (!empty($_SESSION["user"])) {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
 
+    const esAdmin = <?= $_SESSION['perfilusuario'] === 'Administrador' ? 'true' : 'false'; ?>;
+
+    const columnasCalendario = [
+                { data: "modalidad"},
+                { data: "fecha_pago"},
+                { data: "monto_cuota"}
+              ];
+               
+              if (esAdmin) {
+                 columnasCalendario.push(
+                        { data: "interes" },
+                        { data: "principal" }
+                     );
+                }
+
+                columnasCalendario.push(
+                  { data: "saldo"},
+                  { data: "estado"},
+                  { data: "saldo_cuota"});
+            
+
+
+
+
 function inicializarDataTableCalendarioPago(id) {
 
 if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
@@ -268,16 +294,7 @@ if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
                 console.log("Respuesta: ", xhr.responseText);
             }
         },
-        columns: [
-                { data: "modalidad"},
-                { data: "fecha_pago"},
-                { data: "monto_cuota"},
-                { data: "interes"},
-                { data: "principal"},
-                { data: "saldo"},
-                { data: "estado"},
-                { data: "saldo_cuota"}
-              ],
+        columns: columnasCalendario,
         initComplete: function(settings, json) {
         // Verificar si hay datos en la respuesta
                   if (json && json.data && json.data.length > 0) {
