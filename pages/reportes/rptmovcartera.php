@@ -49,7 +49,7 @@ require_once '../../menu_builder.php';
     <section class="content">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Consultar Interés Pendiente</h3>
+          <h3 class="card-title">Consultar resumen movimiento por cartera</h3>
         </div>
         <div class="card-body">
 
@@ -171,7 +171,7 @@ function cargarReporte(fechainicio = '', fechafin = '') {
             extend: 'pdfHtml5',
             orientation: 'landscape',
             pageSize: 'A4',
-            title: 'CREDIMORE - Interés por Cartera',
+            title: 'CREDIMORE - Movimiento por Cartera',
             customize: function (doc) {
               doc.styles.title = {
                 alignment: 'center',
