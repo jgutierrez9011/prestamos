@@ -16,18 +16,25 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        if (isset($_GET['id_solicitud'])) {
-            $id_solicitud = $_GET['id_solicitud'];
-            //Cambia el estado de la solicitud a En revision
-            //$estadoSolicitud = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"],2,$id_solicitud);
-            $solicitud = $solicitudBL->getSolicitud($id_solicitud);
-            echo json_encode($solicitud);
+        $id_solicitud = $_GET['id_solicitud'] ?? null;
+        $fecha = $_GET['fecha'] ?? null;
+        $cliente = $_GET['cliente'] ?? null;
+    
+        if ($id_solicitud || $fecha || $cliente) {
+            $resultado = $solicitudBL->getSolicitud($id_solicitud, $fecha, $cliente);
+    
+            // Si es un array lo devuelves tal cual, si es un solo objeto lo conviertes a array
+            if (is_array($resultado) && isset($resultado[0])) {
+                echo json_encode($resultado);
+            } else {
+                echo json_encode($resultado ? [$resultado] : []);
+            }
         } else {
-            $solicitudes = $solicitudBL->getAllSolicitudes($_SESSION["perfilusuario"],$_SESSION["carterausuario"]);
+            $solicitudes = $solicitudBL->getAllSolicitudes($_SESSION["perfilusuario"], $_SESSION["carterausuario"]);
             echo json_encode($solicitudes);
         }
-        break;
-
+        break;       
+    
     case 'POST':
         $data = json_decode(file_get_contents("php://input"), true);
         // Si se envía una acción de cambio de estado (nuevo endpoint)

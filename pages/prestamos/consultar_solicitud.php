@@ -17,10 +17,10 @@ if (isset($_GET['id_solicitud'])) {
   $id_solicitud = $_GET['id_solicitud'];
   
   // Primero obtener el estado actual para verificar si necesita cambio
-  $solicitudActual = $solicitudBL->getSolicitud($id_solicitud);
-  
+  $solicitudActual = $solicitudBL->getSolicitud($id_solicitud,null,null);
+
   // Solo cambiar a "En revisión" si está en estado "Pendiente" (idestatus=1)
-  if ($solicitudActual['estatus'] == 'Pendiente') {
+  if ($solicitudActual[0]['estatus'] == 'Pendiente') {
       $resultado = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"], 2, $id_solicitud);
       
       if (isset($resultado['error'])) {
@@ -643,52 +643,54 @@ if (!empty($_SESSION["user"])) {
         url: `fnprestamos.php?id_solicitud=${id}`, // Enviar el ID como parámetro GET
         method: 'GET',
         success: function(response) {
+          const data = Array.isArray(response) ? response[0] : response;
+
           // Llenar los campos con los datos obtenidos
-          $('#id_solicitud').val(response.id_solicitud);
-          $('#cedula').val(response.cedula);
-          $('#nombre').val(response.nombre);
-          $('#telefono').val(response.telefono);
-          $('#estado_civil').val(response.estado_civil);
-          $('#tipo_vivienda').val(response.tipo_vivienda);
-          $('#anos_habitar').val(response.anos_habitar);
-          $('#direccion_domicilio').val(response.direccion_domicilio);
-          $('#actividad_economica').val(response.actividad_economica);
-          $('#rubro').val(response.rubro);
-          $('#tipo_local').val(response.tipo_local);
-          $('#tiempo_operar').val(response.tiempo_operar);
-          $('#direccion_negocio').val(response.direccion_negocio);
-          $('#monto_solicitado').val(response.monto_solicitado);
-          $('#plazo_solicitado').val(response.plazo_solicitado);
-          $('#tasa').val(response.tasa);
-          $('#garantia').val(response.garantia);
-          $('#venta_promedio_bueno').val(response.venta_promedio_bueno);
-          $('#venta_promedio_mediano').val(response.venta_promedio_mediano);
-          $('#venta_promedio_bajo').val(response.venta_promedio_bajo);
-          $('#promedio_venta').val(response.promedio_venta);
-          $('#tipo_promedio').val(response.tipo_promedio);
-          $('#ventas_mensuales').val(response.ventas_mensuales);
-          $('#otros_ingresos_negocio').val(response.otros_ingresos_negocio);
-          $('#aportes_familiares').val(response.aportes_familiares);
-          $('#otros_ingresos').val(response.otros_ingresos);
-          $('#gasto_costo_venta').val(response.gasto_costo_venta);
-          $('#gastos_negocio').val(response.gastos_negocio);
-          $('#cuotas_credito').val(response.cuotas_credito);
-          $('#gastos_familiares').val(response.gastos_familiares);
-          $('#utilidad_final').val(response.utilidad_final);
-          $('#cod_solicitud').val(response.cod_solicitud);
-          $('#total_ingresos').val(response.total_ingreso);
-          $('#total_gastos').val(response.cod_solicitud);
+          $('#id_solicitud').val(data.id_solicitud);
+          $('#cedula').val(data.cedula);
+          $('#nombre').val(data.nombre);
+          $('#telefono').val(data.telefono);
+          $('#estado_civil').val(data.estado_civil);
+          $('#tipo_vivienda').val(data.tipo_vivienda);
+          $('#anos_habitar').val(data.anos_habitar);
+          $('#direccion_domicilio').val(data.direccion_domicilio);
+          $('#actividad_economica').val(data.actividad_economica);
+          $('#rubro').val(data.rubro);
+          $('#tipo_local').val(data.tipo_local);
+          $('#tiempo_operar').val(data.tiempo_operar);
+          $('#direccion_negocio').val(data.direccion_negocio);
+          $('#monto_solicitado').val(data.monto_solicitado);
+          $('#plazo_solicitado').val(data.plazo_solicitado);
+          $('#tasa').val(data.tasa);
+          $('#garantia').val(data.garantia);
+          $('#venta_promedio_bueno').val(data.venta_promedio_bueno);
+          $('#venta_promedio_mediano').val(data.venta_promedio_mediano);
+          $('#venta_promedio_bajo').val(data.venta_promedio_bajo);
+          $('#promedio_venta').val(data.promedio_venta);
+          $('#tipo_promedio').val(data.tipo_promedio);
+          $('#ventas_mensuales').val(data.ventas_mensuales);
+          $('#otros_ingresos_negocio').val(data.otros_ingresos_negocio);
+          $('#aportes_familiares').val(data.aportes_familiares);
+          $('#otros_ingresos').val(data.otros_ingresos);
+          $('#gasto_costo_venta').val(data.gasto_costo_venta);
+          $('#gastos_negocio').val(data.gastos_negocio);
+          $('#cuotas_credito').val(data.cuotas_credito);
+          $('#gastos_familiares').val(data.gastos_familiares);
+          $('#utilidad_final').val(data.utilidad_final);
+          $('#cod_solicitud').val(data.cod_solicitud);
+          $('#total_ingresos').val(data.total_ingreso);
+          $('#total_gastos').val(data.cod_solicitud);
           
 
-          $("#monto_aprobado").val(response.monto_solicitado),
-          $("#interes").val(response.tasa),
-          $("#plazo").val(response.plazo_solicitado);
+          $("#monto_aprobado").val(data.monto_solicitado),
+          $("#interes").val(data.tasa),
+          $("#plazo").val(data.plazo_solicitado);
 
-          $("#costo_unitario").val(response.costo_unitario),
-          $("#precio_venta").val(response.precio_venta),
-          $("#unidad_producida").val(response.unidades_producidas);
+          $("#costo_unitario").val(data.costo_unitario),
+          $("#precio_venta").val(data.precio_venta),
+          $("#unidad_producida").val(data.unidades_producidas);
 
-          if (response.rubro === 'produccion') 
+          if (data.rubro === 'produccion') 
           {
                 $('#camposProduccion').slideDown();
           } 
@@ -699,11 +701,11 @@ if (!empty($_SESSION["user"])) {
           
           inicializarDataTableCalendarioPago(id);
 
-          if(response.estatus === 'Aprobada' || response.estatus === 'Rechazada'){
+          if(data.estatus === 'Aprobada' || data.estatus === 'Rechazada'){
 
-            disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
+            disableActionButtons(`La solicitud ya fue ${data.estatus}.`);
 
-            if(response.estatus === 'Aprobada'){
+            if(data.estatus === 'Aprobada'){
 
               Swal.fire({
                     icon: 'success',
@@ -729,9 +731,9 @@ if (!empty($_SESSION["user"])) {
 
           }else{
 
-                    if(response.estatus === 'Cancelado'){
+                    if(data.estatus === 'Cancelado'){
 
-                      disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
+                      disableActionButtons(`La solicitud ya fue ${data.estatus}.`);
 
                     Swal.fire({
                           icon: 'info',

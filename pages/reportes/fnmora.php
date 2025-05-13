@@ -107,6 +107,26 @@ class Reportes {
             throw new Exception("Error al generar el reporte: " . $e->getMessage());
         }
     }
+
+    public function ReporteMovimientoPorCartera($fechaInicio = null, $fechaFin = null) {
+        try {
+            $query = "SELECT * FROM fn_reporte_movimiento_por_cartera(:fechaInicio, :fechaFin)";
+            $stmt = $this->conn->prepare($query);
+
+            // Asignar null si no se pasó parámetro
+            $stmt->bindValue(':fechaInicio', $fechaInicio, is_null($fechaInicio) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':fechaFin', $fechaFin, is_null($fechaFin) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+
+            $stmt->execute();
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $resultados ?: [];
+
+        } catch (PDOException $e) {
+            throw new Exception("Error al ejecutar fn_reporte_movimiento_por_cartera: " . $e->getMessage());
+        }
+    
+}
+
 }
 
 ?>

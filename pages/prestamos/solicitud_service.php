@@ -9,7 +9,7 @@ class SolicitudPrestamo {
         $this->base_de_datos = $pdo;
     }
 
-    public function getSolicitud($id_solicitud) {
+    /*public function getSolicitud($id_solicitud) {
         try {
             $stmt = $this->base_de_datos->prepare("
                 SELECT 
@@ -86,7 +86,109 @@ class SolicitudPrestamo {
             http_response_code(500);
             echo json_encode(["error" => $e->getMessage()]);
         }
+    }*/
+    public function getSolicitud($id_solicitud = null, $fecha = null, $cliente = null) {
+        try {
+            $sql = "
+                SELECT 
+                    a.id_solicitud, 
+                    a.cod_solicitud, 
+                    b.nombre, 
+                    b.cedula,
+                    b.estado_civil, 
+                    b.tipo_vivienda, 
+                    b.anos_habitar, 
+                    b.direccion_negocio,
+                    a.telefono,
+                    b.direccion_domicilio,
+                    a.actividad_economica, 
+                    a.rubro, 
+                    a.tipo_local,
+                    a.tiempo_operar, 
+                    a.direccion_negocio,
+                    a.fecha_creo AS fecha_solicitud, 
+                    a.monto_solicitado, 
+                    c.nombre AS estatus, 
+                    a.plazo_solicitado, 
+                    a.tasa, 
+                    CONCAT(d.strpnombre, ' ', d.strsnombre, ' ', d.strpapellido, ' ', d.strsapellido) AS oficial_credito,
+                    a.venta_promedio_bueno, 
+                    a.venta_promedio_mediano, 
+                    a.venta_promedio_bajo,
+                    a.promedio_venta, 
+                    a.tipo_promedio, 
+                    a.ventas_mensuales,
+                    a.otros_ingresos_negocio, 
+                    a.aportes_familiares, 
+                    a.otros_ingresos,
+                    a.gasto_costo_venta, 
+                    a.gastos_negocio, 
+                    a.cuotas_credito,
+                    a.gastos_familiares, 
+                    a.utilidad_final,
+                    e.id_prestamo,
+                    coalesce(a.costo_unitario,0.00) costo_unitario,
+                    coalesce(a.precio_venta,0.00) precio_venta,
+                    coalesce(a.unidades_producidas,0.00) unidades_producidas,
+                    a.total_ingreso,
+                    a.total_gasto,
+                    f.idcartera, 
+                    f.descripcion
+                FROM 
+                    SolicitudPrestamo a 
+                LEFT JOIN clientes b ON a.idcliente = b.idcliente
+                LEFT JOIN estatus_solicitud c ON a.idestatus = c.idestatus
+                LEFT JOIN tblcatusuario d ON a.usuario_creo = d.intid
+                LEFT JOIN prestamo e on a.id_solicitud = e.id_solicitud
+                left join tblcatcartera f on a.idcartera = f.idcartera
+                WHERE 1=1
+            ";
+    
+            $params = [];
+    
+            if (!empty($id_solicitud)) {
+                $sql .= " AND a.cod_solicitud = ?";
+                $params[] = $id_solicitud;
+            }
+    
+            if (!empty($fecha)) {
+                $sql .= " AND DATE(a.fecha_creo) = ?";
+                $params[] = $fecha;
+            }
+    
+            if (!empty($cliente)) {
+                $sql .= " AND b.nombre ILIKE ?";
+                $params[] = '%' . $cliente . '%';
+            }
+    
+            $stmt = $this->base_de_datos->prepare($sql);
+            $stmt->execute($params);
+    
+            $resultado = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+            if ($resultado === false) {
+                throw new Exception("No se encontró la solicitud con los parámetros proporcionados.");
+            }
+    
+            // Devuelve uno si se buscó por ID específico, varios si fue búsqueda general
+       /*if (!empty($id_solicitud) && empty($fecha) && empty($cliente)) {
+           return $resultado[0] ?? null;
+       } else {
+            return $resultado;
+        }*/
+
+        return $resultado ?: []; // Siempre un array
+    
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["error" => $e->getMessage()]);
+        }
     }
+    
+
 
     public function getAllSolicitudes($rol_usuario, $idcartera) {
         try {
