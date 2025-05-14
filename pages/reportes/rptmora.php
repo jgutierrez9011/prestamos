@@ -124,11 +124,18 @@ function cargarReporte(id_prestamo = '') {
   fetch(url)
     .then(response => response.json())
     .then(data => {
+
+     if (tabla) {
+        tabla.destroy();
+      }
+
       const tbody = document.getElementById('resultadoReporte');
       tbody.innerHTML = '';
       let total = 0;
 
-      const registros = Array.isArray(data) ? data : (data && data.id_prestamo ? [data] : []);
+      //const registros = Array.isArray(data) ? data : (data && data.id_prestamo ? [data] : []);
+      const registros = Array.isArray(data) ? data : [];
+
       registros.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -151,9 +158,7 @@ function cargarReporte(id_prestamo = '') {
 
       document.getElementById('totalRegistros').textContent = total;
 
-      if (tabla) {
-        tabla.destroy();
-      }
+      
 
       tabla = $('#tablaReporte').DataTable({
         responsive: true,
