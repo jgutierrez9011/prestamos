@@ -336,12 +336,15 @@ if (!empty($_SESSION["user"])) {
                 <!-- Campos para Producción -->
           <div id="camposProduccion" style="display: none;">
               <div class="form-group">
+                <label for="costo_unitario">Costo unitario:</label>
                 <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="costo_unitario" name="costo_unitario" placeholder="Costo Unitario">
               </div>
               <div class="form-group">
+                <label for="precio_venta">Precio de venta:</label>
                 <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="precio_venta" name="precio_venta" placeholder="Precio de Venta">
               </div>
               <div class="form-group">
+                <label for="unidad_producida">Unidades producidas:</label>
                 <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="unidad_producida" name="unidad_producida" placeholder="Unidades Producidas">
               </div>
           </div>
@@ -761,18 +764,15 @@ if (!empty($_SESSION["user"])) {
             }
         });
 
-        $('#ventas_mensuales').on('blur', function () {
-                  const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
-                  const rubro = $('#rubro').val();
-
-                  // Solo enviar datos adicionales si el rubro es Producción
+        const calcularCostoProduccion = (ventasMensuales,rubro) => {
+           // Solo enviar datos adicionales si el rubro es Producción
                   let data = {
                       action: 'estimacion_costo',
                       rubro: rubro,
                       ventasMensuales: ventasMensuales
                   };
 
-                  if (rubro === 'producción') {
+                  if (rubro === 'produccion') {
                       data.costoUnitario = parseFloat($('#costo_unitario').val()) || 0;
                       data.precioVenta = parseFloat($('#precio_venta').val()) || 0;
                       data.unidadesProducidas = parseFloat($('#unidad_producida').val()) || 0;
@@ -792,7 +792,42 @@ if (!empty($_SESSION["user"])) {
                           
                       }
                          });
-           });
+        }
+
+        function validarCamposProduccion(venta_mensual, rubro) {
+
+                  const costo = parseFloat($('#costo_unitario').val());
+                  const precio = parseFloat($('#precio_venta').val());
+                  const unidades = parseFloat($('#unidad_producida').val());
+
+                  const camposValidos = !isNaN(costo) && costo >= 0 &&
+                                        !isNaN(precio) && precio >= 0 &&
+                                        !isNaN(unidades) && unidades >= 0;
+
+                  if (camposValidos) {
+                    calcularCostoProduccion(venta_mensual,rubro); // Aquí llamas a tu función si los campos están bien
+                  }
+
+          }
+
+          $('#ventas_mensuales').on('blur', function () {
+                    const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
+                    const rubro = $('#rubro').val();
+
+                    calcularCostoProduccion(ventasMensuales,rubro);
+
+                    
+            });
+
+                  // Asigna el evento blur a cada input
+            $('#costo_unitario, #precio_venta, #unidad_producida').on('blur', function () {
+              
+              const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
+              const rubro = $('#rubro').val();
+
+              validarCamposProduccion(ventasMensuales, rubro);
+
+            });
 
   });
 

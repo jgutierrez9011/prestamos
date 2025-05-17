@@ -467,7 +467,7 @@ if (!empty($_SESSION["user"])) {
                         </div>
                         <div class="form-group">
                             <label for="plazo">Plazo (Meses):</label>
-                            <input type="number" class="form-control" id="plazo" name="plazo" required>
+                            <input type="number" step="0.01" min="0" class="form-control" id="plazo" name="plazo" required>
                         </div>
                         <div class="form-group">
 

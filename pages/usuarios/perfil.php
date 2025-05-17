@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt_form = $conexion->prepare("INSERT INTO tblcatperfilusrfrm (idfrm, idperfil, bolactivo) VALUES (?, ?, 'False')");
                 $formularios = $conexion->query("SELECT idfrm FROM tblcatformularios");
                 foreach ($formularios as $row) {
-                    $stmt_form->execute([$row['idfrm'], $id_perfil]);
+                    $stmt_form->execute(params: [$row['idfrm'], $id_perfil]);
                 }
                 
                 // Insertar menús asociados

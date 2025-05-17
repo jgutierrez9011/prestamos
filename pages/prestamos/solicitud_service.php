@@ -429,9 +429,14 @@ class SolicitudPrestamo {
             $stmt->bindParam(':rubro', $rubro);
             $stmt->execute();
             $config = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+           
+            //echo "El costo unitario es: $costoUnitario";
+            //echo "El precio de venta es :$precioVenta";
+            //echo "Las unidades producidas son: $unidadesProducidas";
     
             if (!$config) {
-                throw new Exception("No se encontró configuración activa para el rubro: $rubro");
+                throw new Exception("No se encontro configuracion activa para el rubro: $rubro");
             }
     
             $tipoCalculo = $config['tipo_calculo'];
@@ -445,14 +450,17 @@ class SolicitudPrestamo {
             } elseif ($tipoCalculo === 'COSTO_UNITARIO') {
                 // Validar solo si se necesita
                 if (!is_numeric($costoUnitario) || !is_numeric($precioVenta) || !is_numeric($unidadesProducidas) || $precioVenta == 0) {
-                    throw new Exception("Se requieren costoUnitario, precioVenta y unidadesProducidas válidos para el rubro Producción.");
+                    throw new Exception("Se requieren costoUnitario, precioVenta y unidadesProducidas validos para el rubro Produccion.");
                 }
     
-                $totalCostoProduccion = $costoUnitario * $unidadesProducidas;
-                $totalVentasProduccion = $precioVenta * $unidadesProducidas;
-                $margenCostoVenta = $totalCostoProduccion / $totalVentasProduccion;
+                //$totalCostoProduccion = $costoUnitario * $unidadesProducidas;
+                //$totalVentasProduccion = $precioVenta * $unidadesProducidas;
+                //$margenCostoVenta = $totalCostoProduccion / $totalVentasProduccion;
     
-                $costoVenta = $ventasMensuales * $margenCostoVenta;
+                //$costoVenta = $ventasMensuales * $margenCostoVenta;
+
+                $costoVenta = ($costoUnitario / $precioVenta) * $unidadesProducidas;
+                
             } else {
                 throw new Exception("Tipo de cálculo desconocido: $tipoCalculo");
             }

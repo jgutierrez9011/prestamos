@@ -125,7 +125,7 @@ if(isset($_SESSION["user"])) {
 
       <form name="frmlogin" id="frmlogin" method="post" action="fnloginusuario.php" onsubmit="return encriptarDatos()">
         <div class="input-group mb-3">
-          <input type="text" autocomplete="off" class="form-control" name="usuario" id="usuario" placeholder="Usuario" value="jhonfc9011@gmail.com" required>
+          <input type="text" autocomplete="off" class="form-control" name="usuario" id="usuario" placeholder="Usuario" value="" required>
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-user"></span>
@@ -134,7 +134,7 @@ if(isset($_SESSION["user"])) {
         </div>
         
         <div class="input-group mb-3">
-          <input type="password" autocomplete="off" class="form-control" name="passw" id="passw" placeholder="Password" value="12345" required>
+          <input type="password" autocomplete="off" class="form-control" name="passw" id="passw" placeholder="Password" value="" required>
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>

@@ -75,7 +75,7 @@ switch ($method) {
                     $solicitudActual = $PrestamoSolicitud->getSolicitud($id_solicitud);
                     
                     // Solo cambiar a "Aprobada" si está en estado "En revisión" (idestatus=1)
-                    if ($solicitudActual['estatus'] == 'En revisión') {
+                    if ($solicitudActual[0]['estatus'] == 'En revisión') {
                         $resultado = $PrestamoSolicitud->updateSolicitudEstado($_SESSION["idusuario"], 3, $id_solicitud);
                         
                         if (isset($resultado['error'])) {
