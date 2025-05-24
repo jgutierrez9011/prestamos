@@ -19,8 +19,22 @@ class Garantia {
         }
     }
 
-    public function insertar($id_solicitud, $descripcion, $cantidad, $marca, $color, $ubicacion, $valor_realizacion) {
+    public function insertar($cod_solicitud, $descripcion, $cantidad, $marca, $color, $ubicacion, $valor_realizacion) {
         try {
+            // Primero obtenemos el id_solicitud basado en el cod_solicitud
+            $queryId = "SELECT id_solicitud FROM solicitudprestamo WHERE cod_solicitud = :cod_solicitud";
+            $stmtId = $this->conn->prepare($queryId);
+            $stmtId->bindParam(':cod_solicitud', $cod_solicitud);
+            $stmtId->execute();
+        
+            $resultado = $stmtId->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$resultado || !isset($resultado['id_solicitud'])) {
+                throw new Exception("No se encontró una solicitud con el código proporcionado");
+            }
+
+            $id_solicitud = $resultado['id_solicitud'];
+
             $query = "INSERT INTO garantia (id_solicitud, descripcion, cantidad, marca, color, ubicacion, valor_realizacion)
                       VALUES (:id_solicitud, :descripcion, :cantidad, :marca, :color, :ubicacion, :valor_realizacion)";
             $stmt = $this->conn->prepare($query);
@@ -73,7 +87,7 @@ class Garantia {
         try {
             $query = "SELECT a.* FROM garantia a 
                       inner join solicitudprestamo b on a.id_solicitud = b.id_solicitud
-                      where b.id_solicitud = :id";
+                      where b.cod_solicitud = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
             $stmt->execute();

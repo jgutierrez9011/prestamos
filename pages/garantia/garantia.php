@@ -220,34 +220,37 @@ require_once '../usuarios/reg.php';
     // Obtener el parámetro de la URL (id o cédula)
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
+    const cod=0;
 
     // Realizar la solicitud AJAX
     $.ajax({
         url: `../../pages/prestamos/fnprestamos.php?id_solicitud=${id}`, // Enviar el ID como parámetro GET
         method: 'GET',
         success: function(response) {
+          const data = response[0]; // extrae el primer objeto del array
           // Llenar los campos con los datos obtenidos
-          $('#id_solicitud').val(response.id_solicitud);
-          $('#cedula').val(response.cedula);
-          $('#nombre').val(response.nombre);
-          $('#telefono').val(response.telefono);
-          $('#estado_civil').val(response.estado_civil);
-          $('#tipo_vivienda').val(response.tipo_vivienda);
-          $('#anos_habitar').val(response.anos_habitar);
-          $('#direccion_domicilio').val(response.direccion_domicilio);
-          $('#actividad_economica').val(response.actividad_economica);
-          $('#rubro').val(response.rubro);
-          $('#tipo_local').val(response.tipo_local);
-          $('#tiempo_operar').val(response.tiempo_operar);
-          $('#direccion_negocio').val(response.direccion_negocio);
-          $('#cod_solicitud').val(response.cod_solicitud);
+          $('#editSolicitud').val(data.id_solicitud);
+          $('#id_solicitud').val(data.id_solicitud);
+          $('#cedula').val(data.cedula);
+          $('#nombre').val(data.nombre);
+          $('#telefono').val(data.telefono);
+          $('#estado_civil').val(data.estado_civil);
+          $('#tipo_vivienda').val(data.tipo_vivienda);
+          $('#anos_habitar').val(data.anos_habitar);
+          $('#direccion_domicilio').val(data.direccion_domicilio);
+          $('#actividad_economica').val(data.actividad_economica);
+          $('#rubro').val(data.rubro);
+          $('#tipo_local').val(data.tipo_local);
+          $('#tiempo_operar').val(data.tiempo_operar);
+          $('#direccion_negocio').val(data.direccion_negocio);
+          $('#cod_solicitud').val(data.cod_solicitud);
           
 
-          if(response.estatus === 'Aprobada' || response.estatus === 'Rechazada'){
+          if(data.estatus === 'Aprobada' || data.estatus === 'Rechazada'){
 
-            disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
+            disableActionButtons(`La solicitud ya fue ${data.estatus}.`);
 
-            if(response.estatus === 'Aprobada'){
+            if(data.estatus === 'Aprobada'){
 
               Swal.fire({
                     icon: 'success',
@@ -273,7 +276,7 @@ require_once '../usuarios/reg.php';
 
           }else{
 
-                    if(response.estatus === 'Cancelado'){
+                    if(data.estatus === 'Cancelado'){
 
                       //disableActionButtons(`La solicitud ya fue ${response.estatus}.`);
 
