@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 
 $accion = $_POST['accion'] ?? '';
 $id_solicitud = $_POST['id_solicitud'] ?? '';
-$respuesta = ['success' => false, 'mensaje' => 'Acción no válida'];
+$respuesta = ['success' => false, 'mensaje' => 'Accion no valida'];
 
 try {
     $pdo = $base_de_datos;

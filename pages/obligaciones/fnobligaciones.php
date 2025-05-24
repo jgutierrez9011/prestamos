@@ -21,8 +21,10 @@ class ObligacionFinanciera {
 
     public function insertar($id_solicitud, $institucion, $monto_inicial, $saldo, $cuota) {
         try {
+
             $query = "INSERT INTO obligacionesfinancieras (id_solicitud, institucion, monto_inicial, saldo, cuota)
                       VALUES (:id_solicitud, :institucion, :monto_inicial, :saldo, :cuota)";
+
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id_solicitud', $id_solicitud);
             $stmt->bindParam(':institucion', $institucion);
@@ -30,8 +32,9 @@ class ObligacionFinanciera {
             $stmt->bindParam(':saldo', $saldo);
             $stmt->bindParam(':cuota', $cuota);
             return $stmt->execute();
+
         } catch (PDOException $e) {
-            throw new Exception("Error al insertar obligación: " . $e->getMessage());
+            throw new Exception("Error al insertar obligacion: " . $e->getMessage());
         }
     }
 
@@ -68,8 +71,24 @@ class ObligacionFinanciera {
         }
     }
 
-    public function obtenerPorId($id) {
+    public function obtenerPorId($cod_solicitud) {
         try {
+            
+            // Primero obtenemos el id_solicitud basado en el cod_solicitud
+            $queryId = "SELECT id_solicitud FROM solicitudprestamo WHERE cod_solicitud = :cod_solicitud";
+            $stmtId = $this->conn->prepare($queryId);
+            $stmtId->bindParam(':cod_solicitud', $cod_solicitud);
+            $stmtId->execute();
+
+
+            $resultado = $stmtId->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$resultado || !isset($resultado['id_solicitud'])) {
+                throw new Exception("No se encontró una solicitud con el código proporcionado");
+            }
+
+            $id = $resultado['id_solicitud'];
+
             $query = "SELECT a.* FROM obligacionesfinancieras a 
                       inner join solicitudprestamo b on a.id_solicitud = b.id_solicitud
                       where b.id_solicitud = :id";
