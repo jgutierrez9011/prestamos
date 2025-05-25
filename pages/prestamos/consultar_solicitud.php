@@ -1004,7 +1004,7 @@ if (!empty($_SESSION["user"])) {
     const fechaDesembolsoVal = $('#fecha_desembolso').val();
     if (fechaDesembolsoVal) {
         const fechaDesembolso = new Date(fechaDesembolsoVal);
-        fechaDesembolso.setDate(fechaDesembolso.getDate() + 7); // Sumar 7 días
+        fechaDesembolso.setDate(fechaDesembolso.getDate() + 8); // Sumar 7 días
         $('#primer_cuota').val(formatDate(fechaDesembolso));
     }
 }
