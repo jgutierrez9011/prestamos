@@ -11,24 +11,29 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        // Obtener parámetros de la URL
-        $fechainicio = isset($_GET['fechainicio']) ? $_GET['fechainicio'] : null;
-        $fechafin = isset($_GET['fechafin']) ? $_GET['fechafin'] : null;
+        $fechainicio = $_GET['fechainicio'] ?? null;
+        $fechafin = $_GET['fechafin'] ?? null;
+        $cod_solicitud = isset($_GET['cod_solicitud']) ? (int)$_GET['cod_solicitud'] : null;
+        $codigoCarterafiltro = isset($_GET['codigoCarterafiltro']) ? (int)$_GET['codigoCarterafiltro'] : null;
+        $cartera = $_SESSION["carterausuario"] ?? null;
 
         try {
-            // Ejecutar la función ReporteInteresCartera
-            $resultado = $reporteService->ReporteMovimientoPorCartera($fechainicio, $fechafin);
+            // Usamos el perfil desde sesión o asumimos "Usuario"
+            $perfilUsuario = $_SESSION["perfilusuario"] ?? 'Usuario';
 
-            if ($resultado) {
-                echo json_encode($resultado);
-            } else {
-                http_response_code(204); // Sin contenido
-                echo json_encode(["message" => "No se encontraron registros."]);
-            }
+            $resultado = $reporteService->ReporteMovimientoPorCartera(
+                $fechainicio,
+                $fechafin,
+                $cod_solicitud,
+                $cartera, // codigoCartera no se usa desde vista
+                $codigoCarterafiltro,
+                $perfilUsuario
+            );
+
+            echo json_encode($resultado ?: []);
         } catch (Exception $e) {
-            http_response_code(500); // Error interno del servidor
+            http_response_code(500);
             echo json_encode(["error" => $e->getMessage()]);
-            exit;
         }
         break;
 

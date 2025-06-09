@@ -146,7 +146,7 @@ function cargarReporte(id_prestamo = '') {
           <td>${row.telefono}</td>
           <td>${row.direccion_domicilio}</td>
           <td>${row.direccion_negocio}</td>
-          <td>${row.vencimiento_prestamo}</td>
+          <td>${row.vencimiento_prestamo || "-"}</td>
           <td>${row.dias_promedio}</td>
           <td>${row.cuotas_vencidas}</td>
           <td>${row.saldo_mora}</td>
@@ -204,11 +204,19 @@ function cargarReporte(id_prestamo = '') {
   });
 
   // Evento del formulario
-  document.getElementById('formReporteMora').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const id_prestamo = document.getElementById('id_prestamo').value.trim();
+document.getElementById('formReporteMora').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const input = document.getElementById('id_prestamo').value.trim();
+  const id_prestamo = parseInt(input, 10);
+
+  // Validar que sea un número entero válido
+  if (!isNaN(id_prestamo)) {
     cargarReporte(id_prestamo);
-  });
+  } else {
+    alert('Por favor ingrese un ID de préstamo válido.');
+  }
+});
 </script>
 </body>
 </html>

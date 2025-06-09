@@ -1,6 +1,9 @@
 <?php
-require_once  '../usuarios/reg.php'; 
+require_once  '../usuarios/reg.php';
+require_once '../usuarios/fnusuario.php'; 
 require_once '../../menu_builder.php';
+$perfilUsuario = $_SESSION['perfilusuario'] ?? 'Usuario';
+$codigoCartera = $_SESSION['carterausuario'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -53,29 +56,50 @@ require_once '../../menu_builder.php';
         </div>
         <div class="card-body">
 
-          <form id="formReporteInteres" class="form-inline mb-3">
-            <div class="form-group mr-2">
-              <label for="fechainicio" class="mr-2">Desde:</label>
-              <input type="date" class="form-control" id="fechainicio" name="fechainicio">
+          
+          <form id="formReporteInteres" class="mb-3">
+            <div class="form-row">
+              <div class="form-group col-md-2">
+                <label for="fechainicio">Desde:</label>
+                <input type="date" class="form-control" id="fechainicio" name="fechainicio" placeholder="dd/mm/aaaa">
+              </div>
+
+              <div class="form-group col-md-2">
+                <label for="fechafin">Hasta:</label>
+                <input type="date" class="form-control" id="fechafin" name="fechafin" placeholder="dd/mm/aaaa">
+              </div>
+
+              <div class="form-group col-md-2">
+                <label for="cod_solicitud">Solicitud:</label>
+                <input type="number" class="form-control" id="cod_solicitud" name="cod_solicitud" placeholder="Ej. 101">
+              </div>
+               
+              <?php if ($perfilUsuario === 'Administrador'): ?>
+              <div class="form-group col-md-2">
+                <label for="codigoCarterafiltro">Cartera:</label>
+                <select class="form-control" id="codigoCarterafiltro" name="codigoCarterafiltro">
+                <?php echo fillcartera_usuario('N',$base_de_datos) ?>
+              </select>
+              </div>
+              <?php endif; ?>
+
+              <div class="form-group col-md-2 align-self-end">
+                <button type="submit" class="btn btn-primary btn-block">Buscar</button>
+              </div>
             </div>
-            <div class="form-group mr-2">
-              <label for="fechafin" class="mr-2">Hasta:</label>
-              <input type="date" class="form-control" id="fechafin" name="fechafin">
-            </div>
-            <button type="submit" class="btn btn-primary">Buscar</button>
           </form>
+
+
 
           <div class="table-responsive">
             <table class="table table-bordered table-hover" id="tablaReporte">
               <thead class="thead-dark">
                 <tr>
                   <th>Cartera</th>
-                  <th>Código</th>
-                  <th>ID Préstamo</th>
-                  <th>Monto Total</th>
-                  <th>Monto Abonado</th>
-                  <th>Saldo Total</th>
-                  <th>Interés Pendiente</th>
+                  <th>Saldo pendiente</th>
+                  <th>Interes pendiente</th>
+                  <th>Mora</th>
+                  <th>Porcentaje mora</th>
                 </tr>
               </thead>
               <tbody id="resultadoReporte">
@@ -112,12 +136,16 @@ require_once '../../menu_builder.php';
 <script>
 let tabla;
 
-function cargarReporte(fechainicio = '', fechafin = '') {
+// Reemplaza la función cargarReporte con esta
+function cargarReporte(fechainicio = '', fechafin = '', cod_solicitud = '', codigoCarterafiltro = '') {
   let url = 'rptmovcartera_service.php';
 
   const params = new URLSearchParams();
   if (fechainicio) params.append('fechainicio', fechainicio);
   if (fechafin) params.append('fechafin', fechafin);
+  if (cod_solicitud) params.append('cod_solicitud', cod_solicitud);
+  if (codigoCarterafiltro) params.append('codigoCarterafiltro', codigoCarterafiltro);
+
   if (params.toString()) {
     url += '?' + params.toString();
   }
@@ -125,34 +153,26 @@ function cargarReporte(fechainicio = '', fechafin = '') {
   fetch(url)
     .then(response => response.json())
     .then(data => {
-      console.log("Datos recibidos:", data); // Para depurar
-
-      if (tabla) {
-        tabla.destroy();
-      }
+      if (tabla) tabla.destroy();
 
       const tbody = document.getElementById('resultadoReporte');
       tbody.innerHTML = '';
       let total = 0;
 
-      const registros = Array.isArray(data) ? data : [];
-
-      if (registros.length === 0) {
+      if (!Array.isArray(data) || data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center">No se encontraron resultados para los filtros aplicados.</td></tr>`;
         document.getElementById('totalRegistros').textContent = 0;
         return;
       }
 
-      registros.forEach(row => {
+      data.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.descripcion}</td>
-          <td>${row.cod_solicitud}</td>
-          <td>${row.id_prestamo}</td>
-          <td>${row.montotal}</td>
-          <td>${row.monto_abonado}</td>
-          <td>${row.saldo_total_cartera}</td>
-          <td>${row.interes_pendiente}</td>
+          <td>${row.saldo_pendiente ?? 0}</td>
+          <td>${row.interes_pendiente ?? 0}</td>
+          <td>${row.mora ?? 0}</td>
+          <td>${row.porcentaje_mora ?? 0} % </td>
         `;
         tbody.appendChild(tr);
         total++;
@@ -164,26 +184,17 @@ function cargarReporte(fechainicio = '', fechafin = '') {
         responsive: true,
         autoWidth: false,
         dom: 'Bfrtip',
-        buttons: [
-          'copy',
-          'excel',
-          {
-            extend: 'pdfHtml5',
-            orientation: 'landscape',
-            pageSize: 'A4',
-            title: 'CREDIMORE - Movimiento por Cartera',
-            customize: function (doc) {
-              doc.styles.title = {
-                alignment: 'center',
-                fontSize: 14,
-                bold: true,
-              };
-              doc.defaultStyle.fontSize = 9;
-              doc.styles.tableHeader.fontSize = 10;
-            }
-          },
-          'print'
-        ],
+        buttons: ['copy', 'excel', {
+          extend: 'pdfHtml5',
+          orientation: 'landscape',
+          pageSize: 'A4',
+          title: 'CREDIMORE - Movimiento por Cartera',
+          customize: function (doc) {
+            doc.styles.title = { alignment: 'center', fontSize: 14, bold: true };
+            doc.defaultStyle.fontSize = 9;
+            doc.styles.tableHeader.fontSize = 10;
+          }
+        }, 'print'],
         language: {
           url: '//cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json'
         }
@@ -204,8 +215,11 @@ document.getElementById('formReporteInteres').addEventListener('submit', functio
   e.preventDefault();
   const fechainicio = document.getElementById('fechainicio').value;
   const fechafin = document.getElementById('fechafin').value;
-  cargarReporte(fechainicio, fechafin);
+  const cod_solicitud = document.getElementById('cod_solicitud').value;
+  const codigoCarterafiltro = document.getElementById('codigoCarterafiltro').value;
+  cargarReporte(fechainicio, fechafin, cod_solicitud, codigoCarterafiltro);
 });
+
 </script>
 
 </body>
