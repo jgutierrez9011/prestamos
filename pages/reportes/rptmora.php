@@ -1,6 +1,9 @@
 <?php
-require_once  '../usuarios/reg.php'; 
+require_once  '../usuarios/reg.php';
+require_once '../usuarios/fnusuario.php'; 
 require_once '../../menu_builder.php';
+$perfilUsuario = $_SESSION['perfilusuario'] ?? 'Usuario';
+$codigoCartera = $_SESSION['carterausuario'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -58,6 +61,18 @@ require_once '../../menu_builder.php';
               <label for="id_prestamo" class="mr-2">Codigo de préstamo:</label>
               <input type="number" class="form-control" id="id_prestamo" name="id_prestamo" placeholder="Ej: 84">
             </div>
+
+            <?php if ($perfilUsuario === 'Administrador'): ?>
+            <div class="form-group mr-2">
+             <label for="codigoCarterafiltro" class="mr-2">Cartera:</label>
+              <select class="form-control" id="codigoCarterafiltro" name="codigoCarterafiltro">
+                <?php echo fillcartera_usuario('N',$base_de_datos) ?>
+              </select>
+            </div>
+             <?php endif; ?>
+
+
+
             <button type="submit" class="btn btn-primary">Buscar</button>
           </form>
 
@@ -115,25 +130,25 @@ require_once '../../menu_builder.php';
 <script>
   let tabla;
 
-function cargarReporte(id_prestamo = '') {
+function cargarReporte(id_prestamo = '', codigoCarterafiltro = '') {
   let url = 'rptmora_service.php';
-  if (id_prestamo) {
-    url += '?id_prestamo=' + id_prestamo;
-  }
+  const params = new URLSearchParams();
+
+  if (id_prestamo) params.append('id_prestamo', id_prestamo);
+  if (codigoCarterafiltro) params.append('codigoCarterafiltro', codigoCarterafiltro);
+
+  if ([...params].length > 0) url += '?' + params.toString();
 
   fetch(url)
     .then(response => response.json())
     .then(data => {
-
-     if (tabla) {
+      if (tabla) {
         tabla.destroy();
       }
 
       const tbody = document.getElementById('resultadoReporte');
       tbody.innerHTML = '';
       let total = 0;
-
-      //const registros = Array.isArray(data) ? data : (data && data.id_prestamo ? [data] : []);
       const registros = Array.isArray(data) ? data : [];
 
       registros.forEach(row => {
@@ -158,16 +173,13 @@ function cargarReporte(id_prestamo = '') {
 
       document.getElementById('totalRegistros').textContent = total;
 
-      
-
       tabla = $('#tablaReporte').DataTable({
         responsive: true,
         autoWidth: false,
         destroy: true,
         dom: 'Bfrtip',
         buttons: [
-          'copy',
-          'excel',
+          'copy', 'excel',
           {
             extend: 'pdfHtml5',
             orientation: 'landscape',
@@ -185,9 +197,7 @@ function cargarReporte(id_prestamo = '') {
           },
           'print'
         ],
-        language: {
-          url: '//cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json'
-        }
+
       });
     })
     .catch(error => {
@@ -204,19 +214,21 @@ function cargarReporte(id_prestamo = '') {
   });
 
   // Evento del formulario
-document.getElementById('formReporteMora').addEventListener('submit', function (e) {
+document.getElementById('formReporteMora').addEventListener('submit', e => {
   e.preventDefault();
 
-  const input = document.getElementById('id_prestamo').value.trim();
-  const id_prestamo = parseInt(input, 10);
+  const toNullInt = val => val.trim() === '' ? null : parseInt(val, 10);
 
-  // Validar que sea un número entero válido
-  if (!isNaN(id_prestamo)) {
-    cargarReporte(id_prestamo);
-  } else {
-    alert('Por favor ingrese un ID de préstamo válido.');
-  }
+  const id_prestamo = toNullInt(document.getElementById('id_prestamo').value);
+
+  // Verifica si el campo de cartera existe (solo para Administrador)
+  const carteraSelect = document.getElementById('codigoCarterafiltro');
+  const codigoCarterafiltro = carteraSelect ? toNullInt(carteraSelect.value) : null;
+
+  cargarReporte(id_prestamo, codigoCarterafiltro);
 });
+
+
 </script>
 </body>
 </html>

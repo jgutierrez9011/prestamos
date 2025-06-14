@@ -9,10 +9,10 @@ class Reportes {
     }
 
     // Generar reporte por préstamo y/o cartera, o todos si no se envían filtros
-    public function ReportePrestamoMora($id_prestamo = null, $id_cartera = null) {
+    public function ReportePrestamoMora($id_prestamo = null, $codigoCartera = null, $codigoCarterafiltro = null, $perfilUsuario = null) {
         try {
             $query = "SELECT 
-                        b.descripcion AS cartera, 
+                        b.descripcion AS cartera,
                         c.id_solicitud, 
                         c.cod_solicitud::int as cod_solicitud , 
                         f.id_prestamo,
@@ -28,8 +28,8 @@ class Reportes {
                         SUM(coalesce(g.monto_cuota,0.0)) AS saldo_mora,
                         SUM(coalesce(g.dias_transcurridos_mora,0.0)) AS dias_mora
                     FROM clientes a 
-                    LEFT JOIN tblcatcartera b ON a.idcartera = b.idcartera
                     LEFT JOIN solicitudprestamo c ON a.idcliente = c.idcliente
+					LEFT JOIN tblcatcartera b ON c.idcartera = b.idcartera
                     LEFT JOIN prestamo f ON c.id_solicitud = f.id_solicitud
                     LEFT JOIN (
                         SELECT
@@ -63,13 +63,21 @@ class Reportes {
                                                 ) I ON f.id_prestamo = I.id_prestamo
                                                 WHERE f.id_solicitud IS NOT NULL 
                                                 AND c.idestatus IN (3, 5,6)";
+            
+                // Determinar el código de cartera que se usará
+            $codigoFinal = null;
+            if ($perfilUsuario !== 'Administrador' && !empty($codigoCartera)) {
+                $codigoFinal = $codigoCartera;
+            } elseif ($perfilUsuario === 'Administrador' && !empty($codigoCarterafiltro)) {
+                $codigoFinal = $codigoCarterafiltro;
+            }
 
             // Agregar condiciones dinámicamente según los parámetros recibidos
             if (!is_null($id_prestamo)) {
                 $query .= " AND c.cod_solicitud::int = :id_prestamo";
             }
 
-            if (!is_null($id_cartera)) {
+            if (!is_null($codigoFinal)) {
                 $query .= " AND b.idcartera = :id_cartera";
             }
 
@@ -96,8 +104,10 @@ class Reportes {
                 $stmt->bindParam(":id_prestamo", $id_prestamo, PDO::PARAM_INT);
             }
 
-            if (!is_null($id_cartera)) {
-                $stmt->bindParam(":id_cartera", $id_cartera, PDO::PARAM_INT);
+
+            // Asignar parámetros según los valores disponibles
+            if (!is_null($codigoFinal)) {
+                $stmt->bindParam(":id_cartera", $codigoFinal, PDO::PARAM_INT);
             }
 
             $stmt->execute();
@@ -111,7 +121,7 @@ class Reportes {
             throw new Exception("Error al generar el reporte: " . $e->getMessage());
         }
     }
-
+    
     public function ReporteMovimientoPorCartera($fechaInicio = null, $fechaFin = null, $cod_solicitud = null, $codigoCartera = null, $codigoCarterafiltro = null, $perfilUsuario = null) {
     try {
         

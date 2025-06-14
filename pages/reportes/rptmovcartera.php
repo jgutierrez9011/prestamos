@@ -70,7 +70,7 @@ $codigoCartera = $_SESSION['carterausuario'] ?? null;
               </div>
 
               <div class="form-group col-md-2">
-                <label for="cod_solicitud">Solicitud:</label>
+                <label for="cod_solicitud">Codigo de préstamo:</label>
                 <input type="number" class="form-control" id="cod_solicitud" name="cod_solicitud" placeholder="Ej. 101">
               </div>
                
@@ -78,10 +78,13 @@ $codigoCartera = $_SESSION['carterausuario'] ?? null;
               <div class="form-group col-md-2">
                 <label for="codigoCarterafiltro">Cartera:</label>
                 <select class="form-control" id="codigoCarterafiltro" name="codigoCarterafiltro">
-                <?php echo fillcartera_usuario('N',$base_de_datos) ?>
-              </select>
+                  <?php echo fillcartera_usuario('N',$base_de_datos) ?>
+                </select>
               </div>
+              <?php else: ?>
+                <input type="hidden" id="codigoCarterafiltro" name="codigoCarterafiltro" value="<?php echo htmlspecialchars($codigoCartera); ?>">
               <?php endif; ?>
+
 
               <div class="form-group col-md-2 align-self-end">
                 <button type="submit" class="btn btn-primary btn-block">Buscar</button>
@@ -216,7 +219,9 @@ document.getElementById('formReporteInteres').addEventListener('submit', functio
   const fechainicio = document.getElementById('fechainicio').value;
   const fechafin = document.getElementById('fechafin').value;
   const cod_solicitud = document.getElementById('cod_solicitud').value;
+
   const codigoCarterafiltro = document.getElementById('codigoCarterafiltro').value;
+
   cargarReporte(fechainicio, fechafin, cod_solicitud, codigoCarterafiltro);
 });
 

@@ -8,21 +8,19 @@ $reporteService = new Reportes($base_de_datos);
 
 // Obtener el método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
-$id_cartera=null;
 switch ($method) {
     case 'GET':
         // Obtener parámetros de la URL
         $id_prestamo = isset($_GET['id_prestamo']) ? intval($_GET['id_prestamo']) : null;
-        
-        if($_SESSION["perfilusuario"]!="Administrador"){
-            $id_cartera = isset($_SESSION["carterausuario"]) ? isset($_SESSION["carterausuario"]) : null;
-        }
-         
+        $codigoCarterafiltro = isset($_GET['codigoCarterafiltro']) ? (int)$_GET['codigoCarterafiltro'] : null;
+        $cartera = $_SESSION["carterausuario"] ?? null;
 
         try {
             // Ejecutar reporte
+
+            $perfilUsuario = $_SESSION["perfilusuario"] ?? 'Usuario';
           
-            $resultado = $reporteService->ReportePrestamoMora($id_prestamo, $id_cartera);
+            $resultado = $reporteService->ReportePrestamoMora($id_prestamo, $cartera,$codigoCarterafiltro, $perfilUsuario);
 
             if ($resultado) {
                 echo json_encode($resultado);
