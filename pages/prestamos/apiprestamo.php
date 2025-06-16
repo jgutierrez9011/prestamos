@@ -52,7 +52,7 @@ switch ($method) {
 
         try{
             $id_prestamo = $prestamoService->createPrestamo($data);
-            $calendario = $prestamoService->generarCalendarioPagos_simple($data['monto_aprobado'],$data['interes'],$data['plazo'],$data['fecha_primer_cuota']);
+            $calendario = $prestamoService->generarCalendarioPagos_simple($data['monto_aprobado'],$data['interes'],$data['plazo'],$data['fecha_primer_cuota'], $data["modalidad"]);
     
             foreach ($calendario as $pagoProgramado) 
             {

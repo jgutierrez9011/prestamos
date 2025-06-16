@@ -33,12 +33,11 @@ class PrestamoService {
     }
 
     // Crear un nuevo préstamo
-    public function createPrestamo($data) {
+    /*public function createPrestamo($data) {
 
         try{
-
             // Calcular la cantidad de semanas a partir de los meses
-        $plazoMeses =$data['plazo'];
+        $plazoMeses = $data['plazo'];
         $plazoSemanas = ceil($plazoMeses * 4); // Redondear hacia arriba para evitar semanas incompletas
 
         // Calcular el interés total simple
@@ -87,7 +86,84 @@ class PrestamoService {
             http_response_code(500);
             echo json_encode(["error" => $e->getMessage()]);
         }
+    }*/
+
+    public function createPrestamo($data) {
+    try {
+        $plazoMeses = $data['plazo'];
+        $monto = $data['monto_aprobado'];
+        $interesMensual = $data['interes'];
+        $modalidad = strtolower($data['modalidad']); // debe venir desde el formulario
+
+        // Calcular número de pagos según modalidad
+        switch ($modalidad) {
+            case 'diaria':
+                $numPagos = $plazoMeses * 30;
+                break;
+            case 'quincenal':
+                $numPagos = $plazoMeses * 2;
+                break;
+            case 'mensual':
+                $numPagos = $plazoMeses;
+                break;
+            case 'semanal':
+                $numPagos = ceil($plazoMeses * 4);
+            default:
+                $numPagos = ceil($plazoMeses * 4);
+                break;
+        }
+
+        // Interés total simple y monto total a pagar
+        $interesTotal = $monto * ($interesMensual / 100) * $plazoMeses;
+        $montoTotal = $monto + $interesTotal;
+
+        // Calcular cuota y su desglose
+        $montoCuota = $montoTotal / $numPagos;
+        $interesPorCuota = $interesTotal / $numPagos;
+
+        $sql = "INSERT INTO prestamo (
+                    id_solicitud, monto_aprobado, interes, plazo, saldo,
+                    fecha_primer_cuota, comentario, usuario_creo,
+                    monto_interes, montotal, frecuencia, modalidad,
+                    monto_cuota, interes_semanal, fecha_desembolso
+                ) VALUES (
+                    :id_solicitud, :monto_aprobado, :interes, :plazo, :saldo,
+                    :fecha_primer_cuota, :comentario, :usuario_creo,
+                    :interesTotal, :montototal, :frecuencia, :tipomodalidad,
+                    :monto_cuota, :interes_por_cuota, :date_desembolso
+                )";
+
+        $stmt = $this->base_de_datos->prepare($sql);
+        $stmt->execute([
+            'id_solicitud' => $data['id_solicitud'],
+            'monto_aprobado' => $monto,
+            'interes' => $interesMensual,
+            'plazo' => $plazoMeses,
+            'saldo' => round($montoTotal, 2),
+            'fecha_primer_cuota' => $data['fecha_primer_cuota'],
+            'comentario' => $data['comentario'],
+            'usuario_creo' => $_SESSION["idusuario"],
+            'interesTotal' => round($interesTotal, 2),
+            'montototal' => round($montoTotal, 2),
+            'frecuencia' => $numPagos,
+            'tipomodalidad' => ucfirst($modalidad),
+            'monto_cuota' => round($montoCuota, 2),
+            'interes_por_cuota' => round($interesPorCuota, 2),
+            'date_desembolso' => $data['fecha_desembolso']
+        ]);
+
+        return $this->base_de_datos->lastInsertId();
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
     }
+}
+
+
 
     // Actualizar un préstamo
     public function updatePrestamo($id_prestamo, $data) {
@@ -158,7 +234,7 @@ class PrestamoService {
         return $calendario;
     }
 
-    function generarCalendarioPagos_simple($monto, $interesMensual, $plazoMeses, $fechaInicioStr) {
+    /*function generarCalendarioPagos_simple($monto, $interesMensual, $plazoMeses, $fechaInicioStr) {
         $calendario = [];
         $fechaInicio = new DateTime($fechaInicioStr);
         
@@ -194,8 +270,76 @@ class PrestamoService {
         }
         
         return $calendario;
-    }    
+    } */
     
+function generarCalendarioPagos_simple($monto, $interesMensual, $plazoMeses, $fechaInicioStr, $modalidad = 'semanal') {
+    $calendario = [];
+    $fechaInicio = new DateTime($fechaInicioStr);
+    $modalidad = strtolower($modalidad);
+
+    // Determinar número de pagos y el intervalo según modalidad
+    switch ($modalidad) {
+        case 'diario':
+            $numPagos = $plazoMeses * 30; // Aproximado
+            $intervalo = ' day';
+            break;
+        case 'quincenal':
+            $numPagos = $plazoMeses * 2;
+            $intervalo = ' days';
+            break;
+        case 'mensual':
+            $numPagos = $plazoMeses;
+            $intervalo = ' month';
+            break;
+        case 'semanal':
+            $numPagos = ceil($plazoMeses * 4); // Aprox. 4 semanas por mes
+            $intervalo = ' week';
+        default:
+            $modalidad = 'semanal';
+            $numPagos = ceil($plazoMeses * 4); // Aprox. 4 semanas por mes
+            $intervalo = ' week';
+            break;
+    }
+
+    // Calcular interés total (simple) y cuota
+    $interesTotal = $monto * ($interesMensual / 100) * $plazoMeses;
+    $montoTotal = $monto + $interesTotal;
+    $cuota = $montoTotal / $numPagos;
+    $interesPorCuota = $interesTotal / $numPagos;
+    $saldoPendiente = $montoTotal;
+
+    for ($i = 0; $i < $numPagos; $i++) {
+        $abonoCapital = $cuota - $interesPorCuota;
+        $saldoPendiente -= $cuota;
+        
+        if($modalidad === 'quincenal'){
+
+             $fechaPago = (clone $fechaInicio)->modify("+".($i * 15)." days");
+
+        }else{
+ 
+             $fechaPago = (clone $fechaInicio)->modify("+ {$i} $intervalo");
+
+        }
+        
+
+
+
+        $calendario[] = [
+            'numero_pago' => ($i + 1),
+            'modalidad' => ucfirst($modalidad),
+            'fecha_pago' => $fechaPago->format('Y-m-d'),
+            'cuota' => round($cuota, 2),
+            'interes' => round($interesPorCuota, 2),
+            'abono_capital' => round($abonoCapital, 2),
+            'saldo_pendiente' => round(max($saldoPendiente, 0), 2)
+        ];
+    }
+
+    return $calendario;
+}
+
+
 
     
 }

@@ -187,7 +187,7 @@ if (!empty($_SESSION["user"])) {
                 <table id="tb_calendarioPago" class="table table-bordered">
                     <thead>
                         <tr>
-                            <th>Semana</th>
+                            <th>Modalidad</th>
                             <th>Fecha de Pago</th>
                             <th>Cuota</th>
                             <?php if($_SESSION['perfilusuario'] == 'Administrador'){?>

@@ -470,6 +470,16 @@ if (!empty($_SESSION["user"])) {
                             <input type="number" step="0.01" min="0" class="form-control" id="plazo" name="plazo" required>
                         </div>
                         <div class="form-group">
+                        <label for="modalidad">Modalidad</label>
+                        <select class="form-control" id="modalidad" name="modalidad">
+                            <option value="">Seleccione...</option>
+                            <option value="diario">Diario</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="quincenal">Quincenal</option>
+                            <option value="mensual">Mensual</option>
+                        </select>
+                        </div>
+                        <div class="form-group">
 
                             <label for="cuota">Cuota:</label>
                             <div class="input-group">
@@ -521,7 +531,7 @@ if (!empty($_SESSION["user"])) {
           <table id="amortizacionTb" class="table table-bordered table-striped" style="width:100%">
               <thead>
                   <tr>
-                      <th><p class="small"><strong>Semana</strong></p></th>
+                      <th><p class="small"><strong>Modalidad</strong></p></th>
                       <th><p class="small"><strong>Fecha de pago</strong></p></th>
                       <th><p class="small"><strong>Cuota</strong></p></th>
                       <th><p class="small"><strong>Interes</strong></p></th>
@@ -613,7 +623,7 @@ if (!empty($_SESSION["user"])) {
           );
 
           const columnasAmortizacion = [
-                        { data: "semana", title: "Semana" },
+                        { data: "numero_pago", title: "Modalidad" },
                         { data: "fecha_pago", title: "Fecha de pago" },
                         { data: "cuota", title: "Cuota" }
                       ];
@@ -845,7 +855,8 @@ if (!empty($_SESSION["user"])) {
                     monto_aprobado: $("#monto_aprobado").val(),
                     interes: $("#interes").val(),
                     fecha_primer_cuota: $("#primer_cuota").val(),
-                    plazo: $("#plazo").val()
+                    plazo: $("#plazo").val(),
+                    modalidad : $("#modalidad").val()
                 });
             },
             dataSrc: function(json) {
@@ -880,6 +891,7 @@ if (!empty($_SESSION["user"])) {
                 monto_aprobado: $("#monto_aprobado").val(),
                 interes: $("#interes").val(),
                 plazo: $("#plazo").val(),
+                modalidad : $("#modalidad").val(),
                 saldo: $("#cuota").val(),
                 fecha_desembolso: $("#fecha_desembolso").val(),
                 fecha_primer_cuota: $("#primer_cuota").val(),
