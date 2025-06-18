@@ -137,95 +137,107 @@ $codigoCartera = $_SESSION['carterausuario'] ?? null;
 <script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
 
 <script>
-let tabla;
+  let tabla;
 
-// Reemplaza la función cargarReporte con esta
-function cargarReporte(fechainicio = '', fechafin = '', cod_solicitud = '', codigoCarterafiltro = '') {
-  let url = 'rptmovcartera_service.php';
+  function cargarReporte(fechainicio = '', fechafin = '', cod_solicitud = '', codigoCarterafiltro = '') {
+    let url = 'rptmovcartera_service.php';
+    const params = new URLSearchParams();
 
-  const params = new URLSearchParams();
-  if (fechainicio) params.append('fechainicio', fechainicio);
-  if (fechafin) params.append('fechafin', fechafin);
-  if (cod_solicitud) params.append('cod_solicitud', cod_solicitud);
-  if (codigoCarterafiltro) params.append('codigoCarterafiltro', codigoCarterafiltro);
+    if (fechainicio) params.append('fechainicio', fechainicio);
+    if (fechafin) params.append('fechafin', fechafin);
+    if (cod_solicitud) params.append('cod_solicitud', cod_solicitud);
+    if (codigoCarterafiltro) params.append('codigoCarterafiltro', codigoCarterafiltro);
 
-  if (params.toString()) {
-    url += '?' + params.toString();
+    if ([...params].length > 0) url += '?' + params.toString();
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        // Destruye si ya está inicializado
+        if ($.fn.DataTable.isDataTable('#tablaReporte')) {
+          $('#tablaReporte').DataTable().clear().destroy();
+        }
+
+        const tbody = document.getElementById('resultadoReporte');
+        tbody.innerHTML = '';
+        let total = 0;
+        const registros = Array.isArray(data) ? data : [];
+
+        if (registros.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center">No se encontraron resultados para los filtros aplicados.</td></tr>`;
+          document.getElementById('totalRegistros').textContent = 0;
+          return;
+        }
+
+        registros.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${row.descripcion}</td>
+            <td>${row.saldo_pendiente ?? 0}</td>
+            <td>${row.interes_pendiente ?? 0}</td>
+            <td>${row.mora ?? 0}</td>
+            <td>${row.porcentaje_mora ?? 0} %</td>
+          `;
+          tbody.appendChild(tr);
+          total++;
+        });
+
+        document.getElementById('totalRegistros').textContent = total;
+
+        tabla = $('#tablaReporte').DataTable({
+          responsive: true,
+          autoWidth: false,
+          destroy: true,
+          dom: 'Bfrtip',
+          buttons: [
+            'copy', 'excel',
+            {
+              extend: 'pdfHtml5',
+              orientation: 'landscape',
+              pageSize: 'A4',
+              title: 'CREDIMORE - Movimiento por Cartera',
+              customize: function (doc) {
+                doc.styles.title = {
+                  alignment: 'center',
+                  fontSize: 14,
+                  bold: true,
+                };
+                doc.defaultStyle.fontSize = 9;
+                doc.styles.tableHeader.fontSize = 10;
+              }
+            },
+            'print'
+          ],
+          language: {
+            url: '//cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json'
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Error al cargar el reporte:', error);
+        document.getElementById('resultadoReporte').innerHTML = `<tr><td colspan="5">Error al obtener los datos</td></tr>`;
+        document.getElementById('totalRegistros').textContent = 0;
+      });
   }
 
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      if (tabla) tabla.destroy();
+  document.addEventListener('DOMContentLoaded', () => {
+    cargarReporte(); // Carga inicial sin filtros
+  });
 
-      const tbody = document.getElementById('resultadoReporte');
-      tbody.innerHTML = '';
-      let total = 0;
+  document.getElementById('formReporteInteres').addEventListener('submit', e => {
+    e.preventDefault();
 
-      if (!Array.isArray(data) || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center">No se encontraron resultados para los filtros aplicados.</td></tr>`;
-        document.getElementById('totalRegistros').textContent = 0;
-        return;
-      }
+    const fechainicio = document.getElementById('fechainicio').value;
+    const fechafin = document.getElementById('fechafin').value;
+    const cod_solicitud = document.getElementById('cod_solicitud').value;
 
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.descripcion}</td>
-          <td>${row.saldo_pendiente ?? 0}</td>
-          <td>${row.interes_pendiente ?? 0}</td>
-          <td>${row.mora ?? 0}</td>
-          <td>${row.porcentaje_mora ?? 0} % </td>
-        `;
-        tbody.appendChild(tr);
-        total++;
-      });
+    const carteraInput = document.getElementById('codigoCarterafiltro');
+    const codigoCarterafiltro = carteraInput ? carteraInput.value : null;
 
-      document.getElementById('totalRegistros').textContent = total;
-
-      tabla = $('#tablaReporte').DataTable({
-        responsive: true,
-        autoWidth: false,
-        dom: 'Bfrtip',
-        buttons: ['copy', 'excel', {
-          extend: 'pdfHtml5',
-          orientation: 'landscape',
-          pageSize: 'A4',
-          title: 'CREDIMORE - Movimiento por Cartera',
-          customize: function (doc) {
-            doc.styles.title = { alignment: 'center', fontSize: 14, bold: true };
-            doc.defaultStyle.fontSize = 9;
-            doc.styles.tableHeader.fontSize = 10;
-          }
-        }, 'print'],
-        language: {
-          url: '//cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json'
-        }
-      });
-    })
-    .catch(error => {
-      console.error('Error al cargar el reporte:', error);
-      document.getElementById('resultadoReporte').innerHTML = `<tr><td colspan="7">Error al obtener los datos</td></tr>`;
-      document.getElementById('totalRegistros').textContent = 0;
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  cargarReporte();
-});
-
-document.getElementById('formReporteInteres').addEventListener('submit', function (e) {
-  e.preventDefault();
-  const fechainicio = document.getElementById('fechainicio').value;
-  const fechafin = document.getElementById('fechafin').value;
-  const cod_solicitud = document.getElementById('cod_solicitud').value;
-
-  const codigoCarterafiltro = document.getElementById('codigoCarterafiltro').value;
-
-  cargarReporte(fechainicio, fechafin, cod_solicitud, codigoCarterafiltro);
-});
-
+    cargarReporte(fechainicio, fechafin, cod_solicitud, codigoCarterafiltro);
+  });
 </script>
+
 
 </body>
 </html>
