@@ -18,8 +18,9 @@ class Rptabono {
      * @return array Resultados del reporte
      * @throws Exception Si ocurre un error en la consulta
      */
-    public function obtenerReporteAbonos($cartera = null, $tipoUsuario = null, $fechaInicio = null, $fechaFin = null) {
+    public function obtenerReporteAbonos($cartera = null, $codigoCarterafiltro = null, $tipoUsuario = null, $fechaInicio = null, $fechaFin = null) {
     try {
+
         $query = "SELECT e.descripcion as cartera, a.cod_solicitud, d.nombre as cliente, a.telefono, 
                          to_char(c.fecha_creo, 'YYYY-MM-DD') as fecha_creo, sum(c.monto_abonado) as monto_abonado,
                          concat(f.strpnombre,' ',f.strsnombre,' ',f.strpapellido,' ',f.strsapellido) as usuario_creo
@@ -32,9 +33,14 @@ class Rptabono {
 
         $condiciones = [];
 
-        if ($tipoUsuario !== 'Administrador' && !is_null($cartera)) {
-            $condiciones[] = "a.idcartera = :cartera";
-        }
+        // Si no es administrador, se filtra por código de cartera
+            if ($tipoUsuario !== 'Administrador' && !empty($cartera)) {
+                $condiciones[] = "a.idcartera = :cartera";
+            }
+
+            if ($tipoUsuario == 'Administrador' && !empty($codigoCarterafiltro)) {
+                $condiciones[] = "a.idcartera = :cartera";
+            }
 
         // Manejo seguro de fechas
         if (!empty($fechaInicio) && !empty($fechaFin)) {
@@ -50,13 +56,14 @@ class Rptabono {
                            concat(f.strpnombre,' ',f.strsnombre,' ',f.strpapellido,' ',f.strsapellido)
                   ORDER BY a.cod_solicitud ASC";
 
-                  
-
         $stmt = $this->conn->prepare($query);
 
-        if ($tipoUsuario !== 'Administrador' && !is_null($cartera)) {
-            $stmt->bindParam(':cartera', $cartera, PDO::PARAM_INT);
-        }
+        if ($tipoUsuario !== 'Administrador' && !empty($cartera)) {
+                $stmt->bindParam(':cartera', $cartera, PDO::PARAM_INT);
+            }elseif($tipoUsuario == 'Administrador' && !empty($codigoCarterafiltro)){
+                $stmt->bindParam(':cartera', $codigoCarterafiltro, PDO::PARAM_INT);
+                 
+            }
 
         if (!empty($fechaInicio) && !empty($fechaFin)) {
             $stmt->bindParam(':fechaInicio', $fechaInicio);

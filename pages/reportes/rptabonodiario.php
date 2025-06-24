@@ -1,6 +1,9 @@
 <?php
-require_once '../usuarios/reg.php'; 
+require_once '../usuarios/reg.php';
+require_once '../usuarios/fnusuario.php'; 
 require_once '../../menu_builder.php';
+$perfilUsuario = $_SESSION['perfilusuario'] ?? 'Usuario';
+$codigoCartera = $_SESSION['carterausuario'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -78,6 +81,16 @@ require_once '../../menu_builder.php';
           </div>
         </div>
       </div>
+
+      <?php if ($perfilUsuario === 'Administrador'): ?>
+            <!-- Filtro de Cartera -->
+            <div class="col-md-3">
+              <label for="cartera_select">Cartera:</label>
+              <select class="form-control" id="cartera_select" name="cartera_select">
+                <?php echo fillcartera_usuario('N',$base_de_datos) ?>
+              </select>
+            </div>
+            <?php endif; ?>
       
       <!-- Botones -->
       <div class="col-md-2">
@@ -145,6 +158,7 @@ require_once '../../menu_builder.php';
 
 <script>
   let tabla;
+  const perfilUsuario = '<?= $perfilUsuario ?>';
 
   // Inicializar datepickers
   $(function() {
@@ -169,7 +183,7 @@ require_once '../../menu_builder.php';
     });
   });
 
-  function cargarReporte(fechaInicio = '', fechaFin = '') {
+  function cargarReporte(fechaInicio = '', fechaFin = '', cartera = '') {
     // Validar que ambas fechas estén presentes
     /*if ((fechaInicio && !fechaFin) || (!fechaInicio && fechaFin)) {
       alert('Debe seleccionar ambas fechas para filtrar');
@@ -180,6 +194,10 @@ require_once '../../menu_builder.php';
     //if (fechaInicio && fechaFin) {
       url += `?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`;
     //}
+    if (perfilUsuario === 'Administrador' && cartera) {
+      url += `&cartera=${cartera}`;
+    }
+
     fetch(url)
       .then(response => {
         if (response.status === 204) {
@@ -298,6 +316,7 @@ require_once '../../menu_builder.php';
     
     const fechaInicio = $('#fecha_inicio').datetimepicker('viewDate').format('YYYY-MM-DD');
     const fechaFin = $('#fecha_fin').datetimepicker('viewDate').format('YYYY-MM-DD');
+    const cartera = document.getElementById('cartera_select')?.value || '';
     
     // Validar que ambas fechas estén seleccionadas
     if (!fechaInicio || !fechaFin) {
@@ -305,7 +324,7 @@ require_once '../../menu_builder.php';
       return;
     }
     
-    cargarReporte(fechaInicio, fechaFin);
+    cargarReporte(fechaInicio, fechaFin, cartera);
   });
 
   // Evento del botón limpiar

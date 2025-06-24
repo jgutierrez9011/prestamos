@@ -13,6 +13,7 @@ switch ($method) {
     case 'GET':
         // Obtener parámetros de la URL
         $cartera = $_SESSION["carterausuario"] ?? null;
+        $carterafiltro = $_GET['cartera'] ?? null;
         $fechaInicio = $_GET['fecha_inicio'] ?? null;
         $fechaFin = $_GET['fecha_fin'] ?? null;
         
@@ -22,7 +23,7 @@ switch ($method) {
 
         try {
             // Ejecutar reporte de abonos
-            $resultado = $reporteService->obtenerReporteAbonos($cartera, $tipoUsuario, $fechaInicio, $fechaFin);
+            $resultado = $reporteService->obtenerReporteAbonos($cartera, $carterafiltro, $tipoUsuario, $fechaInicio, $fechaFin);
 
             if (!empty($resultado)) {
                 echo json_encode($resultado);
