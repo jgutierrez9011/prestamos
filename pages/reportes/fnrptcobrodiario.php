@@ -67,7 +67,7 @@ class RptCobroDiario {
             LEFT JOIN (
                 SELECT id_pago, id_prestamo, fecha_pago, saldo_por_cuota 
                 FROM vw_vista_mora_por_cuota
-                WHERE estado IN ('Pendiente', 'Parcial', 'Mora')
+                WHERE estatus IN ('Mora')
             ) cuotas_mora ON a.id_prestamo = cuotas_mora.id_prestamo AND cuotas_mora.fecha_pago = a.fecha_pago
             WHERE d.idestatus IN (3, 5, 6)
               AND a.fecha_pago BETWEEN :fechaInicio AND :fechaFin";
