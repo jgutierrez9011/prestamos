@@ -24,6 +24,7 @@ class Reportes {
                         a.telefono,
                         I.vencimiento_prestamo,
                         ROUND((SUM(coalesce(g.dias_transcurridos_mora,0.0))/7.0), 2) AS dias_promedio,
+						f.saldo,
                         coalesce(g.cuotas_vencidas,0) as cuotas_vencidas,
                         SUM(coalesce(g.monto_cuota,0.0)) AS saldo_mora,
                         SUM(coalesce(g.dias_transcurridos_mora,0.0)) AS dias_mora
@@ -33,11 +34,11 @@ class Reportes {
                     LEFT JOIN prestamo f ON c.id_solicitud = f.id_solicitud
                     LEFT JOIN (
                         SELECT
-                            MIN(d.fecha_pago) AS fecha_primer_pago_vencido,
+                            d.id_prestamo,
                             COUNT(d.id_pago) as cuotas_vencidas,
-                            d.id_prestamo,  
-                            sum(d.monto_cuota) as monto_cuota,
-                            COALESCE(e.monto_abonado, 0) AS monto_abonado,
+							 MIN(d.fecha_pago) AS fecha_primer_pago_vencido,
+                            d.monto_cuota as monto_cuota,
+                            sum(coalesce(e.monto_abonado,0.0)) AS monto_abonado,
                             CURRENT_DATE - MIN(d.fecha_pago) AS dias_transcurridos_mora
                             FROM calendariopago d 
                             LEFT JOIN (
@@ -46,12 +47,12 @@ class Reportes {
                                     fecha_registro::date AS fecha_registro, 
                                     SUM(monto_aplicado) AS monto_abonado 
                                 FROM abono_cuota
-                                GROUP BY id_pago, fecha_registro::date
+                                GROUP BY id_pago
+								, fecha_registro::date
                             ) e ON d.id_pago = e.id_pago
                             WHERE d.fecha_pago < CURRENT_DATE 
                             AND COALESCE(e.monto_abonado, 0) < d.monto_cuota
-                            GROUP BY d.id_prestamo, 
-                            COALESCE(e.monto_abonado, 0)
+                            GROUP BY d.id_prestamo, d.monto_cuota
                                                 ) g ON f.id_prestamo = g.id_prestamo
                                                 LEFT JOIN estatus_solicitud h ON c.idestatus = h.idestatus
                                                 LEFT JOIN (

@@ -87,11 +87,12 @@ $codigoCartera = $_SESSION['carterausuario'] ?? null;
                   <th>Teléfono</th>
                   <th>Dirección Domicilio</th>
                   <th>Dirección Negocio</th>
-                  <th>Vencimiento</th>
+                  <th>Días Mora</th>
                   <th>Días Promedio</th>
                   <th>Cuotas Vencidas</th>
                   <th>Saldo Mora</th>
-                  <th>Días Mora</th>
+                  <th>Saldo Pendiente</th>
+                  <th>Vencimiento</th>
                 </tr>
               </thead>
               <tbody id="resultadoReporte">
@@ -161,11 +162,12 @@ function cargarReporte(id_prestamo = '', codigoCarterafiltro = '') {
           <td>${row.telefono}</td>
           <td>${row.direccion_domicilio}</td>
           <td>${row.direccion_negocio}</td>
-          <td>${row.vencimiento_prestamo || "-"}</td>
+          <td>${row.dias_mora}</td>
           <td>${row.dias_promedio}</td>
           <td>${row.cuotas_vencidas}</td>
           <td>${row.saldo_mora}</td>
-          <td>${row.dias_mora}</td>
+          <td>${row.saldo}</td>
+          <td>${row.vencimiento_prestamo || "-"}</td>
         `;
         tbody.appendChild(tr);
         total++;
