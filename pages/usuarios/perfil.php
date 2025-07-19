@@ -2,6 +2,16 @@
 require_once 'reg.php';
 require_once '../../menu_builder.php';
 
+require_once '../../acceso_helper.php'; // nuevo archivo
+
+$usuario = $_SESSION['user'] ?? null;
+$archivoActual = basename($_SERVER['PHP_SELF']);
+
+if (!$usuario || !validarAcceso($usuario, $archivoActual, $base_de_datos)) {
+    header("Location: $ruta");
+    exit;
+}
+
 // Función para limpiar y sanitizar datos
 function limpiar($data) {
     $data = trim($data);

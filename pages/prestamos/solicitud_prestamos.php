@@ -480,8 +480,11 @@ if (!empty($_SESSION["user"])) {
     });
 
     // Evento para enviar el formulario
-    document.getElementById('form3').addEventListener('submit', function (e) {
+    document.getElementById('form3').addEventListener('submit', async function (e) {
       e.preventDefault(); // Evita el envío tradicional del formulario
+
+      const validacionOK = await realizarCalculosFinancieros();
+      if (!validacionOK) return;
 
       // Captura los datos de los tres formularios
       const formData1 = new FormData(document.getElementById('form1'));
@@ -490,15 +493,9 @@ if (!empty($_SESSION["user"])) {
 
       // Combina los datos en un solo objeto
       const data = {};
-      formData1.forEach((value, key) => {
-        data[key] = value;
-      });
-      formData2.forEach((value, key) => {
-        data[key] = value;
-      });
-      formData3.forEach((value, key) => {
-        data[key] = value;
-      });
+      formData1.forEach((value, key) => {data[key] = value;});
+      formData2.forEach((value, key) => {data[key] = value;});
+      formData3.forEach((value, key) => {data[key] = value;});
 
       // Envía los datos a la API
       $.ajax({
@@ -596,54 +593,38 @@ if (!empty($_SESSION["user"])) {
         });
     
     function enviarDatosPromedio(tipoPromedio, ventaBuena, ventaMedia, ventaBaja) {
-    $.ajax({
-        url: 'fnprestamos.php', // Reemplaza con la ruta a tu archivo PHP
-        type: 'POST',
-        dataType: 'json',
-        data: JSON.stringify({
-            action:'promedio_venta',
-            tipo: tipoPromedio,
-            buena: ventaBuena,
-            media: ventaMedia,
-            baja: ventaBaja
-        }),
-        success: function(response) {
-            if (typeof response === 'object' && response.error) {
-                console.error('Error:', response.error);
-                alert('Ocurrió un error: ' + response.error);
-            } else {
-                // Aquí puedes hacer algo con el resultado, como mostrarlo en el HTML
-                $('#promedio_venta').val(response.venta_promedio.toFixed(2));
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: 'fnprestamos.php',
+            type: 'POST',
+            dataType: 'json',
+            data: JSON.stringify({
+                action: 'promedio_venta',
+                tipo: tipoPromedio,
+                buena: ventaBuena,
+                media: ventaMedia,
+                baja: ventaBaja
+            }),
+            success: function (response) {
+                if (response.error) {
+                    Swal.fire('Error', response.error, 'error');
+                    reject(response.error);
+                } else {
+                    $('#promedio_venta').val(response.venta_promedio.toFixed(2));
+                    $('#ventas_mensuales').val(response.venta_promedio.toFixed(2));
+                    resolve();
+                }
+            },
+            error: function (xhr, status, error) {
+                Swal.fire('Error', 'Error al procesar la solicitud', 'error');
+                reject(error);
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error en la solicitud:', error);
-            alert('Error al procesar la solicitud');
-        }
+        });
     });
-};
+    }
 
     $('#btnCalVentaPromedio').click(function() {
-        // Obtener valores
-                const tipo = $('#tipo_promedio').val();
-                const buena = parseFloat($('#venta_promedio_bueno').val()) || 0;
-                const media = parseFloat($('#venta_promedio_mediano').val()) || 0;
-                const baja = parseFloat($('#venta_promedio_bajo').val()) || 0;
-                
-                // Validar
-                if (isNaN(buena) || isNaN(media) || isNaN(baja)) {
-                    alert('Por favor ingrese valores válidos');
-                    return;
-                }
-
-                enviarDatosPromedio(tipo, buena, media, baja);
-                calcularIngreso();
-                calcularGasto();
-                cacularUtilidad();
-              /*if(valorSeleccionado==='produccion'){
-                  calcularCostoVenta();
-                }*/
-              
+        realizarCalculosFinancieros();            
     });
 
     function calcularIngreso() {
@@ -710,8 +691,31 @@ if (!empty($_SESSION["user"])) {
         $('#utilidad_final').val(totalUtilidad.toFixed(2));
     }
 
+    async function realizarCalculosFinancieros() {
+
+        const tipo = $('#tipo_promedio').val();
+        const buena = parseFloat($('#venta_promedio_bueno').val()) || 0;
+        const media = parseFloat($('#venta_promedio_mediano').val()) || 0;
+        const baja = parseFloat($('#venta_promedio_bajo').val()) || 0;
+
+        if (isNaN(buena) || isNaN(media) || isNaN(baja)) {
+            Swal.fire('Advertencia', 'Por favor ingrese valores válidos', 'warning');
+            return false;
+        }
+
+        try {
+            await enviarDatosPromedio(tipo, buena, media, baja);
+            calcularIngreso();
+            calcularGasto();
+            cacularUtilidad();
+            return true;
+        } catch (error) {
+            return false;
+        }
+
+    }
     // Ejecutar cuando el input de monto pierde el foco
-        $('#monto_solicitado').on('blur', function() {
+    $('#monto_solicitado').on('blur', function() {
             var descripcion = $('#cod_cartera').val(); // Captura la descripción
             var monto = $('#monto_solicitado').val(); // Captura el monto
 
@@ -764,7 +768,7 @@ if (!empty($_SESSION["user"])) {
             }
         });
 
-        const calcularCostoProduccion = (ventasMensuales,rubro) => {
+    const calcularCostoProduccion = (ventasMensuales,rubro) => {
            // Solo enviar datos adicionales si el rubro es Producción
                   let data = {
                       action: 'estimacion_costo',
@@ -794,7 +798,7 @@ if (!empty($_SESSION["user"])) {
                          });
         }
 
-        function validarCamposProduccion(venta_mensual, rubro) {
+    function validarCamposProduccion(venta_mensual, rubro) {
 
                   const costo = parseFloat($('#costo_unitario').val());
                   const precio = parseFloat($('#precio_venta').val());
@@ -810,7 +814,7 @@ if (!empty($_SESSION["user"])) {
 
           }
 
-          $('#ventas_mensuales').on('blur', function () {
+    $('#ventas_mensuales').on('blur', function () {
                     const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
                     const rubro = $('#rubro').val();
 
@@ -819,8 +823,8 @@ if (!empty($_SESSION["user"])) {
                     
             });
 
-                  // Asigna el evento blur a cada input
-            $('#costo_unitario, #precio_venta, #unidad_producida').on('blur', function () {
+    // Asigna el evento blur a cada input
+    $('#costo_unitario, #precio_venta, #unidad_producida').on('blur', function () {
               
               const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
               const rubro = $('#rubro').val();

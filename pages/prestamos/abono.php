@@ -69,8 +69,16 @@ if (!empty($_SESSION["user"])) {
                 <div class="row">
                     <div class="col-md-6">
                     <p class="mb-2">
-                    <strong class="font-size-base"> ID Préstamo:</strong>
+                    <strong class="font-size-base"> Codigo solicitud:</strong>
+                    <span id="lbl_codigo_solicitud" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base"> Codigo Préstamo:</strong>
                     <span id="lbl_prestamo" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base"> Codigo Cliente:</strong>
+                    <span id="lbl_cod_cliente" class="badge badge-secondary">No asignado</span>
                     </p>
                     <p class="mb-2">
                     <strong class="font-size-base"> Cliente:</strong>
@@ -92,7 +100,9 @@ if (!empty($_SESSION["user"])) {
                     <strong class="font-size-base">Fecha de Aprobación:</strong>
                     <span id="lbl_fecha_aprobacion" class="badge badge-secondary">No asignado</span>
                     </p>
+                    
                     </div>
+
                     <div class="col-md-6">
                     <p class="mb-2">
                     <strong class="font-size-base">Total a pagar:</strong>
@@ -117,6 +127,10 @@ if (!empty($_SESSION["user"])) {
                     <p class="mb-2">
                     <strong class="font-size-base">Interés Semanal:</strong>
                     <span id="lbl_interes_semanal" class="badge badge-secondary">No asignado</span>
+                    </p>
+                    <p class="mb-2">
+                    <strong class="font-size-base">Fecha desembolso:</strong>
+                    <span id="lbl_fecha_desembolso" class="badge badge-secondary">No asignado</span>
                     </p>
                     </div>
                 </div>
@@ -365,7 +379,9 @@ function loadData(id) {
         method: 'GET',
         success: function(response) {
           // Llenar los campos con los datos obtenidos
+          $('#lbl_codigo_solicitud').text(response.cod_solicitud);
           $('#lbl_prestamo').text(response.id_prestamo);
+          $('#lbl_cod_cliente').text(response.idcliente);
           $('#lbl_monto_aprobado').text(response.monto_aprobado);
           $('#lbl_interes').text(response.interes);
           $('#lbl_plazo').text(response.plazo);
@@ -377,6 +393,7 @@ function loadData(id) {
           $('#lbl_interes_semanal').text(response.interes_semanal);
           $('#lbl_cliente').text(response.nombre);
           $('#lbl_total_a_pagar').text(response.montotal);
+          $('#lbl_fecha_desembolso').text(response.fecha_desembolso);
 
 
           if(response.saldo_pendiente <= 0){disableActionButtons("No hay saldo pendiente.");}

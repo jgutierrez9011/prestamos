@@ -14,6 +14,8 @@ CADENA DE CONEXION A POSGRESQL
  $nombreBaseDeDatos = "credimore";
  $usuario = "postgres";
  $pass = "posgres";
+
+ $ruta = "/credimore/pages/usuarios/inicio.php";
  
  try {
      // Cadena de conexión para PostgreSQL

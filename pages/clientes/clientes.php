@@ -1,6 +1,19 @@
 <?php
 require_once  '../usuarios/reg.php';
+require_once '../usuarios/fnusuario.php'; 
 require_once '../../menu_builder.php';
+require_once '../../acceso_helper.php'; // nuevo archivo
+
+$usuario = $_SESSION['user'] ?? null;
+$archivoActual = basename($_SERVER['PHP_SELF']);
+
+if (!$usuario || !validarAcceso($usuario, $archivoActual, $base_de_datos)) {
+    header("Location: $ruta");
+    exit;
+}
+
+$perfilUsuario = $_SESSION['perfilusuario'] ?? 'Usuario';
+$codigoCartera = $_SESSION['carterausuario'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -83,6 +96,23 @@ if (!empty($_SESSION["user"])) {
             </div>
 
            </form>
+
+           <br>
+
+           <form id="formClientes" class="form-inline mb-3">
+
+            <?php if ($perfilUsuario === 'Administrador'): ?>
+            <div class="form-group mr-2">
+             <label for="codigoCarterafiltro" class="mr-2">Cartera:</label>
+              <select class="form-control" id="codigoCarterafiltro" name="codigoCarterafiltro">
+                <?php echo fillcartera_usuario('N',$base_de_datos) ?>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Buscar</button>
+             <?php endif; ?>
+
+          </form>
            <br>
            <div class="row">
         <div class="row table-responsive">
@@ -91,6 +121,7 @@ if (!empty($_SESSION["user"])) {
                   <tr>
                       <th><p class="small"><strong>ID</strong></p></th>
                       <th><p class="small"><strong>Acciones</strong></p></th>
+                      <th><p class="small"><strong>Cartera</strong></p></th>
                       <th><p class="small"><strong>Cedula</strong></p></th>
                       <th><p class="small"><strong>Nombre</strong></p></th>
                       <th><p class="small"><strong>Telefono</strong></p></th>
@@ -200,50 +231,56 @@ if (!empty($_SESSION["user"])) {
 <script src="../../dist/js/demo.js"></script>
 <!-- Page specific script -->
 <script>
-  $(function () {
-    $('#clientesTable').DataTable({
-        ajax: {
-            url: 'fncliente.php',
-            dataSrc: '',
-            error: function(xhr, error, thrown) {
-                console.log("Error en la carga de datos: ", error);
-                console.log("Estado: ", xhr.status);
-                console.log("Respuesta: ", xhr.responseText);
-            }
+ 
+ $(document).ready(function () {
+  const tabla = $('#clientesTable').DataTable({
+    ajax: {
+      url: 'fncliente.php',
+      data: function (d) {
+        const filtro = $('#codigoCarterafiltro').val();
+        if (filtro) d.codigoCarterafiltro = filtro;
+      },
+      dataSrc: '',
+      error: function (xhr, error, thrown) {
+        console.log("Error en la carga de datos: ", error);
+        console.log("Estado: ", xhr.status);
+        console.log("Respuesta: ", xhr.responseText);
+      }
+    },
+    destroy: true,
+    columns: [
+      { data: "idcliente" },
+      {
+        data: "idcliente",
+        render: function (data, type, row) {
+          return `
+            <a href="editar_cliente.php?idcliente=${data}" class="btn btn-sm btn-primary">
+              <i class="fas fa-pencil-alt"></i>
+            </a>`;
         },
-        columns: [
-            { data: "idcliente" },
-            {
-                data: "idcliente",
-                render: function(data, type, row) {
-                return `
-                    <a href="editar_cliente.php?idcliente=${data}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-pencil-alt"></i>
-                    </a>
-                `;
-            },
-                orderable: false,
-                searchable: false
-            },
-            { data: "cedula" },
-            { data: "nombre" },
-            { data: "telefono" },
-            { data: "estado_civil" },
-            { data: "actividad_economica" },
-            { data: "direccion_domicilio" },
-            { data: "tipo_vivienda" },
-            { data: "anos_habitar" },
-            { data: "direccion_negocio" },
-            { data: "tipo_local" },
-            { data: "tiempo_operar" },
-            { data: "rubro" }
-        ]
-    });
+        orderable: false,
+        searchable: false
+      },
+      { data: "descripcion" },
+      { data: "cedula" },
+      { data: "nombre" },
+      { data: "telefono" },
+      { data: "estado_civil" },
+      { data: "actividad_economica" },
+      { data: "direccion_domicilio" },
+      { data: "tipo_vivienda" },
+      { data: "anos_habitar" },
+      { data: "direccion_negocio" },
+      { data: "tipo_local" },
+      { data: "tiempo_operar" },
+      { data: "rubro" }
+    ]
+  });
 
-    /*$(document).on('click', '.edit-btn', function() {
-        var clienteId = $(this).data('id');
-        alert('ID del Cliente: ' + clienteId);
-    });*/
+  $('#formClientes').on('submit', function (e) {
+    e.preventDefault();
+    tabla.ajax.reload(); // Vuelve a cargar datos con el filtro
+  });
 });
 
 </script>

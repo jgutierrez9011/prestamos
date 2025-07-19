@@ -689,7 +689,7 @@ if (!empty($_SESSION["user"])) {
           $('#utilidad_final').val(data.utilidad_final);
           $('#cod_solicitud').val(data.cod_solicitud);
           $('#total_ingresos').val(data.total_ingreso);
-          $('#total_gastos').val(data.cod_solicitud);
+          $('#total_gastos').val(data.total_gasto);
           
 
           $("#monto_aprobado").val(data.monto_solicitado),

@@ -2,6 +2,16 @@
 require_once '../usuarios/reg.php';
 require_once '../usuarios/fnusuario.php'; 
 require_once '../../menu_builder.php';
+require_once '../../acceso_helper.php'; // nuevo archivo
+
+$usuario = $_SESSION['user'] ?? null;
+$archivoActual = basename($_SERVER['PHP_SELF']);
+
+if (!$usuario || !validarAcceso($usuario, $archivoActual, $base_de_datos)) {
+    header("Location: $ruta");
+    exit;
+}
+
 $perfilUsuario = $_SESSION['perfilusuario'] ?? 'Usuario';
 $codigoCartera = $_SESSION['carterausuario'] ?? null;
 ?>

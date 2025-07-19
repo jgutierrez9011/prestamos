@@ -16,11 +16,18 @@ $method = $_SERVER["REQUEST_METHOD"];
 switch ($method) {
     case "GET":
         try {
+            $codigoCarterafiltro = isset($_GET['codigoCarterafiltro']) ? (int)$_GET['codigoCarterafiltro'] : null;
+            $cartera = $_SESSION["carterausuario"] ?? null;
+
             if (isset($_GET["idcliente"])) {
                 
                 // Buscar un solo cliente por ID
-                $stmt = $pdo->prepare("SELECT * FROM clientes WHERE idcliente = :idcliente");
+                $stmt = $pdo->prepare("SELECT a.idcliente, a.cedula, a.nombre, a.telefono, a.estado_civil, a.actividad_economica, a.direccion_domicilio,
+                                              a.tipo_local, a.tipo_vivienda, a.anos_habitar, a.tiempo_operar, a.rubro, b.idcartera, b.descripcion, a.direccion_negocio
+                                              from clientes a 
+                                              left join tblcatcartera b on a.idcartera = b.idcartera WHERE idcliente = :idcliente");
                 $stmt->execute([":idcliente" => $_GET["idcliente"]]);
+
                 $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($cliente) {
@@ -30,11 +37,41 @@ switch ($method) {
                     echo json_encode(["error" => "Cliente no encontrado"]);
                 }
             } else {
-                // Obtener todos los clientes
-                $stmt = $pdo->query("SELECT * FROM clientes");
-                $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($clientes);
-            }
+                    $perfilUsuario = $_SESSION["perfilusuario"] ?? 'Usuario';
+                    $codigoCarterafiltro = isset($_GET['codigoCarterafiltro']) ? (int)$_GET['codigoCarterafiltro'] : null;
+                    $carteraUsuario = $_SESSION["carterausuario"] ?? null;
+
+                    // Definir filtro de cartera según el perfil
+                    $codigoFinal = null;
+
+                    if ($perfilUsuario !== 'Administrador' && !empty($carteraUsuario)) {
+                        $codigoFinal = $carteraUsuario; // Usuario común ve solo su cartera
+                    } elseif ($perfilUsuario === 'Administrador' && !empty($codigoCarterafiltro)) {
+                        $codigoFinal = $codigoCarterafiltro; // Admin puede filtrar por cartera
+                    }
+
+                    // Armar consulta base
+                    $sql = "SELECT a.idcliente, a.cedula, a.nombre, a.telefono, a.estado_civil, 
+                                a.actividad_economica, a.direccion_domicilio, a.tipo_local, 
+                                a.tipo_vivienda, a.anos_habitar, a.tiempo_operar, a.rubro, 
+                                b.idcartera, b.descripcion, a.direccion_negocio
+                            FROM clientes a 
+                            LEFT JOIN tblcatcartera b ON a.idcartera = b.idcartera";
+
+                    // Agregar condición de cartera si aplica
+                    if (!is_null($codigoFinal)) {
+                        $sql .= " WHERE b.idcartera = :idcartera";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->bindParam(':idcartera', $codigoFinal, PDO::PARAM_INT);
+                    } else {
+                        $stmt = $pdo->prepare($sql);
+                    }
+
+                    $stmt->execute();
+                    $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($clientes);
+                }
+
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode(["error" => "Error al obtener clientes 456: " . $e->getMessage()]);

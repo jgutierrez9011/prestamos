@@ -19,7 +19,7 @@ class PrestamoService {
 
     // Obtener un préstamo por ID
     public function getPrestamo($cod_solicitud) {
-        $sql = "SELECT c.nombre, b.*, d.abonado, coalesce(b.montotal - d.abonado,b.montotal)  as saldo_pendiente, d.cantidad_abonos
+        $sql = "SELECT a.cod_solicitud, b.fecha_desembolso, c.idcliente, c.nombre, b.*, d.abonado, coalesce(b.montotal - d.abonado,b.montotal)  as saldo_pendiente, d.cantidad_abonos
                 FROM solicitudPrestamo a 
                 inner join prestamo b on a.id_solicitud = b.id_solicitud
                 inner join clientes c on a.idcliente = c.idcliente
@@ -280,18 +280,22 @@ function generarCalendarioPagos_simple($monto, $interesMensual, $plazoMeses, $fe
     // Determinar número de pagos y el intervalo según modalidad
     switch ($modalidad) {
         case 'diario':
+            $modalidad = 'diario';
             $numPagos = $plazoMeses * 30; // Aproximado
             $intervalo = ' day';
             break;
         case 'quincenal':
+            $modalidad = 'quincenal';
             $numPagos = $plazoMeses * 2;
             $intervalo = ' days';
             break;
         case 'mensual':
+            $modalidad = 'mensual';
             $numPagos = $plazoMeses;
             $intervalo = ' month';
             break;
         case 'semanal':
+            $modalidad = 'semanal';
             $numPagos = ceil($plazoMeses * 4); // Aprox. 4 semanas por mes
             $intervalo = ' week';
         default:
