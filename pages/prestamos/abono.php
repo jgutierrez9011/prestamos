@@ -184,6 +184,9 @@ if (!empty($_SESSION["user"])) {
                             <th>concepto</th>
                             <th>saldo</th>
                             <th>Firma</th>
+                            <?php if ($_SESSION['perfilusuario'] === 'Administrador'): ?>
+                            <th>Acción</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                 </table>
@@ -354,6 +357,16 @@ $('#tb_controlPago').DataTable({
       { data: "concepto" },
       { data: "saldo" },
       { data: "ejecutivo" }
+      <?php if ($_SESSION['perfilusuario'] === 'Administrador'): ?>,
+      {
+        data: "id_abono",
+        render: function(data, type, row) {
+          return `<button class="btn btn-danger btn-sm btnAnularAbono" data-id="${data}">
+                    <i class="fas fa-times"></i> Anular
+                  </button>`;
+          }
+      }
+      <?php endif; ?>
   ],
   responsive: true,
   order: [[0, 'desc']] // Ordenar por fecha descendente
@@ -462,6 +475,56 @@ function loadData(id) {
                 });
             });
 
+    $(document).on("click", ".btnAnularAbono", function () {
+          const id_abono = $(this).data("id");
+
+          Swal.fire({
+            title: '¿Está seguro que desea anular este abono?',
+            input: 'text',
+            inputLabel: 'Motivo de anulación',
+            inputPlaceholder: 'Ingrese el motivo...',
+            inputValidator: (value) => {
+              if (!value) {
+                return 'Debe ingresar un motivo.';
+              }
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Sí, anular',
+            cancelButtonText: 'Cancelar',
+            icon: 'warning'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              $.ajax({
+                url: "servicio_abono.php",
+                type: "DELETE",
+                data: JSON.stringify({
+                  id_abono: id_abono,
+                  accion: "anular",
+                  motivo: result.value
+                }),
+                contentType: "application/json",
+                success: function (response) {
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.message,
+                    timer: 4000,
+                    showConfirmButton: false
+                  });
+                  loadData(id); // recargar tablas
+                },
+                error: function (xhr) {
+                  const error = xhr.responseJSON?.error ?? "Error al anular abono.";
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error,
+                  });
+                }
+              });
+            }
+          });
+        });
 
 });
 

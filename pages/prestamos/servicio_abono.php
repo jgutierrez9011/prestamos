@@ -122,18 +122,30 @@ try {
             break;
 
         case 'DELETE':
-            // Eliminar un abono
             $data = json_decode(file_get_contents("php://input"));
+            
             if (!empty($data->id_abono)) {
-                if ($abono->eliminarAbono($data->id_abono)) {
-                    http_response_code(200); // OK
-                    echo json_encode(["message" => "Abono eliminado correctamente."]);
+                if (isset($data->accion) && $data->accion === 'anular') {
+                    // Eliminar y registrar en historial
+                    if ($abono->anularYEliminarAbono($data->id_abono, $data->motivo ?? 'Sin motivo')) {
+                        http_response_code(200);
+                        echo json_encode(["message" => "Abono anulado y eliminado correctamente."]);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(["error" => "No se pudo anular el abono."]);
+                    }
                 } else {
-                    http_response_code(500); // Internal Server Error
-                    echo json_encode(["error" => "No se pudo eliminar el abono."]);
+                    // Eliminar simple (no recomendado si usas historial)
+                    if ($abono->eliminarAbono($data->id_abono)) {
+                        http_response_code(200);
+                        echo json_encode(["message" => "Abono eliminado correctamente."]);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(["error" => "No se pudo eliminar el abono."]);
+                    }
                 }
             } else {
-                http_response_code(400); // Bad Request
+                http_response_code(400);
                 echo json_encode(["error" => "Falta el parámetro id_abono."]);
             }
             break;

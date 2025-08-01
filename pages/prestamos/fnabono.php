@@ -140,5 +140,23 @@ class Abono {
             throw new Exception($e->getMessage());
         }
     }
+
+    public function anularYEliminarAbono($id_abono, $motivo) {
+    try {
+        $query = "SELECT anular_y_eliminar_abono(:id_abono, :usuario, :motivo)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_abono", $id_abono);
+        $stmt->bindParam(":usuario", $_SESSION["idusuario"]);
+        $stmt->bindParam(":motivo", $motivo);
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    } catch (PDOException $e) {
+        throw new Exception("Error al anular y eliminar abono: " . $e->getMessage());
+    }
+    
+    }
+
 }
 ?>
