@@ -65,22 +65,32 @@ if (!empty($_SESSION["user"])) {
       <div class="row">
         <div class="col-md-12 mb-12">
         <?php
-      if(isset($_GET["token"])):
-        if($_GET["token"] == 1):
-          echo "<div class='alert alert-success'>
-               <strong>Exito!</strong> El usuario fue registrado con exito!
-               </div>";
-        elseif($_GET["token"] == 2):
-          echo "<div class='alert alert-warning'>
-                <strong>Error!</strong> Disculpe no se registro el usuario!, por favor verifique.
-                </div>";
-        elseif($_GET["token"] == 3):
-          echo "<div class='alert alert-warning'>
-                <strong>Error!</strong> Ya existe un usuario con el correo especificado., por favor verifique.
-                </div>";
-        endif;
-      endif;
-         ?>
+                if (isset($_GET["token"])):
+                  if ($_GET["token"] == 1):
+                    echo "<div class='alert alert-success'>
+                            <strong>Éxito!</strong> El usuario fue registrado con éxito.
+                          </div>";
+                  elseif ($_GET["token"] == 2):
+                    echo "<div class='alert alert-warning'>
+                            <strong>Error!</strong> Disculpe, no se registró el usuario. Por favor verifique.
+                          </div>";
+                  elseif ($_GET["token"] == 3):
+                    echo "<div class='alert alert-warning'>
+                            <strong>Error!</strong> Ya existe un usuario con el correo especificado. Por favor verifique.
+                          </div>";
+                  elseif ($_GET["token"] == 4):
+                    echo "<div class='alert alert-danger'>
+                            <strong>Error!</strong> La contraseña no es segura:<br>";
+                    if (!empty($_SESSION['errores_password'])) {
+                      foreach ($_SESSION['errores_password'] as $e) {
+                        echo "- $e <br>";
+                      }
+                      unset($_SESSION['errores_password']);
+                    }
+                    echo "</div>";
+                  endif;
+                endif;
+          ?>
        </div>
       </div>
 
@@ -175,8 +185,26 @@ if (!empty($_SESSION["user"])) {
             <div class="col-md-3 mb-3">
 
               <label for="Correo">Contraseña</label>
-                 <input class="form-control form-control-sm" placeholder="Contraseña" name="password" type="text" data-rule-required="true" data-rule-minlength="6">
-
+                 <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      id="password"
+                      name="password"
+                      placeholder="Contraseña"
+                      required
+                      data-toggle="tooltip"
+                      data-html="true"
+                      autocomplete="new-password"
+                      title="
+                        <ul style='margin:0; padding-left:1.2em; font-size:0.9em;'>
+                          <li id='c1'>❌ Mínimo 8 caracteres</li>
+                          <li id='c2'>❌ Al menos una letra minúscula</li>
+                          <li id='c3'>❌ Al menos una letra mayúscula</li>
+                          <li id='c4'>❌ Al menos un número</li>
+                          <li id='c5'>❌ Al menos un carácter especial</li>
+                        </ul>
+                      "
+                    >
              </div>
 
            <div class="col-md-3 mb-3">
@@ -264,5 +292,48 @@ if (!empty($_SESSION["user"])) {
 <script src="../../dist/js/adminlte.min.js"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="../../dist/js/demo.js"></script>
+
+<script>
+$(document).ready(function () {
+  const $password = $('#password');
+
+  $password.tooltip({
+    trigger: 'manual',
+    placement: 'right',
+    container: 'body'
+  });
+
+  $password.on('focus', function () {
+    $(this).tooltip('show');
+  });
+
+  $password.on('blur', function () {
+    $(this).tooltip('hide');
+  });
+
+  $password.on('input', function () {
+    const pwd = $(this).val();
+    const criterios = {
+      c1: pwd.length >= 8,
+      c2: /[a-z]/.test(pwd),
+      c3: /[A-Z]/.test(pwd),
+      c4: /[0-9]/.test(pwd),
+      c5: /[^A-Za-z0-9]/.test(pwd)
+    };
+
+    let lista = `
+      <ul style='margin:0; padding-left:1.2em; font-size:0.9em;'>
+        <li id='c1'>${criterios.c1 ? '✅' : '❌'} Mínimo 8 caracteres</li>
+        <li id='c2'>${criterios.c2 ? '✅' : '❌'} Al menos una letra minúscula</li>
+        <li id='c3'>${criterios.c3 ? '✅' : '❌'} Al menos una letra mayúscula</li>
+        <li id='c4'>${criterios.c4 ? '✅' : '❌'} Al menos un número</li>
+        <li id='c5'>${criterios.c5 ? '✅' : '❌'} Al menos un carácter especial</li>
+      </ul>
+    `;
+
+    $(this).attr('data-original-title', lista).tooltip('show');
+  });
+});
+</script>
 </body>
 </html>
