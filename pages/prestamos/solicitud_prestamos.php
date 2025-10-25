@@ -565,6 +565,7 @@ if (!empty($_SESSION["user"])) {
                         customer = response.cliente;
 
                         Swal.close();
+
                         if (response.error) {
                           Swal.fire('Error', response.message, 'error');
                           return;
@@ -591,11 +592,38 @@ if (!empty($_SESSION["user"])) {
                 $("#rubro").val(customer.rubro),
                 $("#idcliente").val(customer.idcliente);
 
+                $("#venta_promedio_bueno").val(customer.venta_promedio_bueno);
+                $("#venta_promedio_mediano").val(customer.venta_promedio_mediano);
+                $("#venta_promedio_bajo").val(customer.venta_promedio_bajo);
+                $("#promedio_venta").val(customer.promedio_venta);
+                
+                $("#ventas_mensuales").val(customer.ventas_mensuales);
+                $("#otros_ingresos_negocio").val(customer.otros_ingresos_negocio);
+                $("#aportes_familiares").val(customer.aportes_familiares);
+                $("#otros_ingresos").val(customer.otros_ingresos);
+                $("#total_ingresos").val(customer.total_ingreso);
+                
+                $("#gasto_costo_venta").val(customer.gasto_costo_venta);
+                $("#gastos_negocio").val(customer.gastos_negocio);
+                $("#cuotas_credito").val(customer.cuotas_credito);
+                $("#gastos_familiares").val(customer.gastos_familiares);
+                $("#total_gastos").val(customer.total_gasto);
+                
+                
+                $("#utilidad_final").val(customer.utilidad_final);
+
                 validateForm(document.getElementById('form1'), buttons.next1);
+
+                if(customer.utilidad_final > 0 && customer.utilidad_final != null){
+                  validateForm(document.getElementById('form3'), buttons.submit);
+                }
+
                     },
-                    error: function(xhr, status, error) {
+                    error: function(xhr, status,error) {
                         // Maneja errores
-                        alert('Error en la solicitud: ' + error);
+                        //alert('Error en la solicitud: ' + error);
+                        Swal.close();
+                        Swal.fire('Error en la solicitud: ', error['error'], 'error');
                     }
                 });
             } else {

@@ -84,7 +84,25 @@ switch ($method) {
          if (isset($data["cedula"]) && !isset($data["nombre"], $data["telefono"])) {
             // Búsqueda de cliente por cédula
             try {
-                $stmt = $pdo->prepare("SELECT * FROM clientes WHERE cedula = :cedula");
+                $stmt = $pdo->prepare("SELECT a.idcliente, a.cedula, a.nombre, a.telefono, a.estado_civil, a.actividad_economica, a.direccion_domicilio,
+                                                a.tipo_local, a.tipo_vivienda, a.anos_habitar, a.tiempo_operar, a.rubro, b.idcartera, b.descripcion, a.direccion_negocio,
+                                                fin.*
+                                                from clientes a 
+                                                left join tblcatcartera b on a.idcartera = b.idcartera 
+                                                left join
+                                                (
+                                                select
+                                                s.id_solicitud,
+                                                s.idcliente, venta_promedio_bueno, venta_promedio_mediano, venta_promedio_bajo, promedio_venta,
+                                                ventas_mensuales, otros_ingresos_negocio, aportes_familiares, otros_ingresos, gasto_costo_venta,
+                                                gastos_negocio, cuotas_credito, gastos_familiares, utilidad_final, total_ingreso, total_gasto
+                                                from solicitudprestamo s 
+                                                inner join prestamo p on s.id_solicitud = p.id_solicitud
+                                                inner join (select idcliente, max(p.id_solicitud) id_solicitud
+                                                from solicitudprestamo s inner join prestamo p on s.id_solicitud = p.id_solicitud
+                                                group by idcliente
+                                                order by id_solicitud asc) c on s.idcliente = c.idcliente and s.id_solicitud = c.id_solicitud
+                                                ) fin on a.idcliente = fin.idcliente WHERE cedula = :cedula");
                 $stmt->execute([":cedula" => $data["cedula"]]);
                 $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
 
