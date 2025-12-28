@@ -1,0 +1,103 @@
+<?php
+// fnobligaciones.php
+
+class ObligacionFinanciera {
+    private $conn;
+
+    public function __construct($db) {
+        $this->conn = $db;
+    }
+
+    public function listar() {
+        try {
+            $query = "SELECT * FROM obligacionesfinancieras ORDER BY id_obligacion";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Error al listar obligaciones: " . $e->getMessage());
+        }
+    }
+
+    public function insertar($id_solicitud, $institucion, $monto_inicial, $saldo, $cuota) {
+        try {
+
+            $query = "INSERT INTO obligacionesfinancieras (id_solicitud, institucion, monto_inicial, saldo, cuota)
+                      VALUES (:id_solicitud, :institucion, :monto_inicial, :saldo, :cuota)";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id_solicitud', $id_solicitud);
+            $stmt->bindParam(':institucion', $institucion);
+            $stmt->bindParam(':monto_inicial', $monto_inicial);
+            $stmt->bindParam(':saldo', $saldo);
+            $stmt->bindParam(':cuota', $cuota);
+            return $stmt->execute();
+
+        } catch (PDOException $e) {
+            throw new Exception("Error al insertar obligacion: " . $e->getMessage());
+        }
+    }
+
+    public function actualizar($id, $id_solicitud, $institucion, $monto_inicial, $saldo, $cuota) {
+        try {
+            $query = "UPDATE obligacionesfinancieras
+                      SET id_solicitud = :id_solicitud,
+                          institucion = :institucion,
+                          monto_inicial = :monto_inicial,
+                          saldo = :saldo,
+                          cuota = :cuota
+                      WHERE id_obligacion = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id_solicitud', $id_solicitud);
+            $stmt->bindParam(':institucion', $institucion);
+            $stmt->bindParam(':monto_inicial', $monto_inicial);
+            $stmt->bindParam(':saldo', $saldo);
+            $stmt->bindParam(':cuota', $cuota);
+            $stmt->bindParam(':id', $id);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            throw new Exception("Error al actualizar obligación: " . $e->getMessage());
+        }
+    }
+
+    public function eliminar($id) {
+        try {
+            $query = "DELETE FROM obligacionesfinancieras WHERE id_obligacion = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            throw new Exception("Error al eliminar obligación: " . $e->getMessage());
+        }
+    }
+
+    public function obtenerPorId($cod_solicitud) {
+        try {
+            
+            // Primero obtenemos el id_solicitud basado en el cod_solicitud
+            $queryId = "SELECT id_solicitud FROM solicitudprestamo WHERE cod_solicitud = :cod_solicitud";
+            $stmtId = $this->conn->prepare($queryId);
+            $stmtId->bindParam(':cod_solicitud', $cod_solicitud);
+            $stmtId->execute();
+
+
+            $resultado = $stmtId->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$resultado || !isset($resultado['id_solicitud'])) {
+                throw new Exception("No se encontró una solicitud con el código proporcionado");
+            }
+
+            $id = $resultado['id_solicitud'];
+
+            $query = "SELECT a.* FROM obligacionesfinancieras a 
+                      inner join solicitudprestamo b on a.id_solicitud = b.id_solicitud
+                      where b.id_solicitud = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Error al obtener obligación: " . $e->getMessage());
+        }
+    }
+}

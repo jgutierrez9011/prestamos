@@ -22,7 +22,7 @@ switch ($method) {
         $data = json_decode(file_get_contents('php://input'),true);
         if (isset($data["id_solicitud"],$data["monto_aprobado"],$data["interes"],$data["fecha_primer_cuota"],$data["plazo"])) {
 
-            $result_calendario = $prestamoService->generarCalendarioPagos_simple($data["monto_aprobado"],$data["interes"],$data["plazo"],$data["fecha_primer_cuota"]);
+            $result_calendario = $prestamoService->generarCalendarioPagos_simple($data["monto_aprobado"],$data["interes"],$data["plazo"],$data["fecha_primer_cuota"],  $data["modalidad"]);
             if($result_calendario){
                 echo json_encode($result_calendario);
             }else{

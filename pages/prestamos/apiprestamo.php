@@ -5,10 +5,13 @@ header("Content-Type: application/json");
 require_once '../cn.php';
 require_once 'prestamo_service.php';
 require_once 'solicitud_service.php';
+require_once 'fncalendariopago.php';
 
 // Crear una instancia del servicio
 $prestamoService = new PrestamoService($base_de_datos);
 $PrestamoSolicitud = new SolicitudPrestamo($base_de_datos);
+$calendarioPago = new CalendarioPago($base_de_datos);
+
 
 // Obtener la solicitud HTTP
 $method = $_SERVER['REQUEST_METHOD'];
@@ -28,7 +31,7 @@ switch ($method) {
             }
         } elseif(isset($_GET['monto'])){
             $calendario = $_GET['monto'];
-            $result_calendario = $prestamoService->generarCalendarioPagos_simple(3000,20,2,fechaInicioStr: '2025-03-17');
+            //$result_calendario = $prestamoService->generarCalendarioPagos_simple(3000,20,2,fechaInicioStr: '2025-03-17');
             if($result_calendario){
                 echo json_encode($result_calendario);
             }else{
@@ -46,13 +49,58 @@ switch ($method) {
     case 'POST':
         // Crear un nuevo préstamo
         $data = json_decode(file_get_contents('php://input'),true);
-        $id_prestamo = $prestamoService->createPrestamo($data);
-        http_response_code(201); // Creado
-        //Cambia el estado de la solicitud a En revision
-        //$estadoSolicitud = $PrestamoSolicitud->updateSolicitudEstado($_SESSION["idusuario"],3,$data["id_solicitud"]);
-        echo json_encode(["message" => "Préstamo creado", "id_prestamo" => $id_prestamo]);
-        break;
 
+        try{
+            $id_prestamo = $prestamoService->createPrestamo($data);
+            $calendario = $prestamoService->generarCalendarioPagos_simple($data['monto_aprobado'],$data['interes'],$data['plazo'],$data['fecha_primer_cuota'], $data["modalidad"]);
+    
+            foreach ($calendario as $pagoProgramado) 
+            {
+                    
+                $idpago = $calendarioPago->crear(
+                    $id_prestamo,
+                    $pagoProgramado['fecha_pago'],
+                    $pagoProgramado['cuota'],
+                    $pagoProgramado['interes'],
+                    $pagoProgramado['abono_capital'],
+                    $pagoProgramado['saldo_pendiente']
+                );
+            }
+                
+                // If utilizado para realizar el cambio de estado de la solicitud de prestamo a aprobada
+                if (isset($data['cod_solicitud'])) {
+                    $id_solicitud = $data['cod_solicitud'];
+                    
+                    // Primero obtener el estado actual para verificar si necesita cambio
+                    $solicitudActual = $PrestamoSolicitud->getSolicitud($id_solicitud);
+                    
+                    // Solo cambiar a "Aprobada" si está en estado "En revisión" (idestatus=1)
+                    if ($solicitudActual[0]['estatus'] == 'En revisión') {
+                        $resultado = $PrestamoSolicitud->updateSolicitudEstado($_SESSION["idusuario"], 3, $id_solicitud);
+                        
+                        if (isset($resultado['error'])) {
+                            // Manejar el error
+                            error_log("Error al actualizar estado: " . $resultado['error']);
+                        }
+                    }
+                }
+    
+
+            http_response_code(201); // Creado
+            echo json_encode([
+            "message" => "El prestamo fue aprobado y registrado exitosamente", 
+            "id_prestamo" => $id_prestamo,
+            "cuotas_programadas" => count($calendario)
+            ]);
+
+        }catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                "error" => "Error al crear préstamo",
+                "message" => $e->getMessage()
+            ]);
+        }
+        break;
     case 'PUT':
         // Actualizar un préstamo existente
         $id_prestamo = $_GET['id_prestamo'];

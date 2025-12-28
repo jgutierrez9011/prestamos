@@ -1,6 +1,7 @@
 <?php
 require_once '../usuarios/reg.php';
 require_once 'solicitud_service.php';
+require_once '../../menu_builder.php';
 
 try {
   $pdo = $base_de_datos;
@@ -11,10 +12,22 @@ try {
   exit;
 }
 
+// En tu página principal (donde cargas la solicitud)
 if (isset($_GET['id_solicitud'])) {
   $id_solicitud = $_GET['id_solicitud'];
-  //Cambia el estado de la solicitud a En revision
-  $estadoSolicitud = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"],2,$id_solicitud);
+  
+  // Primero obtener el estado actual para verificar si necesita cambio
+  $solicitudActual = $solicitudBL->getSolicitud($id_solicitud,null,null);
+
+  // Solo cambiar a "En revisión" si está en estado "Pendiente" (idestatus=1)
+  if ($solicitudActual[0]['estatus'] == 'Pendiente') {
+      $resultado = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"], 2, $id_solicitud);
+      
+      if (isset($resultado['error'])) {
+          // Manejar el error adecuadamente
+          error_log("Error al actualizar estado: " . $resultado['error']);
+      }
+  }
 }
 
 ?>
@@ -29,6 +42,8 @@ if (isset($_GET['id_solicitud'])) {
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="../../plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
   <!-- DataTables -->
   <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
   <link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
@@ -40,7 +55,12 @@ if (isset($_GET['id_solicitud'])) {
 <!-- Site wrapper -->
 <div class="wrapper">
   <!-- Navbar -->
-  <?php require_once '../../menu.php'; ?>
+  <?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
   <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->
@@ -51,6 +71,7 @@ if (isset($_GET['id_solicitud'])) {
         <div class="row mb-2">
           <div class="col-sm-6">
             <h1>Consulta de Créditos</h1>
+            
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
@@ -156,6 +177,7 @@ if (isset($_GET['id_solicitud'])) {
                 <div class="form-group">
                 <label for="monto_solicitado">Monto Solicitado:</label>
                 <input type="text" class="form-control form-control-sm" id="monto_solicitado" name="monto_solicitado" readonly>
+                <input type="hidden" class="form-control form-control-sm" id="cod_solicitud" name="cod_solicitud" readonly>
                 </div>
             </div>
             <!-- Plazo -->
@@ -176,12 +198,12 @@ if (isset($_GET['id_solicitud'])) {
 
             <!-- Fila 2: Garantía -->
             <div class="row mt-3"> <!-- mt-3 para agregar un margen superior -->
-            <div class="col-md-12">
+            <!--<div class="col-md-12">
                 <div class="form-group">
                 <label for="garantia">Garantía:</label>
                 <input type="text" class="form-control form-control-sm" id="garantia" name="garantia" readonly>
                 </div>
-            </div>
+            </div>-->
             </div> <!-- Fin de la fila 2 -->
         </div> <!-- Cierre del card-body -->
           </div>
@@ -204,7 +226,7 @@ if (isset($_GET['id_solicitud'])) {
         <!-- Tipo de Promedio -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="tipo_promedio">Tipo de Promedio:</label>
+            <label for="tipo_promedio">Tipo promedio:</label>
             <input type="text" class="form-control form-control-sm" id="tipo_promedio" name="tipo_promedio" readonly>
           </div>
         </div>
@@ -232,7 +254,7 @@ if (isset($_GET['id_solicitud'])) {
         <!-- Promedio de Venta -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="promedio_venta">Promedio de Venta:</label>
+            <label for="promedio_venta">Venta prom.:</label>
             <input type="text" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" readonly>
           </div>
         </div>
@@ -261,6 +283,10 @@ if (isset($_GET['id_solicitud'])) {
             <label for="otros_ingresos">Otros Ingresos:</label>
             <input type="text" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" readonly>
           </div>
+          <div class="form-group">
+            <label for="total_ingresos">Total Ingresos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_ingresos" name="total_ingresos" readonly required>
+          </div>
         </fieldset>
       </div>
 
@@ -268,6 +294,23 @@ if (isset($_GET['id_solicitud'])) {
       <div class="col-md-6">
         <fieldset class="border p-2">
           <legend class="w-auto">Gastos</legend>
+
+          <!-- Campos para Producción -->
+          <div id="camposProduccion" style="display: none;">
+              <div class="form-group">
+              <label for="lbl_costo_unitario">Costo unitario:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="costo_unitario" name="costo_unitario" readonly>
+              </div>
+              <div class="form-group">
+              <label for="lbl_precio_venta">Precio de venta:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="precio_venta" name="precio_venta" readonly>
+              </div>
+              <div class="form-group">
+                <label for="lbl_unidad_producida">Cantidad producida:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="unidad_producida" name="unidad_producida" readonly>
+              </div>
+          </div>
+
           <div class="form-group">
             <label for="gasto_costo_venta">Gastos de Costos de Venta:</label>
             <input type="text" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" readonly>
@@ -283,6 +326,10 @@ if (isset($_GET['id_solicitud'])) {
           <div class="form-group">
             <label for="gastos_familiares">Gastos Familiares:</label>
             <input type="text" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" readonly>
+          </div>
+          <div class="form-group">
+            <label for="total_gastos">Total gastos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_gastos" name="total_gastos" readonly required>
           </div>
         </fieldset>
       </div>
@@ -315,7 +362,7 @@ if (isset($_GET['id_solicitud'])) {
 
             <!-- Fila 1: Boton para cargar tabla de amortizacion -->
             <div class="row"> <!-- mt-3 para agregar un margen superior -->
-            <button id="cargarTabla" type="button" class="btn btn-primary btn-sm ml-2">
+            <button id="cargar_tbcalendariopago" type="button" class="btn btn-primary btn-sm ml-2">
                 <i class=""></i> Cargar tabla
               </button>
               
@@ -328,14 +375,16 @@ if (isset($_GET['id_solicitud'])) {
             <div class="row">
             
             <div class="row table-responsive">
-          <table id="amortizacionTable" class="table table-bordered table-striped" style="width:100%">
+          <table id="tb_calendarioPago" class="table table-bordered table-striped" style="width:100%">
               <thead>
                   <tr>
-                      <th><p class="small"><strong>Semana</strong></p></th>
+                      <th><p class="small"><strong>Modalidad</strong></p></th>
                       <th><p class="small"><strong>Fecha de pago</strong></p></th>
                       <th><p class="small"><strong>Cuota</strong></p></th>
+                      <?php if($_SESSION['perfilusuario'] == 'Administrador'){?>
                       <th><p class="small"><strong>Interes</strong></p></th>
                       <th><p class="small"><strong>Abono a capital</strong></p></th>
+                      <?php }?>
                       <th><p class="small"><strong>Saldo pendiente</strong></p></th>
                   </tr>
               </thead>
@@ -362,19 +411,21 @@ if (isset($_GET['id_solicitud'])) {
                 <i class="fas fa-search"></i> Buscar
                 </button>-->
                 <a href="creditos.php" class="btn btn-primary btn-sm" role="button"><i class="fas fa-search"></i> Buscar</a>
+                <?php if($_SESSION['perfilusuario'] == 'Administrador'){?>
                 <!-- Botón Aprobar -->
-                <button type="button" class="btn btn-success btn-sm ml-2"
+                <button type="button" class="btn btn-success btn-sm ml-2 btn-approve"
                 data-toggle="modal" data-target="#prestamoModal">
                 <i class="fas fa-check"></i> Aprobar
                 </button>
                 <!-- Botón Rechazar -->
-                <button type="button" class="btn btn-danger btn-sm ml-2">
+                <button type="button" class="btn btn-danger btn-sm ml-2 btn-reject">
                 <i class="fas fa-times"></i> Rechazar
                 </button>
+                <?php } ?>
                 <!-- Botón Cancelar -->
-                <button type="button" class="btn btn-secondary btn-sm ml-2">
+                <!--<button type="button" class="btn btn-secondary btn-sm ml-2">
                 <i class="fas fa-ban"></i> Cancelar
-                </button>
+                </button> -->
             </div>
             </div> <!-- Fin de la fila de botones -->
         </div> <!-- Cierre del card-body -->
@@ -391,7 +442,7 @@ if (isset($_GET['id_solicitud'])) {
 
   <!-- Modal -->
   <div class="modal fade" id="prestamoModal" tabindex="-1" aria-labelledby="prestamoModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="prestamoModalLabel">Resolución de comite</h5>
@@ -416,11 +467,34 @@ if (isset($_GET['id_solicitud'])) {
                         </div>
                         <div class="form-group">
                             <label for="plazo">Plazo (Meses):</label>
-                            <input type="number" class="form-control" id="plazo" name="plazo" required>
+                            <input type="number" step="0.01" min="0" class="form-control" id="plazo" name="plazo" required>
                         </div>
                         <div class="form-group">
+                        <label for="modalidad">Modalidad</label>
+                        <select class="form-control" id="modalidad" name="modalidad">
+                            <option value="">Seleccione...</option>
+                            <option value="diario">Diario</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="quincenal">Quincenal</option>
+                            <option value="mensual">Mensual</option>
+                        </select>
+                        </div>
+                        <div class="form-group">
+
                             <label for="cuota">Cuota:</label>
-                            <input type="number" class="form-control" id="cuota" name="cuota" step="0.01" required>
+                            <div class="input-group">
+                              <input type="number" class="form-control" id="cuota" name="cuota" step="0.01" required>
+                                 <div class="input-group-append">
+                                      <button class="btn btn-sm btn-outline-secondary" type="button" id="cargar_tb_amortizado">
+                                          <i class="fas fa-calculator"></i> Calcular cuota y amortizacion
+                                      </button>
+                                 </div>
+                            
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha_desembolso">Fecha desembolso:</label>
+                            <input type="date" class="form-control" id="fecha_desembolso" name="fecha_desembolso" step="0.01" required>
                         </div>
                         <div class="form-group">
                             <label for="primer_cuota">Fecha primer cuota:</label>
@@ -445,13 +519,7 @@ if (isset($_GET['id_solicitud'])) {
         <div class="card-body">
 
 
-            <!-- Fila 1: Boton para cargar tabla de amortizacion -->
-            <div class="row"> <!-- mt-3 para agregar un margen superior -->
-            <button id="cargar_tb_amortizado" type="button" class="btn btn-primary btn-sm ml-2">
-                <i class=""></i> Cargar tabla
-              </button>
-              
-            </div> <!-- Fin de la fila 1 -->
+           
 
             <br>
 
@@ -463,7 +531,7 @@ if (isset($_GET['id_solicitud'])) {
           <table id="amortizacionTb" class="table table-bordered table-striped" style="width:100%">
               <thead>
                   <tr>
-                      <th><p class="small"><strong>Semana</strong></p></th>
+                      <th><p class="small"><strong>Modalidad</strong></p></th>
                       <th><p class="small"><strong>Fecha de pago</strong></p></th>
                       <th><p class="small"><strong>Cuota</strong></p></th>
                       <th><p class="small"><strong>Interes</strong></p></th>
@@ -487,7 +555,7 @@ if (isset($_GET['id_solicitud'])) {
                 </div>
             </div>
         </div>
-    </div>
+  </div>
 <!--Cierra el modal-dialog -->
 
   <!-- FOOTER -->
@@ -506,6 +574,8 @@ if (isset($_GET['id_solicitud'])) {
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <!-- Bootstrap 4 -->
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
 <!-- DataTables  & Plugins -->
 <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
@@ -524,11 +594,52 @@ if (isset($_GET['id_solicitud'])) {
 <!-- AdminLTE for demo purposes -->
 <script src="../../dist/js/demo.js"></script>
 
+<script src="../../plugins/scripts/consultar_solicitud.js"></script>
+
 <script>
   $(function () {
     // Obtener el parámetro de la URL (id o cédula)
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
+
+
+    const esAdmin = <?= $_SESSION['perfilusuario'] === 'Administrador' ? 'true' : 'false'; ?>;
+
+    const columnasCalendario = [
+            { data: "modalidad" },
+            { data: "fecha_pago" },
+            { data: "monto_cuota" }
+          ];
+
+          if (esAdmin) {
+            columnasCalendario.push(
+              { data: "interes" },
+              { data: "principal" }
+            );
+          }
+
+          columnasCalendario.push(
+            { data: "saldo" }
+          );
+
+          const columnasAmortizacion = [
+                        { data: "numero_pago", title: "Modalidad" },
+                        { data: "fecha_pago", title: "Fecha de pago" },
+                        { data: "cuota", title: "Cuota" }
+                      ];
+
+                      if (esAdmin) {
+                        columnasAmortizacion.push(
+                          { data: "interes", title: "Interés" },
+                          { data: "abono_capital", title: "Cuota a capital" }
+                        );
+                      }
+
+                      columnasAmortizacion.push(
+                        { data: "saldo_pendiente", title: "Saldo pendiente" }
+                      );
+
+
 
     // Cargar los datos guardados
     function loadData(id) {
@@ -542,93 +653,233 @@ if (isset($_GET['id_solicitud'])) {
         url: `fnprestamos.php?id_solicitud=${id}`, // Enviar el ID como parámetro GET
         method: 'GET',
         success: function(response) {
-          // Llenar los campos con los datos obtenidos
-          $('#id_solicitud').val(response.id_solicitud);
-          $('#cedula').val(response.cedula);
-          $('#nombre').val(response.nombre);
-          $('#telefono').val(response.telefono);
-          $('#estado_civil').val(response.estado_civil);
-          $('#tipo_vivienda').val(response.tipo_vivienda);
-          $('#anos_habitar').val(response.anos_habitar);
-          $('#direccion_domicilio').val(response.direccion_domicilio);
-          $('#actividad_economica').val(response.actividad_economica);
-          $('#rubro').val(response.rubro);
-          $('#tipo_local').val(response.tipo_local);
-          $('#tiempo_operar').val(response.tiempo_operar);
-          $('#direccion_negocio').val(response.direccion_negocio);
-          $('#monto_solicitado').val(response.monto_solicitado);
-          $('#plazo_solicitado').val(response.plazo_solicitado);
-          $('#tasa').val(response.tasa);
-          $('#garantia').val(response.garantia);
-          $('#venta_promedio_bueno').val(response.venta_promedio_bueno);
-          $('#venta_promedio_mediano').val(response.venta_promedio_mediano);
-          $('#venta_promedio_bajo').val(response.venta_promedio_bajo);
-          $('#promedio_venta').val(response.promedio_venta);
-          $('#tipo_promedio').val(response.tipo_promedio);
-          $('#ventas_mensuales').val(response.ventas_mensuales);
-          $('#otros_ingresos_negocio').val(response.otros_ingresos_negocio);
-          $('#aportes_familiares').val(response.aportes_familiares);
-          $('#otros_ingresos').val(response.otros_ingresos);
-          $('#gasto_costo_venta').val(response.gasto_costo_venta);
-          $('#gastos_negocio').val(response.gastos_negocio);
-          $('#cuotas_credito').val(response.cuotas_credito);
-          $('#gastos_familiares').val(response.gastos_familiares);
-          $('#utilidad_final').val(response.utilidad_final);
+          const data = Array.isArray(response) ? response[0] : response;
 
-          $("#monto_aprobado").val(response.monto_solicitado),
-          $("#interes").val(response.tasa),
-          $("#plazo").val(response.plazo_solicitado)
+          // Llenar los campos con los datos obtenidos
+          $('#id_solicitud').val(data.id_solicitud);
+          $('#cedula').val(data.cedula);
+          $('#nombre').val(data.nombre);
+          $('#telefono').val(data.telefono);
+          $('#estado_civil').val(data.estado_civil);
+          $('#tipo_vivienda').val(data.tipo_vivienda);
+          $('#anos_habitar').val(data.anos_habitar);
+          $('#direccion_domicilio').val(data.direccion_domicilio);
+          $('#actividad_economica').val(data.actividad_economica);
+          $('#rubro').val(data.rubro);
+          $('#tipo_local').val(data.tipo_local);
+          $('#tiempo_operar').val(data.tiempo_operar);
+          $('#direccion_negocio').val(data.direccion_negocio);
+          $('#monto_solicitado').val(data.monto_solicitado);
+          $('#plazo_solicitado').val(data.plazo_solicitado);
+          $('#tasa').val(data.tasa);
+          $('#garantia').val(data.garantia);
+          $('#venta_promedio_bueno').val(data.venta_promedio_bueno);
+          $('#venta_promedio_mediano').val(data.venta_promedio_mediano);
+          $('#venta_promedio_bajo').val(data.venta_promedio_bajo);
+          $('#promedio_venta').val(data.promedio_venta);
+          $('#tipo_promedio').val(data.tipo_promedio);
+          $('#ventas_mensuales').val(data.ventas_mensuales);
+          $('#otros_ingresos_negocio').val(data.otros_ingresos_negocio);
+          $('#aportes_familiares').val(data.aportes_familiares);
+          $('#otros_ingresos').val(data.otros_ingresos);
+          $('#gasto_costo_venta').val(data.gasto_costo_venta);
+          $('#gastos_negocio').val(data.gastos_negocio);
+          $('#cuotas_credito').val(data.cuotas_credito);
+          $('#gastos_familiares').val(data.gastos_familiares);
+          $('#utilidad_final').val(data.utilidad_final);
+          $('#cod_solicitud').val(data.cod_solicitud);
+          $('#total_ingresos').val(data.total_ingreso);
+          $('#total_gastos').val(data.total_gasto);
+          
+
+          $("#monto_aprobado").val(data.monto_solicitado),
+          $("#interes").val(data.tasa),
+          $("#plazo").val(data.plazo_solicitado);
+
+          $("#costo_unitario").val(data.costo_unitario),
+          $("#precio_venta").val(data.precio_venta),
+          $("#unidad_producida").val(data.unidades_producidas);
+
+          if (data.rubro === 'produccion') 
+          {
+                $('#camposProduccion').slideDown();
+          } 
+          else 
+          {
+                $('#camposProduccion').slideUp();
+          }
+          
+          inicializarDataTableCalendarioPago(id);
+
+          if(data.estatus === 'Aprobada' || data.estatus === 'Rechazada'){
+
+            disableActionButtons(`La solicitud ya fue ${data.estatus}.`);
+
+            if(data.estatus === 'Aprobada'){
+
+              Swal.fire({
+                    icon: 'success',
+                    title: 'La solicitud de crédito ya fue aprobada.',
+                    text: `La solicitud ha sido aprobada y el préstamo puede ser desembolsado.`,
+                    timer: 5000,
+                    showConfirmButton: false
+                });
+
+            }else{
+
+              Swal.fire({
+                    icon: 'info',
+                    title: 'La solicitud de crédito fue rechazada.',
+                    text: 'La solicitud fue denegada por el comité de crédito.',
+                    confirmButtonText: 'Entendido'
+                });
+
+               
+
+            }
+            
+
+          }else{
+
+                    if(data.estatus === 'Cancelado'){
+
+                      disableActionButtons(`La solicitud ya fue ${data.estatus}.`);
+
+                    Swal.fire({
+                          icon: 'info',
+                          title: 'La solicitud de crédito ya fue cancelada.',
+                          text: `El préstamo ha sido pagado en su totalidad y se ha cerrado.`,
+                          timer: 5000,
+                          showConfirmButton: false
+                      });
+
+                    }else{
+
+                      Swal.fire({
+                    icon: 'warning',
+                    title: 'La solicitud de crédito esta pendiente.',
+                    text: 'La solicitud está siendo evaluada por el comité de crédito.',
+                    confirmButtonText: 'Entendido'
+                });
+
+                    }
+
+            
+          }
+
         },
         error: function() {
           alert('Hubo un error al cargar los datos.');
         }
       });
     }
+    
+    function inicializarDataTableCalendarioPago(id) {
 
+    if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
+            $('#tb_calendarioPago').DataTable().destroy();
+        }
+        
+    $('#tb_calendarioPago').DataTable({
+        ajax: {
+            url: `servicio_calendariopago.php?id_solicitud=${id}`,
+            dataSrc: 'data',
+            error: function(xhr, error, thrown) {
+                console.log("Error en la carga de datos: ", error);
+                console.log("Estado: ", xhr.status);
+                console.log("Respuesta: ", xhr.responseText);
+            }
+        },
+        columns: columnasCalendario,
+        initComplete: function(settings, json) {
+            // Verificar si hay datos en la respuesta
+            /*if (json && json.data && json.data.length > 0) {
+                //disableActionButtons("La solicitud ya fue aprobada.");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'La solicitud de crédito ya fue aprobada.',
+                    text: `Hay ${json.data.length} pagos programados`,
+                    timer: 5000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'La solicitud de crédito esta pendiente.',
+                    text: 'No se encontraron pagos programados. Se debe revisar.',
+                    confirmButtonText: 'Entendido'
+                });
+            }*/
+        }
+    });
+    }
     // Cargar los datos al iniciar la página
     loadData(id);
+    //inicializarDataTableCalendarioPago(id);
 
-
-    $('#cargar_tb_amortizado').on('click', function() {
-        if ($.fn.DataTable.isDataTable('#amortizacionTb')) {
-            $('#amortizacionTb').DataTable().destroy();
+    $('#cargar_tbcalendariopago').on('click', function() {
+        if ($.fn.DataTable.isDataTable('#tb_calendarioPago')) {
+            $('#tb_calendarioPago').DataTable().destroy();
         }
-        $('#amortizacionTb').DataTable({
-            processing: true,
-            serverSide: false,
+        $('#tb_calendarioPago').DataTable({
             ajax: {
-                url: 'service_amortizacion.php',
-                type: 'POST',
-                contentType: 'application/json',
-                data: function() {
-                    return JSON.stringify({
-                        id_solicitud: $("#id_solicitud").val(),
-                        monto_aprobado: $("#monto_aprobado").val(),
-                        interes: $("#interes").val(),
-                        fecha_primer_cuota: $("#primer_cuota").val(),
-                        plazo: $("#plazo").val()
-                    });
-                },
-                dataSrc: '',
-                error: function(xhr, error, thrown) {
-                    console.error("Error en la carga de datos: ", error);
-                    console.error("Estado: ", xhr.status);
-                    console.error("Respuesta: ", xhr.responseText);
-                }
-            },
-            columns: [
-                { data: "semana", title: "Semana" },
-                { data: "fecha_pago", title: "Fecha de pago" },
-                { data: "cuota", title: "Cuota" },
-                { data: "interes", title: "Interés" },
-                { data: "abono_capital", title: "Cuota a capital" },
-                { data: "saldo_pendiente", title: "Saldo pendiente" }
-            ]
+            url: `servicio_calendariopago.php?id_solicitud=${id}`,
+            dataSrc: 'data',
+            error: function(xhr, error, thrown) {
+                console.log("Error en la carga de datos: ", error);
+                console.log("Estado: ", xhr.status);
+                console.log("Respuesta: ", xhr.responseText);
+            }
+        },
+        columns: columnasCalendario
         });
     });
+
+//Tabla de amortizacion en pantalla de comite de resolucion
+    $('#cargar_tb_amortizado').on('click', function() {
+
+    if ($.fn.DataTable.isDataTable('#amortizacionTb')) {
+        $('#amortizacionTb').DataTable().destroy();
+    }
+
+    var tabla = $('#amortizacionTb').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: 'service_amortizacion.php',
+            type: 'POST',
+            contentType: 'application/json',
+            data: function() {
+                return JSON.stringify({
+                    id_solicitud: $("#id_solicitud").val(),
+                    monto_aprobado: $("#monto_aprobado").val(),
+                    interes: $("#interes").val(),
+                    fecha_primer_cuota: $("#primer_cuota").val(),
+                    plazo: $("#plazo").val(),
+                    modalidad : $("#modalidad").val()
+                });
+            },
+            dataSrc: function(json) {
+                // Si hay resultados, asignamos la primera cuota al input
+                if (json.length > 0) {
+                    var cuotaPrimeraSemana = json[0].cuota;
+                    $('#cuota').val(cuotaPrimeraSemana);
+                } else {
+                    $('#cuota').val(''); // Si no hay datos, limpiar
+                }
+                return json;
+            },
+            error: function(xhr, error, thrown) {
+                console.error("Error en la carga de datos: ", error);
+                console.error("Estado: ", xhr.status);
+                console.error("Respuesta: ", xhr.responseText);
+            }
+        },
+        columns: columnasAmortizacion
+    });
+});
+
     
-
-
     // creacion de prestamos
     $("#prestamoForm").submit(function(event) {
                 
@@ -640,9 +891,12 @@ if (isset($_GET['id_solicitud'])) {
                 monto_aprobado: $("#monto_aprobado").val(),
                 interes: $("#interes").val(),
                 plazo: $("#plazo").val(),
+                modalidad : $("#modalidad").val(),
                 saldo: $("#cuota").val(),
+                fecha_desembolso: $("#fecha_desembolso").val(),
                 fecha_primer_cuota: $("#primer_cuota").val(),
-                comentario: $("#comentario").val()
+                comentario: $("#comentario").val(),
+                cod_solicitud: $('#cod_solicitud').val()
             };
                 
                 // Convertir el objeto a JSON
@@ -654,15 +908,128 @@ if (isset($_GET['id_solicitud'])) {
                     data: jsonData,
                     contentType: "application/json", // Indicar que se envía JSON
                     success: function(response) {
-                        alert("Prestamo registrado exitosamente");
-                        //$("#clienteForm")[0].reset();
+
+                      //disableActionButtons("La solicitud ya fue aprobada.");
+
+                      Swal.fire({
+                                    icon: 'success',
+                                    title: `${response.message}`,
+                                    text: `Hay ${response.cuotas_programadas} pagos programados`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+
+                        $('#prestamoModal').modal('hide'); // Cierra el modal después de guardar
+
+                        //inicializarDataTableCalendarioPago(id);
+
+                        loadData(id);
+
                     },
                     error: function() {
-                        alert("Hubo un error al registrar el prestamo");
+                        Swal.fire({
+                                    icon: 'error',
+                                    title: 'Hubo un error al registrar el prestamo.',
+                                    text: `Si el problema persiste contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
                     }
                 });
+
+
             });
-  });
+
+    function disableActionButtons(reason) {
+              $('.btn-approve, .btn-reject').prop('disabled', true)
+                    .attr('title', reason)
+                    .tooltip('dispose').tooltip();
+            }
+
+    function enableActionButtons() {
+                $('.btn-approve, .btn-reject').prop('disabled', false)
+                    .removeAttr('title')
+                    .tooltip('dispose');
+            }
+    
+    // Función para cambiar el estado (con AJAX y SweetAlert2)
+    function cambiarEstadoSolicitud(estatus,codigoSolicitud) {
+    Swal.fire({
+        title: '¿Rechazar solicitud?',
+        text: `¿Estás seguro de rechazar la solicitud ${codigoSolicitud}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, rechazar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'fnprestamos.php',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: 'cambiar_estado',
+                    codigo_solicitud: codigoSolicitud,
+                    estatus: estatus
+                }),
+                success: function(response) {
+                    Swal.fire({
+                        title: '¡Rechazado!',
+                        text: 'La solicitud ha sido rechazada.',
+                        icon: 'success'
+                    }).then(() => {
+                        location.reload(); // Recargar para ver cambios
+                    });
+                    disableActionButtons("La solicitud ya fue aprobada.");
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Ocurrió un error al rechazar: ' + xhr.responseJSON?.error || 'Error desconocido',
+                        icon: 'error'
+                    });
+                }
+            });
+        }
+    });
+}
+
+    $(document).on('click', '.btn-reject', function() {
+        const codigoSolicitud = $('#cod_solicitud').val();
+        cambiarEstadoSolicitud(
+            4,  // estatus
+            codigoSolicitud // código de solicitud
+        );
+    });
+
+    function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Agrega 0 si es necesario
+    const day = String(date.getDate()).padStart(2, '0'); // Agrega 0 si es necesario
+    return `${year}-${month}-${day}`;
+    }
+
+    // Función para actualizar la fecha de primer cuota
+    function actualizarPrimerCuota() {
+    const fechaDesembolsoVal = $('#fecha_desembolso').val();
+    if (fechaDesembolsoVal) {
+        const fechaDesembolso = new Date(fechaDesembolsoVal);
+        fechaDesembolso.setDate(fechaDesembolso.getDate() + 8); // Sumar 7 días
+        $('#primer_cuota').val(formatDate(fechaDesembolso));
+    }
+}
+
+    const hoy = new Date();
+    $('#fecha_desembolso').val(formatDate(hoy));
+    actualizarPrimerCuota();
+
+    $('#fecha_desembolso').on('change', function() {
+        actualizarPrimerCuota();
+    });
+
+              });
 </script>
 </body>
 </html>

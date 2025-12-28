@@ -9,6 +9,15 @@ if(isset($_POST['fechabaja']) && (isset($_POST['idempleado'])) && (isset($_POST[
  baja_colaborador($_POST['fechabaja'], $_POST['idempleado'], $cambio_estado,$base_de_datos);
 }
 
+if (isset($_POST['action']) && $_POST['action'] === 'cambiar_contrasena') {
+    $idUsuario = $_SESSION["idusuario"];
+    $actualContrasena = $_POST['actualContrasena'] ?? '';
+    $nuevaContrasena = $_POST['nuevaContrasena'] ?? '';
+    $resultado = cambiarContrasena($idUsuario, $actualContrasena, $nuevaContrasena, $base_de_datos);
+    echo json_encode($resultado);
+    exit;
+}
+
 
 /*Lista los tipos de perfiles de accesos que se pueden registrar en la base de datos*/
 function fillperfil_usuario($val,$bd)
@@ -70,14 +79,89 @@ function fillsucursales($val,$bd)
   }
 };
 
+// Validar contraseña fuerte
+function validarPasswordFuerte($password) {
+    return [
+        'longitud' => strlen($password) >= 8,
+        'minuscula' => preg_match('/[a-z]/', $password),
+        'mayuscula' => preg_match('/[A-Z]/', $password),
+        'numero' => preg_match('/[0-9]/', $password),
+        'especial' => preg_match('/[^A-Za-z0-9]/', $password)
+    ];
+}
+
+function cambiarContrasena($idUsuario, $actualContrasena, $nuevaContrasena, $conn) {
+    // Obtener el hash actual de la base de datos
+    $stmt = $conn->prepare("SELECT strpassword FROM tblcatusuario WHERE intid = ?");
+    $stmt->execute([$idUsuario]);
+    $hashActual = $stmt->fetchColumn();
+
+    if ($hashActual === false) {
+        return ['success' => false, 'message' => 'Usuario no encontrado.'];
+    }
+
+    // Verificar la contraseña actual
+    if (MD5($actualContrasena) !== $hashActual) {
+        return ['success' => false, 'message' => 'La contraseña actual es incorrecta.'];
+    }
+
+        // Validar contraseña fuerte
+    $criterios = validarPasswordFuerte($nuevaContrasena);
+    $errores = [];
+
+    if (!$criterios['longitud'])  $errores[] = "• Mínimo 8 caracteres";
+    if (!$criterios['minuscula']) $errores[] = "• Al menos una letra minúscula";
+    if (!$criterios['mayuscula']) $errores[] = "• Al menos una letra mayúscula";
+    if (!$criterios['numero'])    $errores[] = "• Al menos un número";
+    if (!$criterios['especial'])  $errores[] = "• Al menos un carácter especial";
+
+    if (!empty($errores)) {
+        return [
+            'success' => false,
+            'message' => "La nueva contraseña no cumple con los siguientes criterios:\n" . implode("\n", $errores)
+        ];
+    }
+
+    // Hashear la nueva contraseña
+    //$nuevoHash = password_hash($nuevaContrasena, PASSWORD_DEFAULT);
+    $nuevoHash = MD5($nuevaContrasena);
+
+    // Actualizar en la base de datos
+    $stmt = $conn->prepare("UPDATE tblcatusuario SET strpassword = ? WHERE intid = ?");
+    $resultado = $stmt->execute([$nuevoHash, $idUsuario]);
+
+    if ($resultado) {
+        return ['success' => true];
+    } else {
+        return ['success' => false, 'message' => 'No se pudo actualizar la contraseña.'];
+    }
+}
+
+
 /*Funcion para crear un nuevo colaborador*/
 function insertar_colaborador($pnombre, $snombre, $papellido, $sapellido, $sexo,
                               $identificacion, $telefono, $correo, $password, $direccion, $perfil, $user, $cartera, $sucursal, $bd)
 {
     try {
         $base_de_datos = $bd;
-        $password = MD5($password);
         $usuario_creo = $_SESSION["user"];
+
+         // Validar contraseña segura
+        $criterios = validarPasswordFuerte($password);
+        if (in_array(false, $criterios, true)) {
+            $errores = [];
+            if (!$criterios['longitud']) $errores[] = "Debe tener al menos 8 caracteres";
+            if (!$criterios['minuscula']) $errores[] = "Debe contener al menos una letra minúscula";
+            if (!$criterios['mayuscula']) $errores[] = "Debe contener al menos una letra mayúscula";
+            if (!$criterios['numero']) $errores[] = "Debe contener al menos un número";
+            if (!$criterios['especial']) $errores[] = "Debe contener al menos un carácter especial";
+
+            $_SESSION['errores_password'] = $errores;
+            header("location: usuarios.php?token=4"); // Token 4: contraseña débil
+            exit();
+        }
+
+        $password = MD5($password);
 
         date_default_timezone_set('America/Managua');
         $datetime_variable = new DateTime();
@@ -161,6 +245,23 @@ function actualizar_usuario($id,$pnombre, $snombre, $papellido, $sapellido, $ide
        $_SESSION["sentencia"] = $sql;
 
      }else {
+        // Validar contraseña fuerte
+    $criterios = validarPasswordFuerte($strpassword);
+    $errores = [];
+
+    if (!$criterios['longitud'])  $errores[] = "• Mínimo 8 caracteres";
+    if (!$criterios['minuscula']) $errores[] = "• Al menos una letra minúscula";
+    if (!$criterios['mayuscula']) $errores[] = "• Al menos una letra mayúscula";
+    if (!$criterios['numero'])    $errores[] = "• Al menos un número";
+    if (!$criterios['especial'])  $errores[] = "• Al menos un carácter especial";
+
+    if (!empty($errores)) {
+      $_SESSION['errores_password'] = $errores;
+            $id_encoded = base64_encode($id);
+            header("location: usuariosedit.php?id=$id_encoded&token=4");
+            exit();
+ 
+    }
 
         $strpassword = md5($strpassword);
 

@@ -1,5 +1,15 @@
 <?php
 require_once  'reg.php';
+require_once '../../menu_builder.php';
+require_once '../../acceso_helper.php'; // nuevo archivo
+
+$usuario = $_SESSION['user'] ?? null;
+$archivoActual = basename($_SERVER['PHP_SELF']);
+
+if (!$usuario || !validarAcceso($usuario, $archivoActual, $base_de_datos)) {
+    header("Location: $ruta");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,7 +34,12 @@ require_once  'reg.php';
 <div class="wrapper">
   <!-- Navbar -->
 <!-- INICIA EL MENU -->
-<?php require_once '../../menu.php'; ?>
+<?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
 <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->

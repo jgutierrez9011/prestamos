@@ -1,12 +1,25 @@
 <?php
 require_once  '../usuarios/reg.php';
+require_once '../../menu_builder.php';
+require_once '../../acceso_helper.php'; // nuevo archivo
+
+$usuario = $_SESSION['user'] ?? null;
+$archivoActual = basename($_SERVER['PHP_SELF']);
+
+if (!$usuario || !validarAcceso($usuario, $archivoActual, $base_de_datos)) {
+    header("Location: $ruta");
+    exit;
+}
+
+$perfilUsuario = $_SESSION['perfilusuario'] ?? 'Usuario';
+$codigoCartera = $_SESSION['carterausuario'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?php require_once '../../titulo.php'; ?> | Blank Page</title>
+  <title><?php require_once '../../titulo.php'; ?> | Creditos</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -24,7 +37,12 @@ require_once  '../usuarios/reg.php';
 <div class="wrapper">
   <!-- Navbar -->
 <!-- INICIA EL MENU -->
-<?php require_once '../../menu.php'; ?>
+<?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
 <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->
@@ -78,12 +96,34 @@ require_once  '../usuarios/reg.php';
 
            </form>
            <br>
+
+           <div class="row mb-3">
+  <div class="col-md-3">
+    <label for="filtro_id">Código Solicitud</label>
+    <input type="number" id="filtro_id" class="form-control" placeholder="Ej. SOL123">
+  </div>
+  <div class="col-md-3">
+    <label for="filtro_fecha">Fecha</label>
+    <input type="date" id="filtro_fecha" class="form-control">
+  </div>
+  <div class="col-md-3">
+    <label for="filtro_cliente">Cliente</label>
+    <input type="text" id="filtro_cliente" class="form-control" placeholder="Nombre del cliente">
+  </div>
+  <div class="col-md-3">
+    <label>&nbsp;</label>
+    <button id="btnBuscar" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Buscar</button>
+  </div>
+</div>
+
+
            <div class="row">
         <div class="row table-responsive">
           <table id="clientesTable" class="table table-bordered table-striped" style="width:100%">
               <thead>
                   <tr>
                       <th><p class="small"><strong>Código</strong></p></th>
+                      <th><p class="small"><strong>Cartera</strong></p></th>
                       <th><p class="small"><strong>Cliente</strong></p></th>
                       <th><p class="small"><strong>Fecha Solicitud</strong></p></th>
                       <th><p class="small"><strong>Monto Solicitado</strong></p></th>
@@ -92,6 +132,7 @@ require_once  '../usuarios/reg.php';
                       <th><p class="small"><strong>Tasa</strong></p></th>
                       <th><p class="small"><strong>Oficial de Crédito</strong></p></th>
                       <th><p class="small"><strong>Ver detalle</strong></p></th>
+                      <th><p class="small"><strong>Acciones</strong></p></th>
                   </tr>
               </thead>
           </table>
@@ -188,75 +229,174 @@ require_once  '../usuarios/reg.php';
 <!-- AdminLTE for demo purposes -->
 <script src="../../dist/js/demo.js"></script>
 <!-- Page specific script -->
-<script>
+<!--<script>
+  
   $(function () {
+
     $('#clientesTable').DataTable({
-        ajax: {
-            url: 'fnprestamos.php',
-            dataSrc: '',
-            error: function(xhr, error, thrown) {
-                console.log("Error en la carga de datos: ", error);
-                console.log("Estado: ", xhr.status);
-                console.log("Respuesta: ", xhr.responseText);
-            }
+    ajax: {
+      url: 'fnprestamos.php',
+      dataSrc: '',
+      error: function(xhr, error, thrown) {
+        console.log("Error en la carga de datos: ", error);
+        console.log("Estado: ", xhr.status);
+        console.log("Respuesta: ", xhr.responseText);
+      }
+    },
+    columns: [
+      { data: "cod_solicitud" },
+      { data: "descripcion" },
+      { data: "nombre" },
+      { data: "fecha_solicitud" },
+      { data: "monto_solicitado" },
+      { data: "estatus" },
+      { data: "plazo_solicitado" },
+      { data: "tasa" },
+      { data: "oficial_credito" },
+      {
+        data: "cod_solicitud",
+        render: function(data, type, row) {
+          return `
+            <div class="dropdown">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownDetalle${data}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Opciones
+              </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownDetalle${data}">
+                <a class="dropdown-item" href="consultar_solicitud.php?id_solicitud=${data}">Ver detalle</a>
+                <a class="dropdown-item" href="../../pages/garantia/garantia.php?id_solicitud=${data}">Agregar garantía</a>
+                <a class="dropdown-item" href="../../pages/obligaciones/obligaciones.php?id_solicitud=${data}">Agregar obligaciones</a>
+              </div>
+            </div>
+          `;
         },
-        columns: [
-            { data: "cod_solicitud" },
-            { data: "nombre" },
-            { data: "fecha_solicitud" },
-            { data: "monto_solicitado" },
-            { data: "estatus" },
-            { data: "plazo_solicitado" },
-            { data: "tasa" },
-            { data: "oficial_credito" },
-            {
-                data: "cod_solicitud",
-                render: function(data, type, row) {
-                return `
-                    <a href="consultar_solicitud.php?id_solicitud=${data}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-pencil-alt"></i>
-                    </a>
-                `;
-            },
-                orderable: false,
-                searchable: false
-            }
-            
-        ]
-    });
-
-    /*$(document).on('click', '.edit-btn', function() {
-        var clienteId = $(this).data('id');
-        alert('ID del Cliente: ' + clienteId);
-    });*/
-});
-
-</script>
-
-<script>
-
-$(document).ready(function(){
-
-  $(document).on('click', '.edit_data', function(){
-
-       var employee_id = $(this).attr("id");
-       var estado = $("#estado_" + employee_id).val();
-
-       $('#idempleado').val(employee_id);
-       $('#estado_usuario').val(estado);
-
-         if(estado == '1'){
-           $("#inactivar").show();
-           $("#activar").hide();
-         }else {
-           $("#inactivar").hide();
-           $("#activar").show();
-         }
-
-       });
-
+        orderable: false,
+        searchable: false
+      },
+      {
+        data: "cod_solicitud",
+        render: function(data, type, row) {
+          const isDisabled = row.id_prestamo === null;
+          return `
+            <a href="abono.php?id_solicitud=${data}" 
+               class="btn btn-sm btn-success ${isDisabled ? 'disabled' : ''}" 
+               data-toggle="tooltip" 
+               data-placement="top" 
+               title="${isDisabled ? 'Primero debe aprobar el préstamo' : 'Aplicar Pago'}"
+               ${isDisabled ? 'onclick="return false;"' : ''}>
+              <i class="fas fa-money-bill-wave"></i>
+            </a>
+          `;
+        },
+        orderable: false,
+        searchable: false
+      }
+    ]
   });
 
+
+});
+</script>-->
+<script>
+let tabla;
+
+function cargarTabla(filtros = {}) {
+  // Destruir DataTable si ya está inicializado
+  if ($.fn.DataTable.isDataTable('#clientesTable')) {
+    $('#clientesTable').DataTable().destroy();
+  }
+
+  tabla = $('#clientesTable').DataTable({
+    ajax: {
+      url: 'fnprestamos.php',
+      data: filtros,
+      dataSrc: '',
+      error: function (xhr, error, thrown) {
+        console.log("Error en la carga de datos: ", error);
+        console.log("Estado: ", xhr.status);
+        console.log("Respuesta: ", xhr.responseText);
+      }
+    },
+    dom: 'Bfrtip',
+    buttons: [
+      {
+        extend: 'pdfHtml5',
+        orientation: 'landscape',
+        pageSize: 'LEGAL',
+        title: 'Reporte de Créditos',
+        exportOptions: {
+          columns: ':visible:not(:last-child)' 
+        }
+      },
+      'excelHtml5', 'csvHtml5', 'print'
+    ],
+    columns: [
+      { data: "cod_solicitud" },
+      { data: "descripcion" },
+      { data: "nombre" },
+      { data: "fecha_solicitud" },
+      { data: "monto_solicitado" },
+      { data: "estatus" },
+      { data: "plazo_solicitado" },
+      { data: "tasa" },
+      { data: "oficial_credito" },
+      {
+        data: "cod_solicitud",
+        render: function(data) {
+          return `
+            <div class="dropdown">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
+                Opciones
+              </button>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" href="consultar_solicitud.php?id_solicitud=${data}">Ver detalle</a>
+                <a class="dropdown-item" href="../../pages/garantia/garantia.php?id_solicitud=${data}">Agregar garantía</a>
+                <a class="dropdown-item" href="../../pages/obligaciones/obligaciones.php?id_solicitud=${data}">Agregar obligaciones</a>
+              </div>
+            </div>`;
+        },
+        orderable: false,
+        searchable: false
+      },
+      {
+        data: "cod_solicitud",
+        render: function(data, type, row) {
+          const isDisabled = row.id_prestamo === null;
+          return `
+            <a href="abono.php?id_solicitud=${data}" 
+               class="btn btn-sm btn-success ${isDisabled ? 'disabled' : ''}" 
+               data-toggle="tooltip" 
+               title="${isDisabled ? 'Primero debe aprobar el préstamo' : 'Aplicar Pago'}"
+               ${isDisabled ? 'onclick="return false;"' : ''}>
+              <i class="fas fa-money-bill-wave"></i>
+            </a>`;
+        },
+        orderable: false,
+        searchable: false
+      }
+    ]
+  });
+}
+
+// Al cargar la página, mostrar todos los registros
+$(document).ready(function () {
+  cargarTabla();
+
+  // Cuando se hace clic en el botón Buscar
+  $('#btnBuscar').on('click', function () {
+    const filtros = {
+      id_solicitud: $('#filtro_id').val().trim(),
+      fecha: $('#filtro_fecha').val(),
+      cliente: $('#filtro_cliente').val().trim()
+    };
+
+    // Eliminar campos vacíos
+    Object.keys(filtros).forEach(key => {
+      if (!filtros[key]) delete filtros[key];
+    });
+
+    cargarTabla(filtros);
+  });
+});
 </script>
 </body>
 </html>

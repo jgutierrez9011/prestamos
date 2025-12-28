@@ -14,72 +14,78 @@ require_once '../cn.php';
    $datosDecodificados = base64_decode($datosEncriptados);
    
    // Separar los valores individuales
-   list($user, $pass) = explode('|', $datosDecodificados);
-   
-   $pass = md5($pass);
-   
+  list($user, $pass) = explode('|', $datosDecodificados);
+  $pass_plain = $pass; // Contraseña en texto plano
+  $pass_md5 = md5($pass); // Hash MD5 solo para comparar con hashes antiguos
 
 /* FINALIZA: VALIDANDO SI EL USUARIO EXISTE EN EL DIRECTORIO ACTIVO DE LA EMPRESA */
 
 
 /* Autentificacion del usuario */
-$sql= "SELECT strusuario, bolactivo, strpassword FROM tblcatusuario where strusuario ='".$user."' and bolactivo = true";
-$sentencia = $base_de_datos->query($sql);
-$registro = $sentencia->fetchObject();
+
+$sql= "SELECT strusuario, bolactivo, strpassword, intid FROM tblcatusuario WHERE strusuario = ? AND bolactivo = true";
+$sentencia = $base_de_datos->prepare($sql);
+$sentencia->execute([$user]);
+$registro = $sentencia->fetch(PDO::FETCH_OBJ);
 
 if (!$registro) {
-    #No existe
-    header('Location: login.php?token='.md5('$#stop#$'));
-    echo "No se encontro usuario";
+  echo "No se encontro usuario";
+  header('Location: login.php?token='.md5('$#stop#$'));
+  
+  exit();
+} else {
+  $hash_bd = $registro->strpassword;
+  $user_id = $registro->intid;
+
+  // 1. Intentar login con password_hash (bcrypt)
+  if (password_verify($pass_plain, $hash_bd)) {
+    // Si el hash es MD5, migrar a password_hash
+    if (strlen($hash_bd) === 32 && ctype_xdigit($hash_bd)) {
+      $nuevoHash = password_hash($pass_plain, PASSWORD_DEFAULT);
+      $sqlUpdate = "UPDATE tblcatusuario SET strpassword = ? WHERE intid = ?";
+      $stmtUpdate = $base_de_datos->prepare($sqlUpdate);
+      $stmtUpdate->execute([$nuevoHash, $user_id]);
+    }
+    // Login exitoso
+    $_SESSION["time"] = time();
+    $_SESSION["user"] = $user;
+    globales_usuario($_SESSION["user"],$base_de_datos);
+
+    if (array_key_exists('remember',$_POST)) {
+      setcookie("COOKIE_INDEFINED_SESSION", TRUE, time()+86400);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[nombre]", base64_encode($user), time()+86400);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[password]", base64_encode($hash_bd), time()+86400);
+    }
+    header("Location: inicio.php");
+    echo "inicio con exito.";
     exit();
-}else {
+  }
+  // 2. Intentar login con MD5 (antiguo)
+  elseif ($hash_bd === $pass_md5) {
+    // Migrar a password_hash
+    $nuevoHash = password_hash($pass_plain, PASSWORD_DEFAULT);
+    $sqlUpdate = "UPDATE tblcatusuario SET strpassword = ? WHERE intid = ?";
+    $stmtUpdate = $base_de_datos->prepare($sqlUpdate);
+    $stmtUpdate->execute([$nuevoHash, $user_id]);
 
-  $sql = "SELECT strusuario, bolactivo, strpassword FROM tblcatusuario where strpassword='".$pass."' and strusuario='".$user."' and bolactivo = true";
+    // Login exitoso
+    $_SESSION["time"] = time();
+    $_SESSION["user"] = $user;
+    globales_usuario($_SESSION["user"],$base_de_datos);
 
-  $sentencia = $base_de_datos->query($sql);
-  $registro_completo = $sentencia->fetchObject();
-
-
-
-  $user_id = $registro_completo->strpassword;
-
-
-        if($pass == $user_id){
-
-             //hora del inicio de sesion
-             $_SESSION["time"] = time();
-             //usuario que inicio sesion
-             $_SESSION["user"] = $user;
-             //globales de usuario
-             globales_usuario($_SESSION["user"],$base_de_datos);
-
-             //echo 1;
-
-             //regacceso();
-
-             /*Genera una sesion activa que dura 24 horas*/
-					 if (array_key_exists('remember',$_POST))
-					 {
-						  // Crear un nuevo cookie de sesion, que expira a los 30 días
-                    //ini_set('session.cookie_lifetime', 60 * 60 * 24 * 1);
-                    //session_regenerate_id(TRUE);
-                    setcookie("COOKIE_INDEFINED_SESSION", TRUE, time()+86400);
-                    setcookie("COOKIE_DATA_INDEFINED_SESSION[nombre]", base64_encode($email), time()+86400);
-                    setcookie("COOKIE_DATA_INDEFINED_SESSION[password]", base64_encode($pass), time()+86400);
-
-					 }
-					 /*else
-					 {
-						 setcookie("COOKIE_CLOSE_NAVEGADOR", TRUE, 0) . "<br/>";
-					 }*/
-
-              header("Location: inicio.php");
-              echo "inicio con exito.";
-
-        }else{
-            header('Location: login.php?token='.md5('$#tokens#$')."&id=".base64_encode($user_id));
-            echo "password no coincide";
-             }
-   } 
+    if (array_key_exists('remember',$_POST)) {
+      setcookie("COOKIE_INDEFINED_SESSION", TRUE, time()+86400);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[nombre]", base64_encode($user), time()+86400);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[password]", base64_encode($nuevoHash), time()+86400);
+    }
+    header("Location: inicio.php");
+    echo "inicio con exito.";
+    exit();
+  } else {
+    header('Location: login.php?token='.md5('$#tokens#$'));
+    echo "password no coincide";
+    exit();
+  }
+}
 
  ?>

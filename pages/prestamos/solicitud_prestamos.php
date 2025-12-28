@@ -1,5 +1,18 @@
 <?php
 require_once '../usuarios/reg.php';
+require_once '../../menu_builder.php';
+require_once '../../acceso_helper.php'; // nuevo archivo
+
+$usuario = $_SESSION['user'] ?? null;
+$archivoActual = basename($_SERVER['PHP_SELF']);
+
+if (!$usuario || !validarAcceso($usuario, $archivoActual, $base_de_datos)) {
+    header("Location: $ruta");
+    exit;
+}
+
+$perfilUsuario = $_SESSION['perfilusuario'] ?? 'Usuario';
+$codigoCartera = $_SESSION['carterausuario'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,6 +25,8 @@ require_once '../usuarios/reg.php';
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="../../plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
 </head>
@@ -19,7 +34,12 @@ require_once '../usuarios/reg.php';
 <!-- Site wrapper -->
 <div class="wrapper">
   <!-- Navbar -->
-  <?php require_once '../../menu.php'; ?>
+  <?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
   <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->
@@ -79,21 +99,21 @@ require_once '../usuarios/reg.php';
                 </button>
             </div>
         </div>
-                               <input type="hidden" class="form-control form-control-sm" id="idcliente" name="idcliente" required>
+                               <input type="hidden" class="form-control form-control-sm" id="idcliente" name="idcliente" readonly required>
                             </div>
                             <div class="form-group col-md-4">
                                 <label for="nombre">Nombre</label>
-                                <input type="text" class="form-control form-control-sm" id="nombre" name="nombre" required>
+                                <input type="text" class="form-control form-control-sm" id="nombre" name="nombre" readonly required>
                             </div>
                             <div class="form-group col-md-4">
                                 <label for="telefono">Teléfono</label>
-                                <input type="text" class="form-control form-control-sm" id="telefono" name="telefono" required>
+                                <input type="text" class="form-control form-control-sm" id="telefono" name="telefono" readonly required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label for="estado_civil">Estado Civil</label>
-                                <select class="form-control form-control-sm" id="estado_civil" name="estado_civil" required>
+                                <select class="form-control form-control-sm" id="estado_civil" name="estado_civil" disabled required>
                                     <option value="">Seleccione...</option>
                                     <option value="soltero">Soltero</option>
                                     <option value="casado">Casado</option>
@@ -110,7 +130,7 @@ require_once '../usuarios/reg.php';
                             </div> -->
                             <div class="form-group col-md-4">
                                 <label for="tipo_vivienda">Tipo de Vivienda</label>
-                                <select class="form-control form-control-sm" id="tipo_vivienda" name="tipo_vivienda" required>
+                                <select class="form-control form-control-sm" id="tipo_vivienda" name="tipo_vivienda" disabled required>
                                     <option value="">Seleccione...</option>
                                     <option value="propio">Propio</option>
                                     <option value="renta">Renta</option>
@@ -119,14 +139,14 @@ require_once '../usuarios/reg.php';
                             </div>
                             <div class="form-group col-md-4">
                                 <label for="anos_habitar">Años de Habitar</label>
-                                <input type="number" class="form-control form-control-sm" id="anos_habitar" name="anos_habitar" min="0" required>
+                                <input type="number" class="form-control form-control-sm" id="anos_habitar" name="anos_habitar" min="0" readonly required>
                             </div>
                             
                         </div>
                         <div class="form-row">
                         <div class="form-group col-md-12">
                                 <label for="direccion_domicilio">Dirección del Domicilio</label>
-                                <input type="text" class="form-control form-control-sm" id="direccion_domicilio" name="direccion_domicilio" required>
+                                <input type="text" class="form-control form-control-sm" id="direccion_domicilio" name="direccion_domicilio" readonly required>
                             </div>
                         </div>
                         <div class="form-row">
@@ -165,7 +185,17 @@ require_once '../usuarios/reg.php';
                                 <input type="text" class="form-control form-control-sm" id="direccion_negocio" name="direccion_negocio" required>
                             </div>
                         </div>
-                <button type="button" id="next-btn-1" class="btn btn-primary" disabled>Siguiente</button>
+                        
+                        <div class="container mt-5">
+                            <div class="d-flex justify-content-start">
+                              <a href="../../pages/clientes/nuevo_cliente.php" class="btn btn-primary mr-2" role="button">
+                                Agregar cliente
+                              </a>
+                              <button type="button" id="next-btn-1" class="btn btn-primary" disabled>
+                                Siguiente
+                              </button>
+                            </div>
+                      </div>
                 
               </div>
               <div class="card-footer">
@@ -192,20 +222,21 @@ require_once '../usuarios/reg.php';
 
               <div class="form-group">
                                 <label for="montoSolicitado">Monto Solicitado:</label>
-                                <input type="number" class="form-control form-control-sm" id="monto_solicitado" name="monto_solicitado" required>
+                                <input type="hidden" id="cod_cartera" name="cod_cartera" class="form-control" value="<?php echo $_SESSION["carterausuario"] ?>">
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="monto_solicitado" name="monto_solicitado" required>
                             </div>
                             <div class="form-group">
                                 <label for="plazoSolicitado">Plazo Solicitado (meses):</label>
-                                <input type="number" class="form-control form-control-sm" id="plazo_solicitado" name="plazo_solicitado" required>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="plazo_solicitado" name="plazo_solicitado" required>
                             </div>
                             <div class="form-group">
                                 <label for="tasa">Tasa (%):</label>
-                                <input type="number" class="form-control form-control-sm" id="tasa" name="tasa" required>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="tasa" name="tasa" required>
                             </div>
-                            <div class="form-group">
+                           <!-- <div class="form-group">
                                 <label for="garantia">Garantía:</label>
                                 <input type="text" class="form-control form-control-sm" id="garantia" name="garantia" required>
-                            </div>
+                            </div> -->
 
                 <button type="button" id="back-btn-1" class="btn btn-secondary">Atrás</button>
                 <button type="button" id="next-btn-2" class="btn btn-primary" disabled>Siguiente</button>
@@ -232,73 +263,14 @@ require_once '../usuarios/reg.php';
               </div>
               <div class="card-body">
 
-                           <!-- <div class="form-group">
-                                <label for="ventaBuena">Venta Promedio Diaria Buena:</label>
-                                <input type="number" class="form-control form-control-sm" id="venta_promedio_bueno" name="venta_promedio_bueno" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="ventaMediana">Venta Promedio Diaria Mediana:</label>
-                                <input type="number" class="form-control form-control-sm" id="venta_promedio_mediano" name="venta_promedio_mediano" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="ventaBaja">Venta Promedio Diaria Baja:</label>
-                                <input type="number" class="form-control form-control-sm" id="venta_promedio_bajo" name="venta_promedio_bajo" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="promedioVenta">Promedio de Venta:</label>
-                                <input type="number" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="tipoPromedio">Tipo de Promedio:</label>
-                                <select class="form-control form-control-sm" id="tipo_promedio" name="tipo_promedio" required>
-                                    <option value="Diario">Diario</option>
-                                    <option value="Semanal">Semanal</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="ingresosMensuales">Ingresos Ventas Mensuales:</label>
-                                <input type="number" class="form-control form-control-sm" id="ventas_mensuales" name="ventas_mensuales" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="otrosIngresosNegocio">Otros Ingresos del Negocio:</label>
-                                <input type="number" class="form-control form-control-sm" id="otros_ingresos_negocio" name="otros_ingresos_negocio" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="aportesFamiliares">Aportes Familiares:</label>
-                                <input type="number" class="form-control form-control-sm" id="aportes_familiares" name="aportes_familiares" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="otrosIngresos">Otros Ingresos:</label>
-                                <input type="number" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="gastosVenta">Gastos de Costos de Venta:</label>
-                                <input type="number" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="gastosNegocio">Gastos del Negocio:</label>
-                                <input type="number" class="form-control form-control-sm" id="gastos_negocio" name="gastos_negocio" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="cuotasCredito">Cuotas de Crédito:</label>
-                                <input type="number" class="form-control form-control-sm" id="cuotas_credito" name="cuotas_credito" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="gastosFamiliares">Gastos Familiares:</label>
-                                <input type="number" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="utilidadFinal">Utilidad Final:</label>
-                                <input type="number" class="form-control form-control-sm" id="utilidad_final" name="utilidad_final" required>
-                            </div>-->
-                                <!-- Fila 1: Tipo de Promedio, Ventas Promedio y Promedio de Venta -->
+    <!-- Fila 1: Tipo de Promedio, Ventas Promedio y Promedio de Venta -->
     <fieldset class="border p-2 mb-3">
       <legend class="w-auto">Ventas Promedio</legend>
       <div class="row">
         <!-- Tipo de Promedio -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="tipoPromedio">Tipo de Promedio:</label>
+            <label for="tipoPromedio">Tipo promedio:</label>
                                 <select class="form-control form-control-sm" id="tipo_promedio" name="tipo_promedio" required>
                                     <option value="Diario">Diario</option>
                                     <option value="Semanal">Semanal</option>
@@ -309,30 +281,33 @@ require_once '../usuarios/reg.php';
         <div class="col-md-2">
           <div class="form-group">
             <label for="venta_promedio_bueno">Buena:</label>
-            <input type="text" class="form-control form-control-sm" id="venta_promedio_bueno" name="venta_promedio_bueno" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="venta_promedio_bueno" name="venta_promedio_bueno" required>
           </div>
         </div>
         <!-- Venta Promedio Diaria Mediana -->
         <div class="col-md-2">
           <div class="form-group">
             <label for="venta_promedio_mediano">Mediana:</label>
-            <input type="text" class="form-control form-control-sm" id="venta_promedio_mediano" name="venta_promedio_mediano" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="venta_promedio_mediano" name="venta_promedio_mediano" required>
           </div>
         </div>
         <!-- Venta Promedio Diaria Baja -->
         <div class="col-md-2">
           <div class="form-group">
             <label for="venta_promedio_bajo">Baja:</label>
-            <input type="text" class="form-control form-control-sm" id="venta_promedio_bajo" name="venta_promedio_bajo" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="venta_promedio_bajo" name="venta_promedio_bajo" required>
           </div>
         </div>
         <!-- Promedio de Venta -->
         <div class="col-md-2">
           <div class="form-group">
-            <label for="promedio_venta">Promedio de Venta:</label>
-            <input type="text" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" required>
+            <label for="promedio_venta">Venta prom.:</label>
+            <div class="input-group">
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="promedio_venta" name="promedio_venta" readonly required>
+              </div>
           </div>
         </div>
+
       </div> <!-- Fin de la fila 1 -->
     </fieldset>
 
@@ -344,19 +319,23 @@ require_once '../usuarios/reg.php';
           <legend class="w-auto">Ingresos</legend>
           <div class="form-group">
             <label for="ventas_mensuales">Ingresos Ventas Mensuales:</label>
-            <input type="text" class="form-control form-control-sm" id="ventas_mensuales" name="ventas_mensuales" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="ventas_mensuales" name="ventas_mensuales" required>
           </div>
           <div class="form-group">
             <label for="otros_ingresos_negocio">Otros Ingresos del Negocio:</label>
-            <input type="text" class="form-control form-control-sm" id="otros_ingresos_negocio" name="otros_ingresos_negocio" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="otros_ingresos_negocio" name="otros_ingresos_negocio" required>
           </div>
           <div class="form-group">
             <label for="aportes_familiares">Aportes Familiares:</label>
-            <input type="text" class="form-control form-control-sm" id="aportes_familiares" name="aportes_familiares" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="aportes_familiares" name="aportes_familiares" required>
           </div>
           <div class="form-group">
             <label for="otros_ingresos">Otros Ingresos:</label>
-            <input type="text" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="otros_ingresos" name="otros_ingresos" required>
+          </div>
+          <div class="form-group">
+            <label for="total_ingresos">Total Ingresos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_ingresos" name="total_ingresos" readonly required>
           </div>
         </fieldset>
       </div>
@@ -365,21 +344,42 @@ require_once '../usuarios/reg.php';
       <div class="col-md-6">
         <fieldset class="border p-2">
           <legend class="w-auto">Gastos</legend>
+
+                <!-- Campos para Producción -->
+          <div id="camposProduccion" style="display: none;">
+              <div class="form-group">
+                <label for="costo_unitario">Costo unitario:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="costo_unitario" name="costo_unitario" placeholder="Costo Unitario">
+              </div>
+              <div class="form-group">
+                <label for="precio_venta">Precio de venta:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="precio_venta" name="precio_venta" placeholder="Precio de Venta">
+              </div>
+              <div class="form-group">
+                <label for="unidad_producida">Unidades producidas:</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="unidad_producida" name="unidad_producida" placeholder="Unidades Producidas">
+              </div>
+          </div>
+
           <div class="form-group">
-            <label for="gasto_costo_venta">Gastos de Costos de Venta:</label>
-            <input type="text" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
+            <label for="gasto_costo_venta">Costos de Venta:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gasto_costo_venta" name="gasto_costo_venta" required>
           </div>
           <div class="form-group">
             <label for="gastos_negocio">Gastos del Negocio:</label>
-            <input type="text" class="form-control form-control-sm" id="gastos_negocio" name="gastos_negocio" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gastos_negocio" name="gastos_negocio" required>
           </div>
           <div class="form-group">
             <label for="cuotas_credito">Cuotas de Crédito:</label>
-            <input type="text" class="form-control form-control-sm" id="cuotas_credito" name="cuotas_credito" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="cuotas_credito" name="cuotas_credito" required>
           </div>
           <div class="form-group">
             <label for="gastos_familiares">Gastos Familiares:</label>
-            <input type="text" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" required>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="gastos_familiares" name="gastos_familiares" required>
+          </div>
+          <div class="form-group">
+            <label for="total_gastos">Total gastos:</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="total_gastos" name="total_gastos" readonly required>
           </div>
         </fieldset>
       </div>
@@ -390,12 +390,13 @@ require_once '../usuarios/reg.php';
       <div class="col-md-12">
         <div class="form-group">
           <label for="utilidad_final">Utilidad Final:</label>
-          <input type="text" class="form-control form-control-sm" id="utilidad_final" name="utilidad_final" required>
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="utilidad_final" name="utilidad_final" required>
         </div>
       </div>
     </div> <!-- Fin de la fila 3 -->
                 <button type="button" id="back-btn-2" class="btn btn-secondary">Atrás</button>
-                <button type="submit" class="btn btn-success" disabled>Enviar</button>
+                <button type="button" class="btn btn-info" id="btnCalVentaPromedio"><i class="fas fa-calculator"></i> Calcular</button>
+                <button type="submit" class="btn btn-success" id="btn_enviar_solicitud" disabled>Enviar</button>
 
               </div>
               <div class="card-footer">
@@ -426,19 +427,34 @@ require_once '../usuarios/reg.php';
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <!-- Bootstrap 4 -->
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
 <!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="../../dist/js/demo.js"></script>
 <script>
   $(function () {
+
+    let valorSeleccionado = '';
     const forms = document.querySelectorAll('.form-step');
     const indicators = document.querySelectorAll('#step-indicators .nav-link');
+
     const buttons = {
       next1: document.getElementById('next-btn-1'),
       next2: document.getElementById('next-btn-2'),
       submit: document.querySelector('#form3 button[type="submit"]')
     };
+
+    $('#rubro').on('change', function () {
+      valorSeleccionado = $(this).val();
+      if (valorSeleccionado === 'produccion') {
+        $('#camposProduccion').slideDown();
+      } else {
+        $('#camposProduccion').slideUp();
+        $('#costo_unitario, #precio_venta, #unidad_producida').val('');
+      }
+    });
 
     // Función para mostrar el formulario y actualizar el tab activo
     function showForm(index) {
@@ -476,8 +492,11 @@ require_once '../usuarios/reg.php';
     });
 
     // Evento para enviar el formulario
-    document.getElementById('form3').addEventListener('submit', function (e) {
+    document.getElementById('form3').addEventListener('submit', async function (e) {
       e.preventDefault(); // Evita el envío tradicional del formulario
+
+      const validacionOK = await realizarCalculosFinancieros();
+      if (!validacionOK) return;
 
       // Captura los datos de los tres formularios
       const formData1 = new FormData(document.getElementById('form1'));
@@ -486,60 +505,55 @@ require_once '../usuarios/reg.php';
 
       // Combina los datos en un solo objeto
       const data = {};
-      formData1.forEach((value, key) => {
-        data[key] = value;
-      });
-      formData2.forEach((value, key) => {
-        data[key] = value;
-      });
-      formData3.forEach((value, key) => {
-        data[key] = value;
-      });
-
-  
+      formData1.forEach((value, key) => {data[key] = value;});
+      formData2.forEach((value, key) => {data[key] = value;});
+      formData3.forEach((value, key) => {data[key] = value;});
 
       // Envía los datos a la API
-     /* fetch('http://localhost/credimore/pages/prestamos/fnprestamos.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
-      .then(response => response.json())
-      .then(result => {
-        alert(result.message); // Muestra un mensaje de éxito
-        // Redirige o reinicia el formulario si es necesario
-        window.location.href = 'exito.html'; // Cambia esto por la URL de éxito
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Hubo un error al enviar la solicitud.');
-      });*/
-
       $.ajax({
                     type: "POST",
                     url: "fnprestamos.php",
                     data: JSON.stringify(data),
                     contentType: "application/json", // Indicar que se envía JSON
                     success: function(response) {
-                        alert("Cliente guardado exitosamente");
+                        //alert("Cliente guardado exitosamente");
+                        Swal.fire({
+                                    icon: 'success',
+                                    title: `${response.message}`,
+                                    text: ``,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+
                         $("#form1")[0].reset();
                         $("#form2")[0].reset();
                         $("#form3")[0].reset();
                     },
                     error: function() {
-                        alert("Hubo un error al guardar el cliente");
+                        //alert("Hubo un error al guardar el cliente");
+                        Swal.fire({
+                                    icon: 'error',
+                                    title: 'Hubo un error al registrar la solicitud de crédito.',
+                                    text: `Si el problema persiste contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
                     }
                 });
 
     });
 
-
+    /*Buscar cliente*/
     $('#searchButton').click(function() {
             var cedula = $('#cedula').val(); // Obtiene el valor del input de cédula
 
             if (cedula) {
+              Swal.fire({
+              title: 'Buscando cliente...',
+              allowOutsideClick: false,
+              didOpen: () => Swal.showLoading()
+               });   
+
                 // Realiza la solicitud POST
                 $.ajax({
                     url: '../clientes/fncliente.php', // Cambia esto por la URL de tu API
@@ -549,6 +563,19 @@ require_once '../usuarios/reg.php';
                     success: function(response) {
                         // Maneja la respuesta exitosa
                         customer = response.cliente;
+
+                        Swal.close();
+
+                        if (response.error) {
+                          Swal.fire('Error', response.message, 'error');
+                          return;
+                        }
+                        
+                        //const customer = response.cliente;
+                        if (!customer) {
+                          Swal.fire('No encontrado', 'No se encontró un cliente con esa cédula', 'info');
+                          return;
+                        }
 
                 $("#cedula").val(customer.cedula) ,
                 $("#nombre").val(customer.nombre) 
@@ -565,20 +592,290 @@ require_once '../usuarios/reg.php';
                 $("#rubro").val(customer.rubro),
                 $("#idcliente").val(customer.idcliente);
 
+                $("#venta_promedio_bueno").val(customer.venta_promedio_bueno);
+                $("#venta_promedio_mediano").val(customer.venta_promedio_mediano);
+                $("#venta_promedio_bajo").val(customer.venta_promedio_bajo);
+                $("#promedio_venta").val(customer.promedio_venta);
+                
+                $("#ventas_mensuales").val(customer.ventas_mensuales);
+                $("#otros_ingresos_negocio").val(customer.otros_ingresos_negocio);
+                $("#aportes_familiares").val(customer.aportes_familiares);
+                $("#otros_ingresos").val(customer.otros_ingresos);
+                $("#total_ingresos").val(customer.total_ingreso);
+                
+                $("#gasto_costo_venta").val(customer.gasto_costo_venta);
+                $("#gastos_negocio").val(customer.gastos_negocio);
+                $("#cuotas_credito").val(customer.cuotas_credito);
+                $("#gastos_familiares").val(customer.gastos_familiares);
+                $("#total_gastos").val(customer.total_gasto);
+                
+                
+                $("#utilidad_final").val(customer.utilidad_final);
+
                 validateForm(document.getElementById('form1'), buttons.next1);
+
+                if(customer.utilidad_final > 0 && customer.utilidad_final != null){
+                  validateForm(document.getElementById('form3'), buttons.submit);
+                }
+
                     },
-                    error: function(xhr, status, error) {
+                    error: function(xhr, status,error) {
                         // Maneja errores
-                        alert('Error en la solicitud: ' + error);
+                        //alert('Error en la solicitud: ' + error);
+                        Swal.close();
+                        Swal.fire('Error en la solicitud: ', error['error'], 'error');
                     }
                 });
             } else {
-                alert('Por favor, introduce una cédula válida.'); // Validación si el campo está vacío
+              Swal.fire('Error', 'Por favor ingrese una cédula válida', 'error'); // Validación si el campo está vacío
+              return;
+            }
+        });
+    
+    function enviarDatosPromedio(tipoPromedio, ventaBuena, ventaMedia, ventaBaja) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: 'fnprestamos.php',
+            type: 'POST',
+            dataType: 'json',
+            data: JSON.stringify({
+                action: 'promedio_venta',
+                tipo: tipoPromedio,
+                buena: ventaBuena,
+                media: ventaMedia,
+                baja: ventaBaja
+            }),
+            success: function (response) {
+                if (response.error) {
+                    Swal.fire('Error', response.error, 'error');
+                    reject(response.error);
+                } else {
+                    $('#promedio_venta').val(response.venta_promedio.toFixed(2));
+                    $('#ventas_mensuales').val(response.venta_promedio.toFixed(2));
+                    resolve();
+                }
+            },
+            error: function (xhr, status, error) {
+                Swal.fire('Error', 'Error al procesar la solicitud', 'error');
+                reject(error);
+            }
+        });
+    });
+    }
+
+    $('#btnCalVentaPromedio').click(function() {
+        realizarCalculosFinancieros();            
+    });
+
+    function calcularIngreso() {
+        // 1. Objeto para mapear los IDs y valores
+        const ingresos = {
+            ventasMensuales: parseFloat($('#ventas_mensuales').val()) || 0,
+            otroIngresoNegocio: parseFloat($('#otros_ingresos_negocio').val()) || 0,
+            aportesFamiliares: parseFloat($('#aportes_familiares').val()) || 0,
+            otrosIngresos: parseFloat($('#otros_ingresos').val()) || 0
+        };
+
+        // 2. Validación más limpia
+        if (Object.values(ingresos).some(isNaN)) {
+            alert('Por favor ingrese valores válidos en todos los campos numéricos');
+            return;
+        }
+
+        // 3. Cálculo más legible
+        const totalIngreso = Object.values(ingresos).reduce((sum, value) => sum + value, 0);
+        
+        // 4. Formateo mejorado
+        $('#total_ingresos').val(totalIngreso.toFixed(2));
+    }
+
+    const calcularGasto = () => {
+      // 1. Objeto para mapear los IDs y valores
+      const gastos = {
+            costoVenta: parseFloat($('#gasto_costo_venta').val()) || 0,
+            gastosNegocio: parseFloat($('#gastos_negocio').val()) || 0,
+            cuotasCredito: parseFloat($('#cuotas_credito').val()) || 0,
+            gastosFamiliares: parseFloat($('#gastos_familiares').val()) || 0
+        };
+
+        // 2. Validación más limpia
+        if (Object.values(gastos).some(isNaN)) {
+            alert('Por favor ingrese valores válidos en todos los campos numéricos');
+            return;
+        }
+
+        // 3. Cálculo más legible
+        const totalGastos = Object.values(gastos).reduce((sum, value) => sum + value, 0);
+        
+        // 4. Formateo mejorado
+        $('#total_gastos').val(totalGastos.toFixed(2));
+    }
+
+    const cacularUtilidad = () =>{
+      // 1. Objeto para mapear los IDs y valores
+      const utilidad = {
+            totalIngresos: parseFloat($('#total_ingresos').val()) || 0,
+            totalGastos: parseFloat($('#total_gastos').val()) || 0
+        };
+
+        // 2. Validación más limpia
+        if (Object.values(utilidad).some(isNaN)) {
+            alert('Por favor ingrese valores válidos en todos los campos numéricos');
+            return;
+        }
+
+        // 3. Cálculo más legible
+        const totalUtilidad = utilidad.totalIngresos - utilidad.totalGastos;
+        
+        // 4. Formateo mejorado
+        $('#utilidad_final').val(totalUtilidad.toFixed(2));
+    }
+
+    async function realizarCalculosFinancieros() {
+
+        const tipo = $('#tipo_promedio').val();
+        const buena = parseFloat($('#venta_promedio_bueno').val()) || 0;
+        const media = parseFloat($('#venta_promedio_mediano').val()) || 0;
+        const baja = parseFloat($('#venta_promedio_bajo').val()) || 0;
+
+        if (isNaN(buena) || isNaN(media) || isNaN(baja)) {
+            Swal.fire('Advertencia', 'Por favor ingrese valores válidos', 'warning');
+            return false;
+        }
+
+        try {
+            await enviarDatosPromedio(tipo, buena, media, baja);
+            calcularIngreso();
+            calcularGasto();
+            cacularUtilidad();
+            return true;
+        } catch (error) {
+            return false;
+        }
+
+    }
+    // Ejecutar cuando el input de monto pierde el foco
+    $('#monto_solicitado').on('blur', function() {
+            var descripcion = $('#cod_cartera').val(); // Captura la descripción
+            var monto = $('#monto_solicitado').val(); // Captura el monto
+
+            if (descripcion.trim() !== '' && monto.trim() !== '') {
+                $.ajax({
+                    url: 'fnprestamos.php', // <-- Cambiar a tu ruta real
+                    method: 'POST',
+                    data: JSON.stringify({
+                        descripcion: descripcion,
+                        monto: monto,
+                        action: 'limite_credito'
+                    }),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.mensaje) {
+
+                          if(response.mensaje==='El monto está por debajo del mínimo permitido.' || response.mensaje==='El monto está por encima del máximo permitido.')
+                           {
+                               $('#btn_enviar_solicitud').hide();
+
+                               Swal.fire({
+                                    icon: 'warning',
+                                    title: `${response.mensaje}`,
+                                    text: `Si persiste en ingresar el monto, contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+
+                           }else{
+                               $('#btn_enviar_solicitud').show();
+                               //alert(response.mensaje);
+                           }
+                         
+                            
+
+                        } else {
+                            Swal.fire({
+                                    icon: 'warning',
+                                    title: `Respuesta inesperada.`,
+                                    text: `Por favor contacte al administrador.`,
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error en la solicitud AJAX:', error);
+                    }
+                });
             }
         });
 
+    const calcularCostoProduccion = (ventasMensuales,rubro) => {
+           // Solo enviar datos adicionales si el rubro es Producción
+                  let data = {
+                      action: 'estimacion_costo',
+                      rubro: rubro,
+                      ventasMensuales: ventasMensuales
+                  };
+
+                  if (rubro === 'produccion') {
+                      data.costoUnitario = parseFloat($('#costo_unitario').val()) || 0;
+                      data.precioVenta = parseFloat($('#precio_venta').val()) || 0;
+                      data.unidadesProducidas = parseFloat($('#unidad_producida').val()) || 0;
+                  }
+
+                  $.ajax({
+                      url: 'fnprestamos.php',
+                      method: 'POST',
+                      contentType: 'application/json',
+                      data: JSON.stringify(data),
+                      dataType: 'json',
+                      success: function (response) {
+                          $('#gasto_costo_venta').val(response);
+                      },
+                      error: function (err) {
+                          $('#gasto_costo_venta').val('');
+                          
+                      }
+                         });
+        }
+
+    function validarCamposProduccion(venta_mensual, rubro) {
+
+                  const costo = parseFloat($('#costo_unitario').val());
+                  const precio = parseFloat($('#precio_venta').val());
+                  const unidades = parseFloat($('#unidad_producida').val());
+
+                  const camposValidos = !isNaN(costo) && costo >= 0 &&
+                                        !isNaN(precio) && precio >= 0 &&
+                                        !isNaN(unidades) && unidades >= 0;
+
+                  if (camposValidos) {
+                    calcularCostoProduccion(venta_mensual,rubro); // Aquí llamas a tu función si los campos están bien
+                  }
+
+          }
+
+    $('#ventas_mensuales').on('blur', function () {
+                    const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
+                    const rubro = $('#rubro').val();
+
+                    calcularCostoProduccion(ventasMensuales,rubro);
+
+                    
+            });
+
+    // Asigna el evento blur a cada input
+    $('#costo_unitario, #precio_venta, #unidad_producida').on('blur', function () {
+              
+              const ventasMensuales = parseFloat($('#ventas_mensuales').val()) || 0;
+              const rubro = $('#rubro').val();
+
+              validarCamposProduccion(ventasMensuales, rubro);
+
+            });
 
   });
+
+
 </script>
 </body>
 </html>

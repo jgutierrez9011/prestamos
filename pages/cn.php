@@ -14,6 +14,8 @@ CADENA DE CONEXION A POSGRESQL
  $nombreBaseDeDatos = "credimore";
  $usuario = "postgres";
  $pass = "posgres";
+
+ $ruta = "/credimore/pages/usuarios/inicio.php";
  
  try {
      // Cadena de conexión para PostgreSQL
@@ -46,7 +48,7 @@ function conexion_bd($bd)
             
             case 3:
                 /* CADENA DE CONEXIÓN CON POSTGRESQL */
-                $conexion = new PDO("pgsql:host=localhost;port=5432;dbname=credimore", "postgres", "posgres");
+                $conexion = new PDO("pgsql:host=localhost;port=5400;dbname=credimore", "postgres", "posgres");
                 break;
 
             default:

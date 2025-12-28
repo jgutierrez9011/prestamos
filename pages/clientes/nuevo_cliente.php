@@ -1,5 +1,6 @@
 <?php
 require_once  '../usuarios/reg.php';
+require_once '../../menu_builder.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,7 +21,12 @@ require_once  '../usuarios/reg.php';
 <div class="wrapper">
   <!-- Navbar -->
 <!-- INICIA EL MENU -->
-<?php require_once '../../menu.php'; ?>
+<?php //require_once '../../menu.php';
+if (!empty($_SESSION["user"])) {
+  $menuBuilder = new MenuBuilder($base_de_datos, $_SESSION["user"]);
+  echo $menuBuilder->buildMenu();
+}
+?>
 <!-- TERMINA EL MENU -->
 
   <!-- Content Wrapper. Contains page content -->
@@ -239,7 +245,10 @@ require_once  '../usuarios/reg.php';
                         </div>
                         <div class="col-md-4">
                         <button type="submit" class="btn btn-primary">Guardar</button>
-                        <a href="clientes.php" class="btn btn-primary" role="button">Buscar</a>
+                        <a href="../../pages/prestamos/solicitud_prestamos.php" class="btn btn-primary" role="button">Nuevo credito</a>
+                        <?php if($_SESSION["perfilusuario"] === 'Administrador'){ ?>
+                            <a href="clientes.php" class="btn btn-primary" role="button">Buscar</a>
+                        <?php }?>
                         </div>
                         
                     </form>
