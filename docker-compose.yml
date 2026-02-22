@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: credimore
+      DB_USER: postgres
+      DB_PASS: password
+      BASE_URL: http://localhost:8080
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: credimore
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/bd.sql:/docker-entrypoint-initdb.d/bd.sql
