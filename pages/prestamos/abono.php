@@ -184,7 +184,7 @@ if (!empty($_SESSION["user"])) {
                             <th>concepto</th>
                             <th>saldo</th>
                             <th>Firma</th>
-                            <?php if ($_SESSION['perfilusuario'] === 'Administrador'): ?>
+                      <?php if (isset($_SESSION['perfilusuario']) && $_SESSION['perfilusuario'] === 'Administrador'): ?>
                             <th>Acción</th>
                             <?php endif; ?>
                         </tr>
@@ -207,7 +207,7 @@ if (!empty($_SESSION["user"])) {
                             <th>Modalidad</th>
                             <th>Fecha de Pago</th>
                             <th>Cuota</th>
-                            <?php if($_SESSION['perfilusuario'] == 'Administrador'){?>
+                      <?php if (isset($_SESSION['perfilusuario']) && $_SESSION['perfilusuario'] == 'Administrador'){?>
                             <th>Interés</th>
                             <th>Cuota Capital</th>
                             <?php } ?>
@@ -269,7 +269,7 @@ if (!empty($_SESSION["user"])) {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id_solicitud'); // Obtener el valor del parámetro 'id'
 
-    const esAdmin = <?= $_SESSION['perfilusuario'] === 'Administrador' ? 'true' : 'false'; ?>;
+    const esAdmin = <?= (isset($_SESSION['perfilusuario']) && $_SESSION['perfilusuario'] === 'Administrador') ? 'true' : 'false'; ?>;
 
     const columnasCalendario = [
                 { data: "modalidad"},
@@ -357,7 +357,7 @@ $('#tb_controlPago').DataTable({
       { data: "concepto" },
       { data: "saldo" },
       { data: "ejecutivo" }
-      <?php if ($_SESSION['perfilusuario'] === 'Administrador'): ?>,
+      <?php if (isset($_SESSION['perfilusuario']) && $_SESSION['perfilusuario'] === 'Administrador'): ?>,
       {
         data: "id_abono",
         render: function(data, type, row) {

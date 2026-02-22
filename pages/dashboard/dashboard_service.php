@@ -7,8 +7,9 @@ try {
     $pdo = $base_de_datos;
     $dashboardBL = new Dashboard($pdo);
 } catch (PDOException $e) {
+    error_log('dashboard_service DB connection error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["error" => "Error de conexión: " . $e->getMessage()]);
+    echo json_encode(["error" => "Ocurrió un error interno en el servidor."]);
     exit;
 }
 

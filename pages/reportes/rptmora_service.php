@@ -10,17 +10,39 @@ $reporteService = new Reportes($base_de_datos);
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
-        // Obtener parámetros de la URL
-        $id_prestamo = isset($_GET['id_prestamo']) ? intval($_GET['id_prestamo']) : null;
-        $codigoCarterafiltro = isset($_GET['codigoCarterafiltro']) ? (int)$_GET['codigoCarterafiltro'] : null;
+        // Obtener parámetros de la URL y saneamiento
+        $id_prestamo = isset($_GET['id_prestamo']) ? trim($_GET['id_prestamo']) : null;
+        $codigoCarterafiltro = isset($_GET['codigoCarterafiltro']) ? trim($_GET['codigoCarterafiltro']) : null;
         $cartera = $_SESSION["carterausuario"] ?? null;
 
         try {
             // Ejecutar reporte
 
             $perfilUsuario = $_SESSION["perfilusuario"] ?? 'Usuario';
-          
-            $resultado = $reporteService->ReportePrestamoMora($id_prestamo, $cartera,$codigoCarterafiltro, $perfilUsuario);
+
+            // Validar id_prestamo si se proporciona
+            $id_prestamo_int = null;
+            if ($id_prestamo !== null && $id_prestamo !== '') {
+                if (!ctype_digit($id_prestamo) || strlen($id_prestamo) > 10) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "id_prestamo inválido."]);
+                    exit;
+                }
+                $id_prestamo_int = (int)$id_prestamo;
+            }
+
+            // Validar codigoCarterafiltro si se proporciona
+            $codigoCarterafiltro_int = null;
+            if ($codigoCarterafiltro !== null && $codigoCarterafiltro !== '') {
+                if (!ctype_digit($codigoCarterafiltro) || strlen($codigoCarterafiltro) > 10) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "codigoCarterafiltro inválido."]);
+                    exit;
+                }
+                $codigoCarterafiltro_int = (int)$codigoCarterafiltro;
+            }
+
+            $resultado = $reporteService->ReportePrestamoMora($id_prestamo_int, $cartera, $codigoCarterafiltro_int, $perfilUsuario);
 
             if ($resultado) {
                 echo json_encode($resultado);
@@ -30,7 +52,8 @@ switch ($method) {
             }
         } catch (Exception $e) {
             http_response_code(500); // Error interno del servidor
-            echo json_encode(["error" => $e->getMessage()]);
+            error_log('rptmora_service error: ' . $e->getMessage());
+            echo json_encode(["error" => "Ocurrió un error interno en el servidor."]);
             exit;
         }
         break;

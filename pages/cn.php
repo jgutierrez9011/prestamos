@@ -1,7 +1,44 @@
 <?php
-session_start();
 
-define("BASE_URL", "http://localhost/credimore"); // En local
+// Iniciar sesión (si no está iniciada) y asegurar cookie de sesión con HttpOnly y SameSite
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+if (session_id()) {
+    // Reescribe la cookie de sesión para añadir HttpOnly y SameSite (no forzamos Secure en staging)
+    setcookie(session_name(), session_id(), [
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure' => false
+    ]);
+}
+
+// Avoid disclosing PHP warnings/errors to clients; log them instead
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+ini_set('log_errors', '1');
+error_reporting(E_ALL);
+
+// Security headers (safe defaults for staging)
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+// Report-only CSP to avoid breaking UI in staging while gathering violations
+header("Content-Security-Policy-Report-Only: default-src 'self'; object-src 'none'; frame-ancestors 'none';");
+
+// Ensure a CSRF token exists for form protection
+if (empty($_SESSION['csrf'])) {
+    try {
+        $_SESSION['csrf'] = bin2hex(random_bytes(32));
+    } catch (Exception $e) {
+        // Fallback if random_bytes is unavailable
+        $_SESSION['csrf'] = bin2hex(openssl_random_pseudo_bytes(32));
+    }
+}
+
+define("BASE_URL", getenv('BASE_URL') ?: "http://localhost/credimore"); // En local
 // define("BASE_URL", "https://mi-dominio.com"); // En producción
 
 
@@ -9,13 +46,13 @@ define("BASE_URL", "http://localhost/credimore"); // En local
 CADENA DE CONEXION A POSGRESQL
  */
 
- $host = "localhost"; // Cambia esto por la IP o nombre de tu servidor
- $port = "5400"; // Puerto por defecto de PostgreSQL
- $nombreBaseDeDatos = "credimore";
- $usuario = "postgres";
- $pass = "posgres";
+ $host = getenv('DB_HOST') ?: "localhost"; // Cambia esto por la IP o nombre de tu servidor
+ $port = getenv('DB_PORT') ?: "5400"; // Puerto por defecto de PostgreSQL
+ $nombreBaseDeDatos = getenv('DB_NAME') ?: "credimore";
+ $usuario = getenv('DB_USER') ?: "postgres";
+ $pass = getenv('DB_PASS') ?: "posgres";
 
- $ruta = "/credimore/pages/usuarios/inicio.php";
+ $ruta = BASE_URL . "/pages/usuarios/inicio.php";
  
  try {
      // Cadena de conexión para PostgreSQL
@@ -25,9 +62,12 @@ CADENA DE CONEXION A POSGRESQL
      $base_de_datos->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
  
      //echo "Conexión exitosa a PostgreSQL";
- } catch (PDOException $e) {
-     echo "Ocurrió un error con la base de datos: " . $e->getMessage();
- }
+} catch (PDOException $e) {
+    error_log('DB connection error: ' . $e->getMessage());
+    // Do not disclose DB errors to the client; show a generic message if needed
+    // echo "Ocurrió un error con la base de datos.";
+    $base_de_datos = null;
+}
 
 /*FUNCION PARA CONECTAR CON BASE DE DATOS*/
 function conexion_bd($bd)
@@ -48,7 +88,7 @@ function conexion_bd($bd)
             
             case 3:
                 /* CADENA DE CONEXIÓN CON POSTGRESQL */
-                $conexion = new PDO("pgsql:host=localhost;port=5400;dbname=credimore", "postgres", "posgres");
+                $conexion = new PDO("pgsql:host=" . (getenv('DB_HOST') ?: 'localhost') . ";port=" . (getenv('DB_PORT') ?: '5400') . ";dbname=" . (getenv('DB_NAME') ?: 'credimore'), getenv('DB_USER') ?: 'postgres', getenv('DB_PASS') ?: 'posgres');
                 break;
 
             default:
@@ -58,7 +98,8 @@ function conexion_bd($bd)
         // Configurar el manejo de errores
         $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } catch (PDOException $e) {
-        echo "Ocurrió un error con la base de datos: " . $e->getMessage();
+        error_log('conexion_bd error: ' . $e->getMessage());
+        $conexion = null;
     }
 
     return $conexion;

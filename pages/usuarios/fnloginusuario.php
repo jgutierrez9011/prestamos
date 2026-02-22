@@ -8,6 +8,14 @@ require_once '../cn.php';
 
  // Obtener los datos encriptados desde el campo oculto
       $datosEncriptados = $_POST['passw'];
+
+// CSRF protection: validar token
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  if (!isset($_POST['csrf']) || !hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'])) {
+    header('Location: login.php?token=csrf');
+    exit();
+  }
+}
     //$datosEncriptados = "amhvbm55Lmd1dGllcnJlenxBZG1pbi4xMjM=";
     
    // Decodificar los datos encriptados (asumiendo que se utilizó base64 para encriptar)
@@ -52,9 +60,27 @@ if (!$registro) {
     globales_usuario($_SESSION["user"],$base_de_datos);
 
     if (array_key_exists('remember',$_POST)) {
-      setcookie("COOKIE_INDEFINED_SESSION", TRUE, time()+86400);
-      setcookie("COOKIE_DATA_INDEFINED_SESSION[nombre]", base64_encode($user), time()+86400);
-      setcookie("COOKIE_DATA_INDEFINED_SESSION[password]", base64_encode($hash_bd), time()+86400);
+      setcookie("COOKIE_INDEFINED_SESSION", '1', [
+        'expires' => time()+86400,
+        'path' => '/',
+        'secure' => false, // set to true in production (HTTPS)
+        'httponly' => true,
+        'samesite' => 'Lax'
+      ]);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[nombre]", base64_encode($user), [
+        'expires' => time()+86400,
+        'path' => '/',
+        'secure' => false,
+        'httponly' => true,
+        'samesite' => 'Lax'
+      ]);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[password]", base64_encode($hash_bd), [
+        'expires' => time()+86400,
+        'path' => '/',
+        'secure' => false,
+        'httponly' => true,
+        'samesite' => 'Lax'
+      ]);
     }
     header("Location: inicio.php");
     echo "inicio con exito.";
@@ -74,9 +100,27 @@ if (!$registro) {
     globales_usuario($_SESSION["user"],$base_de_datos);
 
     if (array_key_exists('remember',$_POST)) {
-      setcookie("COOKIE_INDEFINED_SESSION", TRUE, time()+86400);
-      setcookie("COOKIE_DATA_INDEFINED_SESSION[nombre]", base64_encode($user), time()+86400);
-      setcookie("COOKIE_DATA_INDEFINED_SESSION[password]", base64_encode($nuevoHash), time()+86400);
+      setcookie("COOKIE_INDEFINED_SESSION", '1', [
+        'expires' => time()+86400,
+        'path' => '/',
+        'secure' => false,
+        'httponly' => true,
+        'samesite' => 'Lax'
+      ]);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[nombre]", base64_encode($user), [
+        'expires' => time()+86400,
+        'path' => '/',
+        'secure' => false,
+        'httponly' => true,
+        'samesite' => 'Lax'
+      ]);
+      setcookie("COOKIE_DATA_INDEFINED_SESSION[password]", base64_encode($nuevoHash), [
+        'expires' => time()+86400,
+        'path' => '/',
+        'secure' => false,
+        'httponly' => true,
+        'samesite' => 'Lax'
+      ]);
     }
     header("Location: inicio.php");
     echo "inicio con exito.";

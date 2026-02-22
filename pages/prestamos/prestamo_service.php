@@ -90,10 +90,30 @@ class PrestamoService {
 
     public function createPrestamo($data) {
     try {
+        // Validaciones básicas de entrada
+        if (empty($data['id_solicitud']) || !ctype_digit(strval($data['id_solicitud']))) {
+            throw new InvalidArgumentException('id_solicitud inválido');
+        }
+        if (empty($data['monto_aprobado']) || !is_numeric($data['monto_aprobado']) || $data['monto_aprobado'] <= 0) {
+            throw new InvalidArgumentException('monto_aprobado inválido');
+        }
+        if (!isset($data['plazo']) || !is_numeric($data['plazo']) || $data['plazo'] <= 0) {
+            throw new InvalidArgumentException('plazo inválido');
+        }
+        if (!isset($data['interes']) || !is_numeric($data['interes']) || $data['interes'] < 0) {
+            throw new InvalidArgumentException('interes inválido');
+        }
+        if (isset($data['fecha_desembolso'])) {
+            $fd = DateTime::createFromFormat('Y-m-d', $data['fecha_desembolso']);
+            if (!$fd || $fd->format('Y-m-d') !== $data['fecha_desembolso']) {
+                throw new InvalidArgumentException('fecha_desembolso inválida, use YYYY-MM-DD');
+            }
+        }
+
         $plazoMeses = $data['plazo'];
         $monto = $data['monto_aprobado'];
         $interesMensual = $data['interes'];
-        $modalidad = strtolower($data['modalidad']); // debe venir desde el formulario
+        $modalidad = strtolower($data['modalidad'] ?? 'semanal'); // debe venir desde el formulario
 
         // Calcular número de pagos según modalidad
         switch ($modalidad) {
@@ -155,11 +175,13 @@ class PrestamoService {
         return $this->base_de_datos->lastInsertId();
 
     } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+        error_log('prestamo_service createPrestamo PDOException: ' . $e->getMessage());
+        return ["error" => "Ocurrió un error interno en el servidor."];
+    } catch (InvalidArgumentException $e) {
+        return ["error" => $e->getMessage()];
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["error" => $e->getMessage()]);
+        error_log('prestamo_service createPrestamo Exception: ' . $e->getMessage());
+        return ["error" => "Ocurrió un error interno en el servidor."];
     }
 }
 
