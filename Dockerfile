@@ -23,9 +23,4 @@ RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 
-CMD ["/bin/bash", "-lc", "\
-echo '--- apachectl -M (MPM) ---'; apachectl -M | grep mpm || true; \
-echo '--- mods-enabled (mpm) ---'; ls -la /etc/apache2/mods-enabled/ | grep mpm || true; \
-echo '--- grep LoadModule mpm_ ---'; grep -R \"LoadModule mpm_\" -n /etc/apache2 || true; \
-echo '--- starting apache ---'; apache2-foreground \
-"]
+CMD ["apache2-foreground"]
