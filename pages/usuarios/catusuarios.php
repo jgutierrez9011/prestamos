@@ -212,7 +212,8 @@ if (!empty($_SESSION["user"])) {
 
         <div class="modal-body">
 
-          <form role="form" action="fnusuario.php" method="post">
+             <form role="form" action="fnusuario.php" method="post">
+               <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf'] ?? '', ENT_QUOTES); ?>">
 
                  <div class="form-group">
                      <label for="inputName">Fecha</label>

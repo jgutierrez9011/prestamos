@@ -124,6 +124,7 @@ if(isset($_SESSION["user"])) {
       <p class="login-box-msg">Iniciar sesión</p>
 
       <form name="frmlogin" id="frmlogin" method="post" action="fnloginusuario.php" onsubmit="return encriptarDatos()">
+        <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf'] ?? '', ENT_QUOTES); ?>">
         <div class="input-group mb-3">
           <input type="text" autocomplete="off" class="form-control" name="usuario" id="usuario" placeholder="Usuario" value="" required>
           <div class="input-group-append">

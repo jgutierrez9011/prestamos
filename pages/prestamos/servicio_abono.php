@@ -39,23 +39,61 @@ try {
         case 'GET':
             // Obtener abonos por préstamo
             if (isset($_GET['cod_prestamo'])) {
+                // Validar que el id sea numérico y dentro de un rango razonable
                 $id_prestamo = $_GET['cod_prestamo'];
+                if (!ctype_digit(strval($id_prestamo)) || strlen($id_prestamo) > 10) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "Parámetro cod_prestamo inválido."]);
+                    break;
+                }
+                $id_prestamo = (int) $id_prestamo;
                 $abonos = $abono->obtenerAbonosPorPrestamo($id_prestamo);
                 echo json_encode($abonos);
             } else {
                 http_response_code(400); // Bad Request
-                echo json_encode(["error" => "Falta el parámetro id_prestamo."]);
+                echo json_encode(["error" => "Falta el parámetro cod_prestamo."]);
             }
             break;
 
         case 'POST':
             // Crear un nuevo abono
-            $data = json_decode(file_get_contents("php://input"),true);
-            //print_r($data);
+            $raw = file_get_contents("php://input");
+            $data = json_decode($raw, true);
+            if (!is_array($data)) {
+                http_response_code(400);
+                echo json_encode(["error" => "JSON inválido o no enviado."]);
+                break;
+            }
+
             if (
-                isset($data["id_prestamo"],$data["fecha_abono"],$data["monto_abono"])
+                isset($data["id_prestamo"], $data["fecha_abono"], $data["monto_abono"])
             ) {
-                if ($abono->crearAbono($data["id_prestamo"], $data["fecha_abono"], $data["monto_abono"], $data["es_prorroga"])) {
+                // Validaciones básicas
+                if (!ctype_digit(strval($data["id_prestamo"])) || strlen($data["id_prestamo"]) > 10) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "id_prestamo inválido."]);
+                    break;
+                }
+                $idPrestamo = (int)$data["id_prestamo"];
+
+                // Fecha válida (YYYY-MM-DD)
+                $fecha = DateTime::createFromFormat('Y-m-d', $data["fecha_abono"]);
+                if (!$fecha || $fecha->format('Y-m-d') !== $data["fecha_abono"]) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "fecha_abono inválida, se requiere YYYY-MM-DD."]);
+                    break;
+                }
+
+                // Monto numérico y positivo, limitar máximo razonable
+                if (!is_numeric($data["monto_abono"]) || $data["monto_abono"] <= 0 || $data["monto_abono"] > 1000000000) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "monto_abono inválido."]);
+                    break;
+                }
+
+                $esProrroga = isset($data["es_prorroga"]) ? (bool)$data["es_prorroga"] : false;
+
+                if ($abono->crearAbono($idPrestamo, $data["fecha_abono"], $data["monto_abono"], $esProrroga)) {
                     
                     $saldoPrestamo = $abono->obtenerSaldoPorPrestamo($data["id_prestamo"]);
 
@@ -63,17 +101,18 @@ try {
 
                    //echo "<script>console.log(" . $saldoPrestamo["saldo"] . ");</script>";
 
-                    if($saldoPrestamo["saldo"] <= 0.00){
+                    if(isset($saldoPrestamo["saldo"]) && $saldoPrestamo["saldo"] <= 0.00){
 
                         // Primero obtener el estado actual para verificar si necesita cambio
-                            $solicitudActual = $solicitudBL->getSolicitud($data["id_solicitud"]);
+                            $idSolicitud = isset($data["id_solicitud"]) && ctype_digit(strval($data["id_solicitud"])) ? (int)$data["id_solicitud"] : null;
+                            $solicitudActual = $idSolicitud ? $solicitudBL->getSolicitud($idSolicitud) : null;
                             // Solo cambiar a "En revisión" si está en estado "Pendiente" (idestatus=1)
                         
                             //echo "<script>console.log(" . $solicitudActual['estatus']. ");</script>";
 
-                            if ($solicitudActual['estatus'] === 'Aprobada') {
+                            if (is_array($solicitudActual) && ($solicitudActual['estatus'] ?? '') === 'Aprobada') {
 
-                                $resultado = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"], 7, $data["id_solicitud"]);
+                                $resultado = $solicitudBL->updateSolicitudEstado($_SESSION["idusuario"], 7, $idSolicitud);
                                 //print_r($resultado);
                                 //echo "<script>console.log(" . $resultado . ");</script>";
 
@@ -91,6 +130,7 @@ try {
 
                 } else {
                     http_response_code(500); // Internal Server Error
+                    error_log('crearAbono falló para id_prestamo: ' . $idPrestamo);
                     echo json_encode(["error" => "No se pudo crear el abono."]);
                 }
             } else {
@@ -108,7 +148,17 @@ try {
                 !empty($data->monto_abonado) &&
                 isset($data->es_prorroga)
             ) {
-                if ($abono->actualizarAbono($data->id_abono, $data->fecha_abono, $data->monto_abonado, $data->es_prorroga)) {
+                // Validar tipos
+                if (!ctype_digit(strval($data->id_abono))) {
+                    http_response_code(400);
+                    echo json_encode(["error"=>"id_abono inválido."]); break;
+                }
+                if (!is_numeric($data->monto_abonado) || $data->monto_abonado <= 0) {
+                    http_response_code(400);
+                    echo json_encode(["error"=>"monto_abonado inválido."]); break;
+                }
+
+                if ($abono->actualizarAbono((int)$data->id_abono, $data->fecha_abono, $data->monto_abonado, $data->es_prorroga)) {
                     http_response_code(200); // OK
                     echo json_encode(["message" => "Abono actualizado correctamente."]);
                 } else {
@@ -127,7 +177,10 @@ try {
             if (!empty($data->id_abono)) {
                 if (isset($data->accion) && $data->accion === 'anular') {
                     // Eliminar y registrar en historial
-                    if ($abono->anularYEliminarAbono($data->id_abono, $data->motivo ?? 'Sin motivo')) {
+                    if (!ctype_digit(strval($data->id_abono))) {
+                        http_response_code(400); echo json_encode(["error"=>"id_abono inválido."]); break;
+                    }
+                    if ($abono->anularYEliminarAbono((int)$data->id_abono, $data->motivo ?? 'Sin motivo')) {
                         http_response_code(200);
                         echo json_encode(["message" => "Abono anulado y eliminado correctamente."]);
                     } else {
@@ -136,7 +189,8 @@ try {
                     }
                 } else {
                     // Eliminar simple (no recomendado si usas historial)
-                    if ($abono->eliminarAbono($data->id_abono)) {
+                    if (!ctype_digit(strval($data->id_abono))) { http_response_code(400); echo json_encode(["error"=>"id_abono inválido."]); break; }
+                    if ($abono->eliminarAbono((int)$data->id_abono)) {
                         http_response_code(200);
                         echo json_encode(["message" => "Abono eliminado correctamente."]);
                     } else {
@@ -158,6 +212,7 @@ try {
 } catch (Exception $e) {
     // Captura cualquier excepción lanzada por fnabono.php
     http_response_code(500); // Internal Server Error
-    echo json_encode(["error" => $e->getMessage()]);
+    error_log('servicio_abono error: ' . $e->getMessage());
+    echo json_encode(["error" => "Ocurrió un error interno en el servidor."]);
 }
 ?>

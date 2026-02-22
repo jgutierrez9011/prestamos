@@ -112,6 +112,7 @@ if (!empty($_SESSION["user"])) {
 
           <!-- Datos del fromulario-->
           <form class="needs-validation" action="usuarios.php" method="post">
+            <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf'] ?? '', ENT_QUOTES); ?>">
           <!-- Primera linea de campos en el fromulario-->
 
           <div class="row">

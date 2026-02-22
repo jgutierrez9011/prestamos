@@ -180,11 +180,11 @@ class SolicitudPrestamo {
         return $resultado ?: []; // Siempre un array
     
         } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+            error_log('solicitud_service getSolicitud PDOException: ' . $e->getMessage());
+            return [];
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(["error" => $e->getMessage()]);
+            error_log('solicitud_service getSolicitud Exception: ' . $e->getMessage());
+            return [];
         }
     }
     
@@ -218,11 +218,11 @@ class SolicitudPrestamo {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
     
         } catch(PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+            error_log('solicitud_service getAllSolicitudes PDOException: ' . $e->getMessage());
+            return [];
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(["error" => $e->getMessage()]);
+            error_log('solicitud_service getAllSolicitudes Exception: ' . $e->getMessage());
+            return [];
         }
     }
 
@@ -298,13 +298,11 @@ class SolicitudPrestamo {
         return ["message" => "Solicitud de credito registrada exitosamente."];
 
         }catch(PDOException $e) {
-           // Captura errores específicos de PDO
-           http_response_code(500);
-           echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+           error_log('solicitud_service createSolicitud PDOException: ' . $e->getMessage());
+           return ["error" => "Ocurrió un error interno en el servidor."];
         }catch (Exception $e) {
-            // Captura cualquier otra excepción
-            http_response_code(500);
-            echo json_encode(["error" => $e->getMessage()]);
+            error_log('solicitud_service createSolicitud Exception: ' . $e->getMessage());
+            return ["error" => "Ocurrió un error interno en el servidor."];
         }
     }
 
@@ -338,13 +336,11 @@ class SolicitudPrestamo {
         return ["message" => "Solicitud actualizada exitosamente"];
 
         }catch(PDOException $e) {
-            // Captura errores específicos de PDO
-            http_response_code(500);
-            echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
+            error_log('solicitud_service updateSolicitud PDOException: ' . $e->getMessage());
+            return ["error" => "Ocurrió un error interno en el servidor."];
          }catch (Exception $e) {
-             // Captura cualquier otra excepción
-             http_response_code(500);
-             echo json_encode(["error" => $e->getMessage()]);
+            error_log('solicitud_service updateSolicitud Exception: ' . $e->getMessage());
+            return ["error" => "Ocurrió un error interno en el servidor."];
          }
     }
 

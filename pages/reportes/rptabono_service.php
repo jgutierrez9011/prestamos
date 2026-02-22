@@ -11,17 +11,41 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        // Obtener parámetros de la URL
+        // Obtener parámetros de la URL con saneamiento
         $cartera = $_SESSION["carterausuario"] ?? null;
-        $carterafiltro = $_GET['cartera'] ?? null;
-        $fechaInicio = $_GET['fecha_inicio'] ?? null;
-        $fechaFin = $_GET['fecha_fin'] ?? null;
-        
+        $carterafiltro = isset($_GET['cartera']) ? trim($_GET['cartera']) : null;
+        $fechaInicio = isset($_GET['fecha_inicio']) ? trim($_GET['fecha_inicio']) : null;
+        $fechaFin = isset($_GET['fecha_fin']) ? trim($_GET['fecha_fin']) : null;
+
         // Determinar tipo de usuario (Administrador o no)
-        $tipoUsuario = $_SESSION["perfilusuario"];
-        
+        $tipoUsuario = $_SESSION["perfilusuario"] ?? 'Usuario';
 
         try {
+            // Validar fechas si se proporcionan
+            $fechaInicioObj = null;
+            $fechaFinObj = null;
+            if ($fechaInicio) {
+                $fechaInicioObj = DateTime::createFromFormat('Y-m-d', $fechaInicio);
+                if (!$fechaInicioObj || $fechaInicioObj->format('Y-m-d') !== $fechaInicio) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "fecha_inicio inválida, formato YYYY-MM-DD esperado."]);
+                    exit;
+                }
+            }
+            if ($fechaFin) {
+                $fechaFinObj = DateTime::createFromFormat('Y-m-d', $fechaFin);
+                if (!$fechaFinObj || $fechaFinObj->format('Y-m-d') !== $fechaFin) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "fecha_fin inválida, formato YYYY-MM-DD esperado."]);
+                    exit;
+                }
+            }
+            if ($fechaInicioObj && $fechaFinObj && $fechaInicioObj > $fechaFinObj) {
+                http_response_code(400);
+                echo json_encode(["error" => "fecha_inicio no puede ser posterior a fecha_fin."]);
+                exit;
+            }
+
             // Ejecutar reporte de abonos
             $resultado = $reporteService->obtenerReporteAbonos($cartera, $carterafiltro, $tipoUsuario, $fechaInicio, $fechaFin);
 
@@ -33,7 +57,8 @@ switch ($method) {
             }
         } catch (Exception $e) {
             http_response_code(500); // Error interno del servidor
-            echo json_encode(["error" => $e->getMessage()]);
+            error_log('rptabono_service error: ' . $e->getMessage());
+            echo json_encode(["error" => "Ocurrió un error interno en el servidor."]);
             exit;
         }
         break;

@@ -1,6 +1,16 @@
 <?php
 require_once 'reg.php';
 
+// CSRF protection for POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  if (!isset($_POST['csrf']) || !hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'])) {
+    // Invalid CSRF: redirect back with token error or stop execution
+    header('HTTP/1.1 403 Forbidden');
+    echo 'CSRF token invalid';
+    exit();
+  }
+}
+
 if(isset($_POST['fechabaja']) && (isset($_POST['idempleado'])) && (isset($_POST['estado_usuario'])) )
 {
  $cambio_estado="";

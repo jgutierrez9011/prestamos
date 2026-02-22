@@ -137,7 +137,8 @@ $codigoCartera = $_SESSION['carterausuario'] ?? null;
 <script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
 <script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
 <!-- Tempusdominus Bootstrap 4 -->
-<script src="../../plugins/moment/moment.min.js"></script>
+<!-- Updated moment.js to CDN (use local patched copy + SRI in production) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script src="../../plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
 
 <script>
