@@ -1,18 +1,20 @@
-FROM php:8.1-apache
+FROM php:8.1-apache-bookworm
 
-# Copiar el código al directorio web
 COPY . /var/www/html
 
-# Instalar extensiones necesarias para PostgreSQL y habilitar mod_rewrite
 RUN apt-get update && apt-get install -y libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql \
-    && a2enmod rewrite
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
-# Configurar ServerName para evitar advertencias
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+# Opcional pero MUY efectivo: eliminar módulos conflictivos del todo
+RUN rm -f /etc/apache2/mods-available/mpm_event.* /etc/apache2/mods-available/mpm_worker.* || true
 
-# Configurar permisos si es necesario
-RUN chown -R www-data:www-data /var/www/html
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && chown -R www-data:www-data /var/www/html
 
-# Exponer puerto 80
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 80
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
