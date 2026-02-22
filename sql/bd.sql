@@ -8,7 +8,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
+--SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -3009,7 +3009,7 @@ COPY public.tblcatperfilusrfrm (idperfilusrfrm, idfrm, idperfil, bolactivo) FROM
 --
 
 COPY public.tblcatusuario (intid, strpnombre, strsnombre, strpapellido, strsapellido, strsexo, strcorreo, stridentificacion, strdireccion, strcontacto, strusuariocreo, datfechacreo, strusuariomodifico, datfechamodifico, datfechabaja, bolactivo, strusuario, strpassword, intidperfil, idcartera, sucursal_id) FROM stdin;
-26	JHONNY	FRAN	PRUEBA 4		MASCULINO	jhonny4@gmail.com	004		8888888	jhonfc9011@gmail.com	2025-02-10 09:42:38	jgutierrez	2025-02-10 00:00:00	\N	t	jgutierrez	e67c10a4c8fbfc0c400e047bb9a056a1	1	2	3
+26	JHONNY	FRAN	PRUEBA 4		MASCULINO	jhonny4@gmail.com	004		8888888	jhonfc9011@gmail.com	2025-02-10 09:42:38	jgutierrez	2025-02-10 00:00:00	\N	t	jgutierrez	$2y$10$ULjiFIsFexlqEomeOtv2sOmwInMZ/Mr/ekpC84OkmRID90GIh6Tyu	1	2	3
 6	KEVIN	ARNOLD	RIVERA	GOMEZ	MASCULINO	kevin@gmail.com	001	Laureles norte	8888888	jhonfc9011@gmail.com	2025-01-31 21:46:43	jgutierrez	2025-02-10 00:00:00	\N	t	kevin@gmail.com	827ccb0eea8a706c4c34a16891f84e7b	1	1	2
 8	JHONNY		PRUEBA 3		MASCULINO		003			jhonfc9011@gmail.com	2025-02-07 15:16:10	jhonfc9011@gmail.com	2025-02-07 15:22:06	2025-02-07	t	jhonny@gmail.com	d41d8cd98f00b204e9800998ecf8427e	1	1	2
 28	JAQUELINE		REYES	REYES	FEMENINO	jreyes@gmail.com	007	test	5555555	jhonfc9011@gmail.com	2025-03-29 09:39:00	jhonfc9011@gmail.com	2025-03-29 00:00:00	\N	t	jreyes	827ccb0eea8a706c4c34a16891f84e7b	2	2	3
