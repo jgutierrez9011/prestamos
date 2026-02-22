@@ -1,18 +1,24 @@
-#FROM php:8.1-apache
-FROM php:8.1-apache-buster
-# Copiar el código al directorio web
+FROM php:8.1-apache
+
 COPY . /var/www/html
 
-# Instalar extensiones necesarias para PostgreSQL y habilitar mod_rewrite
 RUN apt-get update && apt-get install -y libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql \
     && a2enmod rewrite
 
-# Configurar ServerName para evitar advertencias
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+# FIX MPM: dejar SOLO prefork (mod_php)
+RUN set -eux; \
+    a2dismod mpm_event || true; \
+    a2dismod mpm_worker || true; \
+    a2dismod mpm_prefork || true; \
+    rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf; \
+    rm -f /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf; \
+    rm -f /etc/apache2/mods-enabled/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.conf; \
+    a2enmod mpm_prefork; \
+    apachectl -M | grep -E 'mpm_(event|worker|prefork)_module'; \
+    test "$(apachectl -M | grep -cE 'mpm_(event|worker|prefork)_module')" -eq 1
 
-# Configurar permisos si es necesario
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 RUN chown -R www-data:www-data /var/www/html
 
-# Exponer puerto 80
 EXPOSE 80
