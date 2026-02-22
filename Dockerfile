@@ -13,7 +13,7 @@ RUN rm -f /etc/apache2/mods-available/mpm_event.* /etc/apache2/mods-available/mp
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
     && chown -R www-data:www-data /var/www/html
 
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
