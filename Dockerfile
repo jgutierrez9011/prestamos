@@ -4,23 +4,17 @@ COPY . /var/www/html
 
 RUN apt-get update && apt-get install -y libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql \
-    && a2enmod rewrite
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
-# FIX MPM: dejar SOLO prefork (mod_php)
-RUN set -eux; \
-    a2dismod mpm_event || true; \
-    a2dismod mpm_worker || true; \
-    a2dismod mpm_prefork || true; \
-    rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf; \
-    rm -f /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf; \
-    rm -f /etc/apache2/mods-enabled/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.conf; \
-    a2enmod mpm_prefork; \
-    apachectl -M | grep -E 'mpm_(event|worker|prefork)_module'; \
-    test "$(apachectl -M | grep -cE 'mpm_(event|worker|prefork)_module')" -eq 1
+# Opcional pero MUY efectivo: eliminar módulos conflictivos del todo
+RUN rm -f /etc/apache2/mods-available/mpm_event.* /etc/apache2/mods-available/mpm_worker.* || true
 
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-RUN chown -R www-data:www-data /var/www/html
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && chown -R www-data:www-data /var/www/html
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
-
-CMD ["apache2-foreground"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
