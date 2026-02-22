@@ -38,7 +38,7 @@ if (empty($_SESSION['csrf'])) {
     }
 }
 
-define("BASE_URL", "http://localhost/credimore"); // En local
+define("BASE_URL", getenv('BASE_URL') ?: "http://localhost/credimore"); // En local
 // define("BASE_URL", "https://mi-dominio.com"); // En producción
 
 
@@ -46,13 +46,13 @@ define("BASE_URL", "http://localhost/credimore"); // En local
 CADENA DE CONEXION A POSGRESQL
  */
 
- $host = "localhost"; // Cambia esto por la IP o nombre de tu servidor
- $port = "5400"; // Puerto por defecto de PostgreSQL
- $nombreBaseDeDatos = "credimore";
- $usuario = "postgres";
- $pass = "posgres";
+ $host = getenv('DB_HOST') ?: "localhost"; // Cambia esto por la IP o nombre de tu servidor
+ $port = getenv('DB_PORT') ?: "5400"; // Puerto por defecto de PostgreSQL
+ $nombreBaseDeDatos = getenv('DB_NAME') ?: "credimore";
+ $usuario = getenv('DB_USER') ?: "postgres";
+ $pass = getenv('DB_PASS') ?: "posgres";
 
- $ruta = "/credimore/pages/usuarios/inicio.php";
+ $ruta = BASE_URL . "/pages/usuarios/inicio.php";
  
  try {
      // Cadena de conexión para PostgreSQL
@@ -88,7 +88,7 @@ function conexion_bd($bd)
             
             case 3:
                 /* CADENA DE CONEXIÓN CON POSTGRESQL */
-                $conexion = new PDO("pgsql:host=localhost;port=5400;dbname=credimore", "postgres", "posgres");
+                $conexion = new PDO("pgsql:host=" . (getenv('DB_HOST') ?: 'localhost') . ";port=" . (getenv('DB_PORT') ?: '5400') . ";dbname=" . (getenv('DB_NAME') ?: 'credimore'), getenv('DB_USER') ?: 'postgres', getenv('DB_PASS') ?: 'posgres');
                 break;
 
             default:

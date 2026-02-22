@@ -1,16 +1,16 @@
 RewriteEngine On
 
-# Redirige acceso raíz (http://localhost/credimore/) a login
-RewriteCond %{REQUEST_URI} ^/credimore/?$ [NC]
-RewriteRule ^.*$ /credimore/pages/usuarios/login.php [R=302,L]
+# Redirige acceso raíz a login
+RewriteCond %{REQUEST_URI} ^/?$ [NC]
+RewriteRule ^.*$ pages/usuarios/login.php [R=302,L]
 
 # Evita redirección infinita si ya estamos en login
-RewriteCond %{REQUEST_URI} !^/credimore/pages/usuarios/login\.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/pages/usuarios/login\.php$ [NC]
 
 # Redirige todo lo que no sea archivo o carpeta existente a login.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^.*$ /credimore/pages/usuarios/login.php [L]
+RewriteRule ^.*$ pages/usuarios/login.php [L]
 
 # Opcional: Evita listado de directorios
 Options -Indexes
