@@ -1,5 +1,5 @@
-FROM php:8.1-apache
-
+#FROM php:8.1-apache
+FROM php:8.1-apache-buster
 # Copiar el código al directorio web
 COPY . /var/www/html
 
