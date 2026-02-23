@@ -46,17 +46,77 @@ define("BASE_URL", getenv('BASE_URL') ?: "http://localhost/credimore"); // En lo
 CADENA DE CONEXION A POSGRESQL
  */
 
- $host = getenv('DB_HOST') ?: "localhost"; // Cambia esto por la IP o nombre de tu servidor
- $port = getenv('DB_PORT') ?: "5400"; // Puerto por defecto de PostgreSQL
- $nombreBaseDeDatos = getenv('DB_NAME') ?: "credimore";
- $usuario = getenv('DB_USER') ?: "postgres";
- $pass = getenv('DB_PASS') ?: "posgres";
+// Railway/hosting platforms usually expose DATABASE_URL / DATABASE_PUBLIC_URL and PG* variables.
+// Keep DB_* compatibility for local docker-compose usage.
+function obtener_config_postgres()
+{
+    $databaseUrl = getenv('DATABASE_URL') ?: getenv('DATABASE_PUBLIC_URL') ?: '';
+
+    $config = [
+        'host' => getenv('DB_HOST') ?: getenv('PGHOST') ?: 'localhost',
+        'port' => getenv('DB_PORT') ?: getenv('PGPORT') ?: '5432',
+        'name' => getenv('DB_NAME') ?: getenv('PGDATABASE') ?: 'credimore',
+        'user' => getenv('DB_USER') ?: getenv('PGUSER') ?: 'postgres',
+        'pass' => getenv('DB_PASS') ?: getenv('PGPASSWORD') ?: 'postgres',
+        'sslmode' => getenv('DB_SSLMODE') ?: getenv('PGSSLMODE') ?: '',
+    ];
+
+    if (!empty($databaseUrl)) {
+        $parsed = parse_url($databaseUrl);
+        if ($parsed !== false) {
+            if (!empty($parsed['host'])) {
+                $config['host'] = $parsed['host'];
+            }
+            if (!empty($parsed['port'])) {
+                $config['port'] = (string) $parsed['port'];
+            }
+            if (!empty($parsed['path'])) {
+                $config['name'] = ltrim($parsed['path'], '/');
+            }
+            if (!empty($parsed['user'])) {
+                $config['user'] = rawurldecode($parsed['user']);
+            }
+            if (array_key_exists('pass', $parsed) && $parsed['pass'] !== null) {
+                $config['pass'] = rawurldecode($parsed['pass']);
+            }
+            if (!empty($parsed['query'])) {
+                parse_str($parsed['query'], $queryParams);
+                if (!empty($queryParams['sslmode'])) {
+                    $config['sslmode'] = $queryParams['sslmode'];
+                }
+            }
+        }
+    }
+
+    // In managed PostgreSQL (e.g. Railway), SSL is commonly required.
+    if (empty($config['sslmode']) && !in_array($config['host'], ['localhost', '127.0.0.1'], true)) {
+        $config['sslmode'] = 'require';
+    }
+
+    return $config;
+}
+
+function construir_dsn_postgres($config)
+{
+    $dsn = "pgsql:host={$config['host']};port={$config['port']};dbname={$config['name']}";
+    if (!empty($config['sslmode'])) {
+        $dsn .= ";sslmode={$config['sslmode']}";
+    }
+
+    return $dsn;
+}
+
+$dbConfig = obtener_config_postgres();
 
  $ruta = BASE_URL . "/pages/usuarios/inicio.php";
  
  try {
      // Cadena de conexión para PostgreSQL
-     $base_de_datos = new PDO("pgsql:host=$host;port=$port;dbname=$nombreBaseDeDatos", $usuario, $pass);
+     $base_de_datos = new PDO(
+         construir_dsn_postgres($dbConfig),
+         $dbConfig['user'],
+         $dbConfig['pass']
+     );
      
      // Configurar PDO para lanzar excepciones en caso de error
      $base_de_datos->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -88,7 +148,12 @@ function conexion_bd($bd)
             
             case 3:
                 /* CADENA DE CONEXIÓN CON POSTGRESQL */
-                $conexion = new PDO("pgsql:host=" . (getenv('DB_HOST') ?: 'localhost') . ";port=" . (getenv('DB_PORT') ?: '5400') . ";dbname=" . (getenv('DB_NAME') ?: 'credimore'), getenv('DB_USER') ?: 'postgres', getenv('DB_PASS') ?: 'posgres');
+                $dbConfig = obtener_config_postgres();
+                $conexion = new PDO(
+                    construir_dsn_postgres($dbConfig),
+                    $dbConfig['user'],
+                    $dbConfig['pass']
+                );
                 break;
 
             default:
